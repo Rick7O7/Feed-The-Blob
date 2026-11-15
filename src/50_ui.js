@@ -18,7 +18,7 @@ function save() {
   if (!G || G.auto) return;
   try {
     localStorage.setItem(SAVEKEY, JSON.stringify({ coins: G.coins, total: G.total, gems: G.gems, stars: G.stars, rb: G.rb, up: G.up, stats: G.stats, quest: G.quest, qbase: G.qbase,
-      skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, mass: G.blobs.map(function (b) { return Math.round(b.mass); }), lvl: G.blobs.map(function (b) { return b.level; }), ts: Date.now(), mute: Snd.muted }));
+      skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, mass: G.blobs.map(function (b) { return Math.round(b.mass); }), lvl: G.blobs.map(function (b) { return b.level; }), ts: Date.now(), mute: Snd.muted }));
   } catch (e) { /* storage can be unavailable; the game runs without it */ }
 }
 function load() { try { return JSON.parse(localStorage.getItem(SAVEKEY) || 'null'); } catch (e) { return null; } }
@@ -168,7 +168,7 @@ function uiModal() {
     } else if (m.tab === 'boosts') {
       for (i = 0; i < BOOSTS.length; i++) { var bo = BOOSTS[i]; h += '<div class="rowi"><div><b>' + bo.name + '</b><span>' + bo.hint + '</span></div><div class="rbtn">' + adBtn('boostAd:' + bo.id, 'Free', 'b_' + bo.id) + btn('boostGem:' + bo.id, bo.gems + ' ' + ICON.gem, { off: G.gems < bo.gems }) + '</div></div>'; }
     } else {
-      h += '<div class="rowi"><div><b>Daily gift</b><span>20 gems, once a day</span></div><div class="rbtn">' + btn('daily', G.daily === today() ? 'Come back tomorrow' : 'Claim', { off: G.daily === today() }) + '</div></div>';
+      h += '<div class="rowi"><div><b>Daily gift</b><span>' + (G.daily === today() ? 'Day ' + G.streak + ' in a row. Tomorrow: ' + DAILY[G.streak % 7] + ' gems' : 'Day ' + dailyDay() + ' in a row: ' + dailyNext() + ' gems') + '</span></div><div class="rbtn">' + btn('daily', G.daily === today() ? 'Come back tomorrow' : 'Claim', { off: G.daily === today() }) + '</div></div>';
       if (adsOn()) h += '<div class="rowi"><div><b>Free gems</b><span>15 gems per video</span></div><div class="rbtn">' + adBtn('gemAd', 'Watch', 'gems') + '</div></div>';
       h += '<div class="rowi"><div><b>Earn gems by playing</b><span>Quests, boss blobs, level-ups and every rebirth pay gems.</span></div></div>';
       h += '<div class="rowi"><div><b>Buy gems</b><span>Purchases are switched off in this version. A portal has to enable them first.</span></div></div>';

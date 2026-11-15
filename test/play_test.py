@@ -57,6 +57,10 @@ async def flows(br, errs):
     gems2, cd, dis = await pg.evaluate("[G.gems, cdLeft('gems'), document.querySelector('[data-act=\"gemAd\"]').disabled]")
     print('Gratis-Gems nach Anzeige:', gems2, 'Sperrzeit:', cd, 'Knopf gesperrt:', dis); assert gems2 == 145 and cd > 170 and dis
     await pg.click('[data-act="daily"]'); assert await pg.evaluate('G.gems') == 165
+    # Tagesserie: Tag 7 in Folge zahlt 100, eine verpasste Serie beginnt wieder bei Tag 1 mit 20
+    st = await pg.evaluate("(function () { var r = []; G.daily = today() - 1; G.streak = 6; var g = G.gems; ACT.daily(); r.push(G.gems - g, G.streak);"
+                           " G.daily = today() - 3; G.streak = 4; g = G.gems; ACT.daily(); r.push(G.gems - g, G.streak); ACT.daily(); r.push(G.gems - g); G.gems = 165; return r; })()")
+    print('Tagesserie [Tag 7 Gems, Tag, nach Lücke Gems, Tag, zweiter Klick am selben Tag]:', st); assert st == [100, 7, 20, 1, 20]
     await pg.click('[data-act="tab:boosts"]'); await pg.click('[data-act="boostGem:x2"]'); assert await pg.evaluate('G.boost.x2') > 100
     await pg.click('[data-act="close"]'); assert await pg.evaluate('G.modal') is None
     # K.o.: Wiederbeleben per Anzeige, danach ist das Angebot gesperrt und es gibt nur noch Gems oder Heimkehr

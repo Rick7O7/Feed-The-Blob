@@ -69,10 +69,14 @@ function openModal(m) { G.modal = m; JOY = null; KEYS = {}; MOUSE.down = false; 
 function closeModal() { G.modal = null; uiModal(); lastTs = 0; hud(); if (G.pend.length) nextModal(); else sdkPlay(true); }
 function spend(n) { if (G.gems < n) { Snd.nope(); uiToast('Not enough gems'); return false; } G.gems -= n; Snd.buy(); return true; }
 function today() { return Math.floor(Date.now() / 86400000); }
+// Daily streak: each day in a row pays more, day 7 is the jackpot, then the cycle repeats. Missing a day starts again at day 1.
+var DAILY = [20, 25, 30, 40, 50, 60, 100];
+function dailyDay() { return G.daily === today() ? G.streak : G.daily === today() - 1 ? G.streak + 1 : 1; }   // streak day of the next (or today's) claim
+function dailyNext() { return DAILY[(dailyDay() - 1) % 7]; }
 function rebirthGain() { return 3 + Math.max(0, G.blobs[0].level - rbLevel()); }
 function canRebirth() { return G.blobs[0].level >= rbLevel(); }
 function doRebirth(mult) {
-  var st = Math.ceil(rebirthGain() * mult), keep = { gems: G.gems + 20, stars: G.stars + st, rb: G.rb + 1, stats: G.stats, quest: G.quest, qbase: G.qbase, skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, total: G.total };
+  var st = Math.ceil(rebirthGain() * mult), keep = { gems: G.gems + 20, stars: G.stars + st, rb: G.rb + 1, stats: G.stats, quest: G.quest, qbase: G.qbase, skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, total: G.total };
   keep.stats.rebirths++;
   newGame(keep); G.started = true; cam.x = HOMES[0].x; cam.y = HOMES[0].y; G.flash = 0.8; Snd.level();
   G.banner = { title: 'REBIRTH ' + G.rb, sub: '+' + st + ' stars. Everything grows ' + Math.round(starMul() * 100) + '% now. Welcome to ' + THEMES[G.rb % THEMES.length].name + '!', col: '#fff36b', t: 4.2 };
@@ -99,7 +103,11 @@ var ACT = {
   boostAd: function (id) { var b = boostById(id); if (b.can && !b.can()) return uiToast('Wait until the current event is over'); rewarded('b_' + id, b.cd, function () { b.run(); uiToast(b.name + ' is active'); }); },
   boostGem: function (id) { var b = boostById(id); if (b.can && !b.can()) return uiToast('Wait until the current event is over'); if (spend(b.gems)) { b.run(); uiToast(b.name + ' is active'); uiModal(); hud(); } },
   gemAd: function () { rewarded('gems', 180, function () { G.gems += 15; Snd.gem(); uiToast('+15 gems'); }); },
-  daily: function () { if (G.daily === today()) return; G.daily = today(); G.gems += 20; Snd.gem(); uiToast('+20 gems. Come back tomorrow for more.'); save(); uiModal(); hud(); },
+  daily: function () {
+    if (G.daily === today()) return;
+    var n = dailyNext(), day = dailyDay(); G.streak = day; G.daily = today(); G.gems += n; Snd.gem();
+    uiToast('+' + n + ' gems. Day ' + day + ' in a row' + (day % 7 === 0 ? ', streak jackpot!' : '. Come back tomorrow for ' + DAILY[day % 7] + '.')); save(); uiModal(); hud();
+  },
   skin: function (id) {
     var s = findIn(SKINS, id);
     if (G.skins.indexOf(id) < 0) { if (!spend(s.price)) return; G.skins.push(id); }

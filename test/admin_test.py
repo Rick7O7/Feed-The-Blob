@@ -45,8 +45,11 @@ async def main():
         print('Spielerwerte [Münzen, Gems, Herzen, Stufe, Sterne, Sneakers, Rucksack, Stufen der Rivalen]:', v); assert 5000 <= v[0] < 5200 and v[1:7] == [77, 2, 6, 4, 3, 3] and min(v[7]) >= 4
         await pg.click('#fbA .fbA-row[data-id="unlock"] [data-go]'); assert await pg.evaluate('G.skins.length === SKINS.length && G.hats.length === HATS.length')
         # 5. Items spawnen, Ereignis starten
+        # Spiel dafür anhalten: sonst sammelt oder verliert der Spieler Kristalle zwischen den Zählungen (Test war wackelig)
+        await row(pg, 'speed', '0'); await pg.wait_for_timeout(100)
         g0 = await pg.evaluate("G.items.filter(function (i) { return i.kind === 'gem'; }).length"); await row(pg, 'spawn', 'gem', 30)
         g1 = await pg.evaluate("G.items.filter(function (i) { return i.kind === 'gem'; }).length"); print('Gespawnte Kristalle:', g1 - g0); assert g1 - g0 == 30
+        await row(pg, 'speed', '1')
         await row(pg, 'event', 'boss'); await pg.wait_for_timeout(3200); boss = await pg.evaluate('!!G.boss'); print('Boss gestartet:', boss); assert boss
         await pg.click('#fbA .fbA-row[data-id="stopevent"] [data-go]'); assert await pg.evaluate('!G.boss && !G.event')
         # 6. Teleport

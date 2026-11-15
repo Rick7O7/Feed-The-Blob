@@ -105,7 +105,7 @@ function newGame(sv) {
   G = { t: 0, coins: sv.coins || 0, total: sv.total || 0, gems: sv.gems || 0, stars: sv.stars || 0, rb: sv.rb || 0,
     up: {}, stats: { fed: 0, crystals: 0, bonks: 0, bosses: 0, bought: 0, raids: 0, raided: 0, stolen: 0, jackpots: 0, defended: 0, kos: 0, revives: 0, ads: 0, rebirths: 0, time: 0 },
     quest: sv.quest || 0, qbase: sv.qbase || null, skins: sv.skins || ['classic'], skin: sv.skin || 'classic', hats: sv.hats || ['none'], hat: sv.hat || 'none',
-    cd: sv.cd || {}, daily: sv.daily || 0, hp: 3, healT: 0, fever: 0, feverT: 0, boost: { x2: 0 }, leader: -1, leadT: 0, crownT: 0, alarm: 0, lastRaid: -99, raidGem: -999, hitStop: 0, rate: 0, rateAcc: 0, calm: 0,
+    cd: sv.cd || {}, daily: sv.daily || 0, streak: sv.streak || 0, hp: 3, healT: 0, fever: 0, feverT: 0, boost: { x2: 0 }, leader: -1, leadT: 0, crownT: 0, alarm: 0, lastRaid: -99, raidGem: -999, hitStop: 0, rate: 0, rateAcc: 0, calm: 0,
     items: [], actors: [], blobs: [], map: null, clouds: [], crates: [], crateT: 8, tips: {}, parts: [], texts: [], meteors: [], boss: null, event: null, nextEvent: 45, evBag: [], evCount: 0,
     spawnAcc: 0, grav: 900, shake: 0, flash: 0, saveT: 0, banner: null, started: false, auto: false, modal: null, pend: [], koOffer: false, ground: 0 };
   var k, i; UKEYS.forEach(function (key) { G.up[key] = (sv.up && sv.up[key]) || 0; });
