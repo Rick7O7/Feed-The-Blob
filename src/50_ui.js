@@ -1,5 +1,5 @@
 /* ---------- input, HUD, pop-ups, saving, main loop ---------- */
-var JOY = null, KEYS = {}, MOUSE = { down: false, x: 0, y: 0, wx: 0, wy: 0 }, sprintDown = false, paused = false, hudT = 0, lastTs = 0, acc = 0, AWAY = 0, cdT = 0;
+var rawTs = 0, FXDT = 0, JOY = null, KEYS = {}, MOUSE = { down: false, x: 0, y: 0, wx: 0, wy: 0 }, sprintDown = false, paused = false, hudT = 0, lastTs = 0, acc = 0, AWAY = 0, cdT = 0;
 var SAVEKEY = 'feedblob.v2';
 function $(id) { return document.getElementById(id); }
 var ICON = {
@@ -18,7 +18,7 @@ function save() {
   if (!G || G.auto) return;
   try {
     localStorage.setItem(SAVEKEY, JSON.stringify({ coins: G.coins, total: G.total, gems: G.gems, stars: G.stars, rb: G.rb, up: G.up, stats: G.stats, quest: G.quest, qbase: G.qbase,
-      skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, mass: G.blobs.map(function (b) { return Math.round(b.mass); }), lvl: G.blobs.map(function (b) { return b.level; }), ts: Date.now(), mute: Snd.muted }));
+      skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, mass: G.blobs.map(function (b) { return Math.round(b.mass); }), lvl: G.blobs.map(function (b) { return b.level; }), ts: Date.now(), mute: Snd.muted, musicOff: Snd.musicOff }));
   } catch (e) { /* storage can be unavailable; the game runs without it */ }
 }
 function load() { try { return JSON.parse(localStorage.getItem(SAVEKEY) || 'null'); } catch (e) { return null; } }
@@ -34,19 +34,34 @@ function buildHud() {
   s.addEventListener('pointerdown', function (e) { e.preventDefault(); sprintDown = true; IN.lunge = true; try { s.setPointerCapture(e.pointerId); } catch (x) { /* older browsers */ } });
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (n) { s.addEventListener(n, function () { sprintDown = false; }); });
   document.addEventListener('click', function (e) {
-    var el = e.target.closest ? e.target.closest('[data-act]') : null; if (!el || el.disabled) return;
+    var el = e.target.closest ? e.target.closest('[data-act]') : null;
+    if (!(e.target.closest && e.target.closest('#setpop')) && (!el || el.dataset.act !== 'setpop')) $('setpop').classList.add('gone');
+    if (!el || el.disabled) return;
     var p = el.dataset.act.split(':'); Snd.init();
+    if (/^collect/.test(p[0])) { flyFrom = el.getBoundingClientRect(); flyFromT = performance.now(); }      // coins from a pop-up fly out of the button that was pressed
     if (p[0] === 'buy') { if (G.started && !G.modal) { buy(p[1]); hud(); } }
-    else if (p[0] === 'mute') { Snd.muted = !Snd.muted; Snd.setMute(Snd.muted); $('mute').classList.toggle('off', Snd.muted); save(); }
+    else if (p[0] === 'mute') toggleSound('sfx');
+    else if (p[0] === 'music') toggleSound('music');
+    else if (p[0] === 'setpop') $('setpop').classList.toggle('gone');
+    else if (p[0] === 'daily') claimDaily();
     else if (p[0] === 'play') startGame();
     else if (p[0] === 'fresh') { wipe(); newGame(null); AWAY = 0; cam.x = HOMES[0].x; cam.y = HOMES[0].y; startGame(); }
     else if (ACT[p[0]]) ACT[p[0]](p[1]);
   });
-  $('mute').classList.toggle('off', Snd.muted);
+  soundUi();
+}
+function toggleSound(which) {
+  if (which === 'music') Snd.musicOff = !Snd.musicOff; else Snd.muted = !Snd.muted;
+  Snd.setMute(); soundUi(); save();
+  uiToast((which === 'music' ? 'Music ' + (Snd.musicOff ? 'off' : 'on') : 'Sounds ' + (Snd.muted ? 'off' : 'on')));
+}
+function soundUi() {
+  $('mute').classList.toggle('off', Snd.muted && Snd.musicOff); $('mute').classList.toggle('half', Snd.muted !== Snd.musicOff);
+  $('tgmus').classList.toggle('on', !Snd.musicOff); $('tgsfx').classList.toggle('on', !Snd.muted);
 }
 function startGame() {
   if (G.started) return;
-  Snd.init(); Snd.setMute(Snd.muted); G.started = true; $('start').classList.add('gone'); document.body.classList.remove('prestart'); lastTs = 0;
+  Snd.init(); Snd.setMute(); G.started = true; $('start').classList.add('gone'); document.body.classList.remove('prestart'); lastTs = 0;
   if (AWAY > 0) { G.pend.push({ type: 'away', reward: AWAY }); AWAY = 0; }
   sdkPlay(true); hud();
 }
@@ -58,7 +73,8 @@ function bindInput() {
     if (!KEYS[e.code] && (e.code === 'Space' || e.code === 'ShiftLeft' || e.code === 'ShiftRight')) IN.lunge = true;
     KEYS[e.code] = true;
     var d = /^Digit([1-8])$/.exec(e.code); if (d && !e.repeat) { buy(UKEYS[+d[1] - 1]); hud(); }
-    if (e.code === 'KeyM' && !e.repeat) { Snd.muted = !Snd.muted; Snd.setMute(Snd.muted); $('mute').classList.toggle('off', Snd.muted); }
+    if (e.code === 'KeyM' && !e.repeat) toggleSound('sfx');
+    if (e.code === 'KeyN' && !e.repeat) toggleSound('music');
     if (e.code === 'KeyB' && !e.repeat) ACT.shop('skins');
   });
   window.addEventListener('keyup', function (e) { KEYS[e.code] = false; });
@@ -88,7 +104,10 @@ function bindInput() {
   }
   cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
   cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
-  document.addEventListener('visibilitychange', function () { if (document.hidden) { paused = true; save(); KEYS = {}; JOY = null; MOUSE.down = false; } else { paused = false; lastTs = 0; } });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { paused = true; save(); KEYS = {}; JOY = null; MOUSE.down = false; if (Snd.ctx) Snd.ctx.suspend(); }
+    else { paused = false; lastTs = 0; if (Snd.ctx && G.started) Snd.ctx.resume(); }
+  });
   window.addEventListener('pagehide', save);
 }
 function readInput() {
@@ -104,7 +123,7 @@ function readInput() {
 }
 function hud() {
   var P = G.actors[0], b = G.blobs[0], i, k, h;
-  $('coins').textContent = fmt(G.coins); $('gems').textContent = fmt(G.gems);
+  $('shopbtn').classList.toggle('gift', G.daily !== today());
   var c = cpsNow(); $('cps').textContent = '+' + (c < 10 ? c.toFixed(1) : fmt(c)) + '/s';
   $('lvlname').textContent = 'Lv ' + b.level + ' ' + lvName(b.level) + (G.stars ? '  ★' + G.stars : '');
   var lo = LVT[b.level - 1], hi = LVT[b.level]; $('lvlfill').style.width = clamp((b.mass - lo) / (hi - lo) * 100, 0, 100) + '%';
@@ -129,7 +148,7 @@ function hud() {
   if (e && e.on) { ev.className = 'pill'; ev.style.background = EV[e.type].col; $('evtxt').textContent = EV[e.type].title; $('evfill').style.width = clamp((1 - e.t / EV[e.type].dur) * 100, 0, 100) + '%'; }
   else ev.className = 'pill gone';
   var bn = $('banner');
-  if (G.banner) { if (bn.dataset.t !== G.banner.title) { bn.dataset.t = G.banner.title; $('bt').textContent = G.banner.title; $('bs').textContent = G.banner.sub; $('bt').style.color = G.banner.col; $('bbar').style.background = G.banner.col; bn.className = ''; void bn.offsetWidth; bn.className = 'show'; } }
+  if (G.banner) { if (bn.dataset.t !== G.banner.title) { bn.dataset.t = G.banner.title; $('bicon').innerHTML = EVICON[evKey(G.banner.title)]; $('bt').textContent = G.banner.title; $('bs').textContent = G.banner.sub; $('bt').style.color = G.banner.col; $('bbar').style.background = G.banner.col; bn.className = ''; void bn.offsetWidth; bn.className = 'show'; } }
   else if (bn.className) { bn.className = ''; bn.dataset.t = ''; }
   $('sprintfill').style.height = (P.stam / stamMax(P) * 100) + '%'; $('sprint').classList.toggle('tired', P.tired > 0 || P.stam < 22);
   if (G.t > 45 && !$('keys').classList.contains('gone')) $('keys').classList.add('gone');
@@ -159,7 +178,7 @@ function uiModal() {
       adBtn('rebirthAd', 'Rebirth with ' + st2 + ' stars') + btn('rebirth', 'Rebirth with ' + st + ' stars') + btn('rebirthGem', 'Rebirth with ' + st2 + ' stars for 20 ' + ICON.gem, { off: G.gems < 20 }) + btn('close', 'Not yet') + '</div>';
   } else if (m.type === 'shop') {
     var tabs = [['skins', 'Skins'], ['hats', 'Hats'], ['boosts', 'Boosts'], ['gems', 'Gems']];
-    h = '<div class="mhead"><b class="gemcount">' + ICON.gem + ' ' + fmt(G.gems) + '</b><div class="tabs">' + tabs.map(function (t) { return '<button class="tab' + (m.tab === t[0] ? ' on' : '') + '" data-act="tab:' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><button class="x" data-act="close" aria-label="Close">X</button></div><div class="mbody">';
+    h = '<div class="mhead"><span class="gemcount">' + ICON.gem + ' <b>' + fmt(SHOW.g + 0.001) + '</b></span><div class="tabs">' + tabs.map(function (t) { return '<button class="tab' + (m.tab === t[0] ? ' on' : '') + (t[0] === 'gems' && G.daily !== today() ? ' gift' : '') + '" data-act="tab:' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><button class="x" data-act="close" aria-label="Close">X</button></div><div class="mbody">';
     if (m.tab === 'skins' || m.tab === 'hats') {
       var list = m.tab === 'skins' ? SKINS : HATS, own = m.tab === 'skins' ? G.skins : G.hats, cur = m.tab === 'skins' ? G.skin : G.hat, act = m.tab === 'skins' ? 'skin' : 'hat';
       h += '<div class="grid">';
@@ -168,13 +187,14 @@ function uiModal() {
     } else if (m.tab === 'boosts') {
       for (i = 0; i < BOOSTS.length; i++) { var bo = BOOSTS[i]; h += '<div class="rowi"><div><b>' + bo.name + '</b><span>' + bo.hint + '</span></div><div class="rbtn">' + adBtn('boostAd:' + bo.id, 'Free', 'b_' + bo.id) + btn('boostGem:' + bo.id, bo.gems + ' ' + ICON.gem, { off: G.gems < bo.gems }) + '</div></div>'; }
     } else {
-      h += '<div class="rowi"><div><b>Daily gift</b><span>' + (G.daily === today() ? 'Day ' + G.streak + ' in a row. Tomorrow: ' + DAILY[G.streak % 7] + ' gems' : 'Day ' + dailyDay() + ' in a row: ' + dailyNext() + ' gems') + '</span></div><div class="rbtn">' + btn('daily', G.daily === today() ? 'Come back tomorrow' : 'Claim', { off: G.daily === today() }) + '</div></div>';
+      h += streakRow();
       if (adsOn()) h += '<div class="rowi"><div><b>Free gems</b><span>15 gems per video</span></div><div class="rbtn">' + adBtn('gemAd', 'Watch', 'gems') + '</div></div>';
       h += '<div class="rowi"><div><b>Earn gems by playing</b><span>Quests, boss blobs, level-ups and every rebirth pay gems.</span></div></div>';
       h += '<div class="rowi"><div><b>Buy gems</b><span>Purchases are switched off in this version. A portal has to enable them first.</span></div></div>';
     }
     h += '</div>';
   }
+  if (m.type === 'levelup' || m.type === 'rebirth') h = '<div class="rays"></div>' + h;
   $('mcard').innerHTML = h; $('mcard').className = 'pill ' + m.type;
   Array.prototype.forEach.call(document.querySelectorAll('canvas[data-pv]'), function (cnv) {
     var p = cnv.dataset.pv.split(':');
@@ -197,10 +217,106 @@ function uiTestAd(kind, done) {      // stands in for a real video while the gam
   var iv = setInterval(function () { left--; $('adsub').textContent = kind + '. On a portal a real ad plays here. ' + Math.max(0, left); if (left <= 0) { clearInterval(iv); done(true); } }, 1000);
 }
 
+/* ---------- event banner icons ---------- */
+var EVICON = {
+  gold: '<svg viewBox="0 0 48 48"><circle cx="30" cy="16" r="9" fill="#ff9f2e" stroke="#3b2a20" stroke-width="3"/><path d="M24 22 13 33" stroke="#ffd23c" stroke-width="5" stroke-linecap="round"/><ellipse cx="17" cy="38" rx="12" ry="5" fill="#e09a12" stroke="#3b2a20" stroke-width="3"/><ellipse cx="17" cy="33" rx="12" ry="5" fill="#ffc93c" stroke="#3b2a20" stroke-width="3"/><ellipse cx="17" cy="28" rx="12" ry="5" fill="#ffd95e" stroke="#3b2a20" stroke-width="3"/></svg>',
+  boss: '<svg viewBox="0 0 48 48"><path d="M6 40c-2-14 6-30 18-30s20 16 18 30z" fill="#b65cff" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/><path d="M13 20l8 4M35 20l-8 4" stroke="#3b2a20" stroke-width="3.4" stroke-linecap="round"/><circle cx="18" cy="27" r="3.5" fill="#fff" stroke="#3b2a20" stroke-width="2"/><circle cx="30" cy="27" r="3.5" fill="#fff" stroke="#3b2a20" stroke-width="2"/><path d="M15 35h18l-3 4-3-3-3 3-3-3-3 3z" fill="#fff" stroke="#3b2a20" stroke-width="2" stroke-linejoin="round"/></svg>',
+  frenzy: '<svg viewBox="0 0 48 48"><path d="M27 3 9 27h12l-3 18 21-26H26z" fill="#ff5b8a" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/><path d="M4 14h7M2 22h6M38 33h7M40 41h6" stroke="#3b2a20" stroke-width="3" stroke-linecap="round"/></svg>',
+  lowgrav: '<svg viewBox="0 0 48 48"><circle cx="24" cy="30" r="11" fill="#6ce0ff" stroke="#3b2a20" stroke-width="3"/><circle cx="20" cy="27" r="3" fill="#fff"/><path d="M10 12l5-6 5 6M28 10l5-6 5 6" fill="none" stroke="#3b2a20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 6v10M33 4v10" stroke="#3b2a20" stroke-width="3" stroke-linecap="round"/></svg>',
+  tornado: '<svg viewBox="0 0 48 48"><path d="M5 8h38M9 17h30M14 26h20M18 34h12M22 42h5" stroke="#3b2a20" stroke-width="7" stroke-linecap="round"/><path d="M5 8h38M9 17h30M14 26h20M18 34h12M22 42h5" stroke="#8cf58a" stroke-width="3.4" stroke-linecap="round"/></svg>',
+  star: '<svg viewBox="0 0 48 48"><path d="M24 3l6 13 14 2-10 10 3 14-13-7-13 7 3-14L4 18l14-2z" fill="#fff36b" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/></svg>'
+};
+function evKey(title) { for (var k in EV) if (EV[k].title === title) return k; return 'star'; }
+
+/* ---------- daily streak: a 7-day row, the claim sends gems flying into the counter ---------- */
+function streakRow() {
+  var got = G.daily === today(), cur = got ? G.streak : dailyDay(), pos = (cur - 1) % 7 + 1, h = '', j;
+  for (j = 1; j <= 7; j++) {
+    var done = got ? j <= pos : j < pos, here = j === pos;
+    h += '<div class="day' + (done ? ' done' : '') + (here ? (got ? ' today' : ' next') : '') + (j === 7 ? ' d7' : '') + '"><small>Day ' + j + '</small><i class="gemi"></i><b>' + DAILY[j - 1] + '</b>' + (done ? '<em>✓</em>' : '') + '</div>';
+  }
+  var sub = got ? 'Day ' + G.streak + ' in a row. Come back tomorrow for ' + DAILY[G.streak % 7] + ' gems.' : cur > 1 ? 'Day ' + cur + ' in a row. Miss a day and the streak starts again.' : 'Come back every day: day 7 pays 100 gems.';
+  return '<div class="streak"><div class="sh"><b>Daily gift</b><span>' + sub + '</span></div><div class="days">' + h + '</div>' +
+    btn('daily', got ? 'Come back tomorrow' : 'Claim ' + dailyNext() + ' ' + ICON.gem, { off: got, cls: got ? '' : 'claim' }) + '</div>';
+}
+function claimDaily() {
+  if (G.daily === today()) return;
+  var cell = document.querySelector('.day.next'), r = cell ? cell.getBoundingClientRect() : null, n = dailyNext();
+  ACT.daily(); SHOW.lock = true; setTimeout(function () { SHOW.lock = false; }, 2500);   // safety: the counter never stays frozen
+  var st = document.querySelector('.day.today'); if (st) st.classList.add('stamp');
+  if (r) flyBurst(r, 'gem', Math.min(14, 4 + Math.round(n / 10)), function () { SHOW.lock = false; });
+  if (n >= 100) Snd.fanfare();
+}
+
+/* ---------- flying coins and gems: DOM icons above everything, so they also cross pop-ups ---------- */
+var FLY = 0, FLYMAX = 26, flyFrom = null, flyFromT = 0, SHOW = { c: 0, g: 0, lock: false, lc: '', lg: '' }, WATCH = null;
+function flyTarget(kind) {
+  if (kind === 'gem') { var gc = G.modal && document.querySelector('.gemcount .gemi'); return gc || $('gembox').querySelector('.gemi'); }
+  return $('coinbox').querySelector('.coin');
+}
+function flyOne(x, y, kind, delay, done) {
+  if (FLY >= (LOWFX ? 8 : FLYMAX)) { if (done) done(); return; }
+  var tg = flyTarget(kind); if (!tg) { if (done) done(); return; }
+  var tr = tg.getBoundingClientRect(), tx = tr.left + tr.width / 2, ty = tr.top + tr.height / 2;
+  if (!tr.width) { if (done) done(); return; }
+  var el = document.createElement('i'); el.className = 'fl ' + (kind === 'gem' ? 'gemi' : 'coin'); el.style.left = x + 'px'; el.style.top = y + 'px';
+  $('fly').appendChild(el); FLY++;
+  var dx = tx - x, dy = ty - y, mx = dx * 0.35 + (Math.random() - 0.5) * 140, my = dy * 0.35 - 40 - Math.random() * 70, rot = kind === 'gem' ? 45 : 0;
+  var a = el.animate([
+    { transform: 'translate(-50%,-50%) translate(0,0) scale(.4) rotate(' + rot + 'deg)', opacity: 0 },
+    { transform: 'translate(-50%,-50%) translate(' + mx + 'px,' + my + 'px) scale(1.15) rotate(' + rot + 'deg)', opacity: 1, offset: 0.35 },
+    { transform: 'translate(-50%,-50%) translate(' + dx + 'px,' + dy + 'px) scale(.75) rotate(' + rot + 'deg)', opacity: 1 }
+  ], { duration: 620 + Math.random() * 180, delay: delay || 0, easing: 'cubic-bezier(.45,0,.75,1)', fill: 'both' });
+  a.onfinish = function () {
+    el.remove(); FLY--;
+    var box = kind === 'gem' ? (G.modal && document.querySelector('.gemcount')) || $('gembox') : $('coinbox');
+    box.classList.remove('bump'); void box.offsetWidth; box.classList.add('bump'); Snd.tick(FLY);
+    if (done) done();
+  };
+}
+function flyBurst(r, kind, n, done) {
+  if (LOWFX) n = Math.ceil(n / 2);
+  var left = n, cb = function () { if (--left === 0 && done) done(); };
+  for (var i = 0; i < n; i++) flyOne(r.left + r.width / 2 + (Math.random() - 0.5) * r.width * 0.6, r.top + r.height / 2 + (Math.random() - 0.5) * r.height * 0.4, kind, i * 45, cb);
+}
+// watches the game state once per frame and turns changes into effects: coin/gem flights, raid impacts, the level-up moment
+function watchFx(dt) {
+  var b0 = G.blobs[0], P = G.actors[0], i;
+  if (!WATCH || G.auto) { WATCH = { c: G.coins, g: G.gems, lvl: b0.level, hits: G.blobs.map(function (b) { return b.hits; }), pc: 0, pg: 0, t: 0, rb: G.rb }; return; }
+  var w = WATCH; w.t -= dt;
+  if (G.rb !== w.rb || b0.level < w.lvl) { w.rb = G.rb; w.lvl = b0.level; }
+  if (b0.level > w.lvl) {        // one moment at a time, and only for a real single step (admin or test jumps stay quiet)
+    if (b0.level === w.lvl + 1) { FX = FX.filter(function (f) { return f.type !== 'lvl'; }); fxAdd({ type: 'lvl', dur: 1.9, level: b0.level, name: lvName(b0.level) }); }
+    w.lvl = b0.level;
+  }
+  for (i = 1; i < 4; i++) { var b = G.blobs[i]; if (b.hits > w.hits[i]) { var dx = P.x - b.x, dy = P.y - b.y, d = hyp(dx, dy) + 0.01; fxAdd({ type: 'hit', dur: b.hits >= 3 ? 0.7 : 0.45, x: b.x, y: b.y, r: b.r, n: b.hits, hx: dx / d * b.r * 0.85, hy: dy / d * b.r * 0.85, hr: 38, rot: Math.random() }); } w.hits[i] = b.hits; }
+  if (G.coins > w.c) w.pc += G.coins - w.c; w.c = G.coins;
+  if (G.gems > w.g) w.pg += G.gems - w.g; w.g = G.gems;
+  if (w.t > 0 || !G.started || (!w.pc && !w.pg)) return;
+  w.t = 0.12;
+  var src;
+  if (flyFrom && performance.now() - flyFromT < 6000) { src = flyFrom; flyFrom = null; flyBurst(src, 'coin', 8); if (w.pg) flyBurst(src, 'gem', Math.min(6, w.pg)); w.pc = w.pg = 0; return; }
+  if (G.questPop > 2.3 && !$('quest').classList.contains('gone')) src = $('quest').getBoundingClientRect();
+  else { var at = b0.mouthT > 0 && onScreen(b0.x, b0.y) ? w2s(b0.x, b0.y - b0.r * 0.3) : w2s(P.x, P.y - 20); src = { left: at.x - 20, top: at.y - 20, width: 40, height: 40 }; }
+  if (w.pc) { var big = w.pc / Math.max(1, cpsNow()); flyBurst(src, 'coin', clamp(Math.round(Math.log(1 + big) * 1.3), 1, 7)); }
+  if (w.pg) flyBurst(src, 'gem', Math.min(6, w.pg));
+  w.pc = w.pg = 0;
+}
+// HUD numbers count up smoothly instead of jumping; spending snaps down at once
+function hudAnim(dt) {
+  if (!G) return;
+  var k = Math.min(1, dt * 7);
+  if (G.coins < SHOW.c || G.coins - SHOW.c < 1) SHOW.c = G.coins; else SHOW.c += (G.coins - SHOW.c) * k;
+  if (!SHOW.lock) { if (G.gems < SHOW.g || G.gems - SHOW.g < 0.5) SHOW.g = G.gems; else SHOW.g += (G.gems - SHOW.g) * k * 0.8; }
+  var c = fmt(SHOW.c), g = fmt(SHOW.g + 0.001);
+  if (c !== SHOW.lc) { SHOW.lc = c; $('coins').textContent = c; }
+  if (g !== SHOW.lg) { SHOW.lg = g; $('gems').textContent = g; var gc = G.modal && document.querySelector('.gemcount b'); if (gc) gc.textContent = g; }
+}
+
 /* ---------- main loop ---------- */
 function frame(ts) {
   requestAnimationFrame(frame);
-  var dt = lastTs ? Math.min(0.1, (ts - lastTs) / 1000) : 0; lastTs = ts;
+  var dt = lastTs ? Math.min(0.1, (ts - lastTs) / 1000) : 0, rdt = rawTs ? Math.min(0.1, (ts - rawTs) / 1000) : 0; lastTs = ts; rawTs = ts;
   if (G.started && !paused && !Ads.busy && !G.modal) {
     readInput(); if (G.hitStop > 0) G.hitStop -= dt; else acc += dt; var n = 0;
     while (acc >= 1 / 60 && n < 6 && !G.modal) { step(1 / 60); acc -= 1 / 60; n++; }
@@ -209,12 +325,15 @@ function frame(ts) {
     G.saveT += dt; if (G.saveT > 5) { G.saveT = 0; save(); }
   }
   if (G.modal) { cdT -= dt; if (cdT <= 0) { cdT = 1; tickCooldowns(); } }
+  if (rdt > 0) { FRAMEMS += (rdt * 1000 - FRAMEMS) * 0.03; LOWFX = LOWFX ? FRAMEMS > 21 : FRAMEMS > 25; }
+  FXDT = paused || Ads.busy ? 0 : rdt; watchFx(rdt); hudAnim(rdt);
+  if (!G.started) drawHero($('hero'), ts);
   render();
 }
 function init() {
   cv = $('c'); cx = cv.getContext('2d'); buildSprites(); document.body.classList.add('prestart');
   try { if (window.matchMedia('(pointer:coarse)').matches) { TOUCH = true; document.body.classList.add('touch'); } } catch (e) { /* no media queries: keyboard layout stays */ }
-  var sv = load(); newGame(sv); Snd.muted = !!(sv && sv.mute);
+  var sv = load(); newGame(sv); Snd.muted = !!(sv && sv.mute); Snd.musicOff = !!(sv && sv.musicOff); SHOW.c = G.coins; SHOW.g = G.gems;
   resize(); window.addEventListener('resize', resize); buildHud(); bindInput();
   if (sv && sv.total > 0) {
     $('play').innerHTML = '<span class="tri"></span>CONTINUE'; $('fresh').classList.remove('gone');

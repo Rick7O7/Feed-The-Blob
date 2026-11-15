@@ -8,7 +8,12 @@ function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 2); VW = window.innerWidth; VH = window.innerHeight;
   cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR); cv.style.width = VW + 'px'; cv.style.height = VH + 'px';
   SC = clamp(Math.min(VW, VH) / 560, 0.5, 1.45);
+  try {          // safe areas (notch, home bar): canvas-drawn HUD parts (mini map, edge arrows) keep out of them
+    var pr = document.getElementById('safeprobe'), cs = getComputedStyle(pr);
+    SAFE = { l: parseFloat(cs.paddingLeft) || 0, r: parseFloat(cs.paddingRight) || 0, t: parseFloat(cs.paddingTop) || 0, b: parseFloat(cs.paddingBottom) || 0 };
+  } catch (e) { SAFE = { l: 0, r: 0, t: 0, b: 0 }; }
 }
+var SAFE = { l: 0, r: 0, t: 0, b: 0 };
 function txt(str, x, y, size, col, alpha, align) {
   cx.font = '900 ' + size + 'px ' + FONT; cx.textAlign = align || 'center'; cx.textBaseline = 'middle';
   if (alpha !== undefined) cx.globalAlpha = alpha;
@@ -193,9 +198,9 @@ function chevron(x, y, col) {
   cx.fillStyle = col; cx.fill(); cx.lineWidth = 3; cx.strokeStyle = INK; cx.stroke();
 }
 function edgeArrow(wx, wy, col, label, pulse) {
-  var z = SC * (1 - 0.05 * ZB), sx = (wx - cam.x) * z + VW / 2, sy = (wy - cam.y) * z + VH / 2, m = 46, top = 118, bot = VH - (TOUCH ? 215 : 128);
-  if (sx > m && sx < VW - m && sy > top && sy < bot) return;
-  var px = clamp(sx, m, VW - m), py = clamp(sy, top, bot), ang = Math.atan2(sy - py, sx - px), s = 1 + (pulse ? Math.abs(Math.sin(G.t * 6)) * 0.25 : 0);
+  var z = SC * (1 - 0.05 * ZB), sx = (wx - cam.x) * z + VW / 2, sy = (wy - cam.y) * z + VH / 2, m = 46, land = VH < 430, top = (land ? 122 : 118) + SAFE.t, bot = VH - SAFE.b - (land ? (TOUCH ? 150 : 104) : TOUCH ? 215 : 128);
+  if (sx > m + SAFE.l && sx < VW - m - SAFE.r && sy > top && sy < bot) return;
+  var px = clamp(sx, m + SAFE.l, VW - m - SAFE.r), py = clamp(sy, top, bot), ang = Math.atan2(sy - py, sx - px), s = 1 + (pulse ? Math.abs(Math.sin(G.t * 6)) * 0.25 : 0);
   cx.save(); cx.translate(px, py); cx.scale(s, s);
   cx.beginPath(); cx.arc(0, 0, 20, 0, TAU); cx.fillStyle = col; cx.fill(); cx.lineWidth = 3; cx.strokeStyle = INK; cx.stroke();
   cx.rotate(ang); cx.beginPath(); cx.moveTo(30, 0); cx.lineTo(19, -9); cx.lineTo(19, 9); cx.closePath(); cx.fillStyle = col; cx.fill(); cx.stroke(); cx.restore();
@@ -303,7 +308,7 @@ function drawClouds(P) {
 // small map: the arena is bigger than the screen, so this shows homes, rivals, clouds, crates and portals
 function drawMini(th) {
   var mw, x0, y0, M = G.map, i, o;
-  if (VH < 430) { mw = 120; x0 = 10; y0 = 92; } else if (VW < 860) { mw = 104; x0 = VW - mw - 10; y0 = 222; } else { mw = 172; x0 = VW - mw - 10; y0 = 66; }
+  if (VH < 430) { mw = 120; x0 = 10 + SAFE.l; y0 = 92 + SAFE.t; } else if (VW < 860) { mw = 104; x0 = VW - mw - 10 - SAFE.r; y0 = 222 + SAFE.t; } else { mw = 172; x0 = VW - mw - 10 - SAFE.r; y0 = 66 + SAFE.t; }
   var k = mw / W, mh = H * k, dark = G.rb % 5 >= 3;
   cx.save(); cx.translate(x0, y0); cx.lineJoin = 'round';
   cx.globalAlpha = 0.9; cx.beginPath(); cx.roundRect(-3, -3, mw + 6, mh + 6, 9); cx.fillStyle = th.floor; cx.fill(); cx.globalAlpha = 1; cx.lineWidth = 3; cx.strokeStyle = INK; cx.stroke();
@@ -401,8 +406,72 @@ function render() {
     if (nc && !G.alarm) edgeArrow(nc.x, nc.y, '#6cc0ff', 'LOOT', false);
     drawMini(th);
   }
+  drawFx(FXDT);
   if (JOY) {
     cx.beginPath(); cx.arc(JOY.ox, JOY.oy, 56, 0, TAU); cx.fillStyle = 'rgba(255,255,255,.18)'; cx.fill(); cx.lineWidth = 3; cx.strokeStyle = 'rgba(59,42,32,.35)'; cx.stroke();
     cx.beginPath(); cx.arc(JOY.ox + JOY.dx, JOY.oy + JOY.dy, 24, 0, TAU); cx.fillStyle = 'rgba(255,255,255,.75)'; cx.fill(); cx.stroke();
   }
+}
+
+/* ---------- screen-space effects: raid impacts, level-up moment. Pure decoration, Math.random only, never touches G ---------- */
+var FX = [], FXMAX = 40, FRAMEMS = 16, LOWFX = false;   // LOWFX: the device is struggling (average frame over 25 ms), so effects get cheaper
+function w2s(wx, wy) { var z = SC * (1 - 0.05 * ZB); return { x: (wx - cam.x) * z + VW / 2, y: (wy - cam.y) * z + VH / 2, z: z }; }
+function fxAdd(o) { if (FX.length >= (LOWFX ? 6 : FXMAX)) FX.shift(); o.t = 0; FX.push(o); }
+function starPath(x, y, r0, r1, n, rot) { cx.beginPath(); for (var i = 0; i < n * 2; i++) { var r = i % 2 ? r0 : r1, a = rot + i * Math.PI / n; cx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } cx.closePath(); }
+function drawFx(dt) {
+  for (var i = FX.length - 1; i >= 0; i--) {
+    var f = FX[i]; f.t += dt; if (f.t >= f.dur) { FX.splice(i, 1); continue; }
+    var k = f.t / f.dur, e = 1 - Math.pow(1 - k, 3);
+    if (f.type === 'hit') {        // a raid hit: white (gold for the jackpot) star burst plus a shock ring on the hit blob
+      var s = w2s(f.x, f.y), big = f.n >= 3, R = (f.r * s.z) * (big ? 1.5 : 1.1);
+      cx.globalAlpha = 1 - k; cx.lineWidth = (big ? 14 : 9) * (1 - k) + 2; cx.strokeStyle = big ? '#ffd23c' : '#fff';
+      cx.beginPath(); cx.arc(s.x, s.y, R * (0.6 + e * (big ? 1.6 : 1)), 0, TAU); cx.stroke();
+      if (k < 0.45) {
+        var q = k / 0.45, sz = (f.hr * s.z) * (0.5 + q * (big ? 1.3 : 0.8)) * (1 + 0.1 * f.n);
+        cx.globalAlpha = 1 - q * q; starPath(f.hx * s.z + s.x, f.hy * s.z + s.y, sz * 0.45, sz, big ? 12 : 8, f.rot);
+        cx.fillStyle = big ? '#fff36b' : '#fff'; cx.fill(); cx.lineWidth = 4; cx.strokeStyle = INK; cx.stroke();
+      }
+      cx.globalAlpha = 1;
+      if (big && k < 0.25 && !LOWFX) { cx.globalAlpha = 0.35 * (1 - k / 0.25); cx.fillStyle = '#ffd23c'; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
+    } else if (f.type === 'lvl') {   // the level-up moment: rays, ring from the home blob, the new level name big in the middle
+      var hb = G.blobs[0], hs = w2s(hb.x, hb.y), cy = VH * 0.36, fade = k < 0.82 ? 1 : 1 - (k - 0.82) / 0.18;
+      cx.globalAlpha = 0.9 * (1 - e); cx.lineWidth = 16 * (1 - e) + 3; cx.strokeStyle = '#fff36b';
+      cx.beginPath(); cx.arc(hs.x, hs.y, hb.r * hs.z * (1 + e * 3), 0, TAU); cx.stroke();
+      cx.save(); cx.translate(VW / 2, cy); cx.rotate(f.t * 0.6); cx.globalAlpha = 0.28 * fade;
+      var rl = Math.max(VW, VH) * 0.7 * Math.min(1, k * 4);
+      if (!LOWFX) for (var r = 0; r < 12; r++) { cx.beginPath(); cx.moveTo(0, 0); cx.arc(0, 0, rl, r * TAU / 12, r * TAU / 12 + TAU / 26); cx.closePath(); cx.fillStyle = r % 2 ? '#fff36b' : '#fff'; cx.fill(); }
+      cx.restore();
+      var pop = k < 0.12 ? 0.4 + k / 0.12 * 0.8 : k < 0.2 ? 1.2 - (k - 0.12) / 0.08 * 0.2 : 1, ts = Math.min(VW / 7, VH / 6.5, 78);
+      cx.save(); cx.translate(VW / 2, cy); cx.scale(pop, pop);
+      txt('LEVEL ' + f.level, 0, -ts * 0.35, ts, '#ffd23c', fade);
+      txt(f.name, 0, ts * 0.55, ts * 0.5, '#fff', fade);
+      cx.restore();
+    }
+  }
+  cx.globalAlpha = 1;
+}
+
+/* ---------- the start screen hero: an idle blob that wobbles, blinks and snatches a snack every few seconds ---------- */
+var HERO = { snacks: ['apple', 'donut', 'pizza', 'fish', 'gold', 'gem'], last: -1 };
+function drawHero(cnv, now) {
+  var w = cnv.clientWidth, h = cnv.clientHeight; if (!w || !h) return;
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (cnv.width !== Math.round(w * dpr)) { cnv.width = Math.round(w * dpr); cnv.height = Math.round(h * dpr); }
+  var old = cx, oldT = G.t, T = now / 1000, cyc = 3.4, n = Math.floor(T / cyc), p = (T % cyc) / cyc, side = n % 2 ? 1 : -1;
+  cx = cnv.getContext('2d'); cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, w, h); cx.lineJoin = 'round'; cx.lineCap = 'round';
+  G.t = T;
+  var r = Math.min(h * 0.36, w * 0.2), bx = w / 2, by = h - r * 1.02, gulpK = p > 0.74 ? Math.max(0, 1 - (p - 0.74) / 0.12) : 0;
+  var hop = Math.abs(Math.sin(T * 2.2)) * r * 0.06 * (1 - gulpK), wob = 0.8 + gulpK * 5 + Math.sin(T * 3) * 0.4;
+  var sx = 0, sy = 0, kind = HERO.snacks[n % HERO.snacks.length], fly = p > 0.5 && p < 0.74;
+  if (fly) { var q = (p - 0.5) / 0.24; sx = bx + side * (w * 0.46) * (1 - q); sy = by + r * 0.26 - Math.sin(q * Math.PI) * h * 0.55 + (1 - q) * -h * 0.1; }
+  var mouth = p > 0.56 && p < 0.76 ? Math.min(1, (p - 0.56) / 0.08) : gulpK * 0.3, blink = (T % 3.9) < 0.12 && !fly ? -1 : 1;
+  drawBlobBody(bx, by - hop, r * (1 + gulpK * 0.06), findIn(SKINS, G.skin), wob, 1.3, mouth, blink, fly ? sx - bx : Math.sin(T * 0.7) * 0.6, fly ? sy - by : 0.4, 3, 0);
+  if (G.hat && G.hat !== 'none') { cx.save(); cx.translate(bx, by - hop - r * 0.45); drawHat(G.hat, r * 0.6); cx.restore(); }
+  if (fly) { var sp = SPR[kind], sw = r * 0.62; cx.save(); cx.translate(sx, sy); cx.rotate(T * 6 * side); cx.drawImage(sp, -sw / 2, -sw / 2, sw, sw); cx.restore(); }
+  if (p > 0.74 && p < 0.98) {       // little sparkles and hearts after the gulp
+    var a = (p - 0.74) / 0.24; cx.globalAlpha = 1 - a;
+    for (var i = 0; i < 5; i++) { var ang = -Math.PI / 2 + (i - 2) * 0.5, d = r * (0.9 + a * 0.9); cx.beginPath(); cx.arc(bx + Math.cos(ang) * d, by - r * 0.3 + Math.sin(ang) * d, r * 0.05 * (1 - a) + 1.5, 0, TAU); cx.fillStyle = i % 2 ? '#fff36b' : '#ff8fc7'; cx.fill(); }
+    cx.globalAlpha = 1;
+  }
+  G.t = oldT; cx = old;
 }
