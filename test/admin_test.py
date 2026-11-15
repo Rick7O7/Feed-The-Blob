@@ -68,8 +68,10 @@ async def main():
         await pg.evaluate('G.modal = null; G.pend.length = 0; G.hp = 3'); r1 = await rate()
         await row(pg, 'speed', '4'); r4 = await rate(); await row(pg, 'speed', '0'); r0 = await rate(); await row(pg, 'speed', '0.5'); rh = await rate(); await row(pg, 'speed', '1')
         print(f'Spielgeschwindigkeit: x1 {r1:.2f}, x4 {r4:.2f}, x0 {r0:.2f}, x0.5 {rh:.2f} (Spielsekunden je Sekunde)'); assert 0.8 < r1 < 1.15 and 3.2 < r4 < 4.5 and r0 == 0 and 0.4 < rh < 0.6
-        await pg.click('#fbA .fbA-row[data-id="freeze"] [data-go]'); p0 = await pg.evaluate('G.actors.slice(1).map(function (a) { return [a.x, a.y]; })'); await pg.wait_for_timeout(700)
-        p1 = await pg.evaluate('G.actors.slice(1).map(function (a) { return [a.x, a.y]; })'); print('Rivalen eingefroren:', p0 == p1); assert p0 == p1; await pg.click('#fbA .fbA-row[data-id="freeze"] [data-go]')
+        await pg.click('#fbA .fbA-row[data-id="freeze"] [data-go]'); await pg.wait_for_timeout(150); p0 = await pg.evaluate('G.actors.slice(1).map(function (a) { return [a.x, a.y]; })'); await pg.wait_for_timeout(700)
+        p1 = await pg.evaluate('G.actors.slice(1).map(function (a) { return [a.x, a.y]; })'); mv = max(((x1 - x0) ** 2 + (y1 - y0) ** 2) ** 0.5 for (x0, y0), (x1, y1) in zip(p0, p1))
+        # eingefrorene Rivalen laufen nicht, werden aber beim Überlappen auseinander- und aus Felsen herausgeschoben: ein paar Pixel sind erlaubt
+        print('Rivalen eingefroren, größte Bewegung in 0,7 s:', round(mv)); assert mv < 25; await pg.click('#fbA .fbA-row[data-id="freeze"] [data-go]')
         await pg.click('#fbA .fbA-row[data-id="stam"] [data-go]'); await pg.evaluate('G.actors[0].stam = 3'); await pg.wait_for_timeout(200); assert await pg.evaluate('G.actors[0].stam >= 100'); await pg.click('#fbA .fbA-row[data-id="stam"] [data-go]')
         await pg.click('#fbA .fbA-row[data-id="noads"] [data-go]'); g0 = await pg.evaluate('G.gems'); await pg.evaluate("G.cd = {}; ACT.gemAd()"); g1 = await pg.evaluate('G.gems'); print('Anzeigen überspringen: Gems sofort +', g1 - g0); assert g1 - g0 == 15
         await pg.click('#fbA .fbA-row[data-id="noads"] [data-go]')
