@@ -46,7 +46,7 @@ function buildHud() {
 }
 function startGame() {
   if (G.started) return;
-  Snd.init(); Snd.setMute(Snd.muted); G.started = true; $('start').classList.add('gone'); lastTs = 0;
+  Snd.init(); Snd.setMute(Snd.muted); G.started = true; $('start').classList.add('gone'); document.body.classList.remove('prestart'); lastTs = 0;
   if (AWAY > 0) { G.pend.push({ type: 'away', reward: AWAY }); AWAY = 0; }
   sdkPlay(true); hud();
 }
@@ -129,7 +129,7 @@ function hud() {
   if (e && e.on) { ev.className = 'pill'; ev.style.background = EV[e.type].col; $('evtxt').textContent = EV[e.type].title; $('evfill').style.width = clamp((1 - e.t / EV[e.type].dur) * 100, 0, 100) + '%'; }
   else ev.className = 'pill gone';
   var bn = $('banner');
-  if (G.banner) { if (bn.dataset.t !== G.banner.title) { bn.dataset.t = G.banner.title; $('bt').textContent = G.banner.title; $('bs').textContent = G.banner.sub; $('bt').style.color = G.banner.col; bn.className = ''; void bn.offsetWidth; bn.className = 'show'; } }
+  if (G.banner) { if (bn.dataset.t !== G.banner.title) { bn.dataset.t = G.banner.title; $('bt').textContent = G.banner.title; $('bs').textContent = G.banner.sub; $('bt').style.color = G.banner.col; $('bbar').style.background = G.banner.col; bn.className = ''; void bn.offsetWidth; bn.className = 'show'; } }
   else if (bn.className) { bn.className = ''; bn.dataset.t = ''; }
   $('sprintfill').style.height = (P.stam / stamMax(P) * 100) + '%'; $('sprint').classList.toggle('tired', P.tired > 0 || P.stam < 22);
   if (G.t > 45 && !$('keys').classList.contains('gone')) $('keys').classList.add('gone');
@@ -212,12 +212,12 @@ function frame(ts) {
   render();
 }
 function init() {
-  cv = $('c'); cx = cv.getContext('2d'); buildSprites();
+  cv = $('c'); cx = cv.getContext('2d'); buildSprites(); document.body.classList.add('prestart');
   try { if (window.matchMedia('(pointer:coarse)').matches) { TOUCH = true; document.body.classList.add('touch'); } } catch (e) { /* no media queries: keyboard layout stays */ }
   var sv = load(); newGame(sv); Snd.muted = !!(sv && sv.mute);
   resize(); window.addEventListener('resize', resize); buildHud(); bindInput();
   if (sv && sv.total > 0) {
-    $('play').textContent = 'CONTINUE'; $('fresh').classList.remove('gone');
+    $('play').innerHTML = '<span class="tri"></span>CONTINUE'; $('fresh').classList.remove('gone');
     var away = Math.min(7200, (Date.now() - (sv.ts || Date.now())) / 1000);
     if (away > 120) AWAY = Math.round(cpsNow() * away * 0.35);
   }

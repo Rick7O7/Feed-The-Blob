@@ -32,6 +32,7 @@ var Snd = {
     var t = this.ctx.currentTime; if (key && this.last[key] && t - this.last[key] < gap) return false;
     if (key) this.last[key] = t; return true;
   },
+  jit: function () { return 0.94 + Math.random() * 0.12; },   // small random pitch wobble, keeps every hit/pickup from sounding identical (Math.random, never the seeded rnd, so the simulation stays deterministic)
   tone: function (f, dur, type, vol, f2, delay) {
     var c = this.ctx, t = c.currentTime + (delay || 0), o = c.createOscillator(), g = c.createGain();
     o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
@@ -47,20 +48,20 @@ var Snd = {
     f.type = 'lowpass'; f.frequency.value = cut || 1200; g.gain.value = vol;
     s.buffer = b; s.connect(f); f.connect(g); g.connect(this.master); s.start();
   },
-  pop: function (n) { if (this.ok('pop', 0.035)) { var f = 440 + Math.min(n, 16) * 38; this.tone(f, 0.07, 'triangle', 0.13, f * 1.5); } },
-  gulp: function (n) { if (this.ok('gulp', 0.04)) { var f = 250 + Math.min(n, 20) * 26; this.tone(f * 1.6, 0.1, 'sine', 0.2, f * 0.8); } },
-  coin: function () { if (this.ok('coin', 0.08)) { this.tone(988, 0.08, 'square', 0.06); this.tone(1319, 0.16, 'square', 0.06, 0, 0.07); } },
+  pop: function (n) { if (this.ok('pop', 0.035)) { var f = (440 + Math.min(n, 16) * 38) * this.jit(); this.tone(f, 0.07, 'triangle', 0.12, f * 1.5); } },
+  gulp: function (n) { if (this.ok('gulp', 0.04)) { var f = (250 + Math.min(n, 20) * 26) * this.jit(); this.tone(f * 1.6, 0.1, 'sine', 0.19, f * 0.8); } },
+  coin: function () { if (this.ok('coin', 0.08)) { this.tone(988 * this.jit(), 0.08, 'square', 0.07); this.tone(1319, 0.16, 'square', 0.07, 0, 0.07); } },
   buy: function () { if (this.ok('buy', 0.05)) { this.tone(523, 0.08, 'triangle', 0.18); this.tone(784, 0.14, 'triangle', 0.18, 0, 0.07); } },
   nope: function () { if (this.ok('nope', 0.15)) this.tone(170, 0.12, 'square', 0.07, 120); },
-  bump: function () { if (this.ok('bump', 0.08)) { this.noise(0.16, 0.35, 900); this.tone(170, 0.16, 'square', 0.12, 60); } },
-  hit: function () { if (this.ok('hit', 0.08)) { this.noise(0.22, 0.45, 700); this.tone(120, 0.25, 'sawtooth', 0.16, 45); } },
+  bump: function () { if (this.ok('bump', 0.08)) { this.noise(0.16, 0.3, 900); this.tone(170 * this.jit(), 0.16, 'square', 0.12, 60); } },
+  hit: function () { if (this.ok('hit', 0.08)) { this.noise(0.22, 0.4, 700); this.tone(120 * this.jit(), 0.25, 'sawtooth', 0.15, 45); } },
   boom: function () { if (this.ok('boom', 0.1)) { this.noise(0.6, 0.6, 500); this.tone(90, 0.5, 'sine', 0.35, 35); } },
   siren: function () { if (this.ok('siren', 0.5)) { for (var i = 0; i < 3; i++) this.tone(620, 0.22, 'sawtooth', 0.07, 930, i * 0.24); } },
   level: function () { if (this.ok('level', 0.3)) { var a = [523, 659, 784, 1047, 1319]; for (var i = 0; i < a.length; i++) this.tone(a[i], 0.2, 'triangle', 0.17, 0, i * 0.085); } },
   quest: function () { if (this.ok('quest', 0.3)) { this.tone(784, 0.1, 'triangle', 0.15); this.tone(1047, 0.1, 'triangle', 0.15, 0, 0.09); this.tone(1568, 0.25, 'triangle', 0.15, 0, 0.18); } },
   tired: function () { if (this.ok('tired', 0.6)) this.tone(300, 0.25, 'sine', 0.1, 140); },
   whoosh: function () { if (this.ok('whoosh', 0.1)) { this.noise(0.14, 0.2, 2600); this.tone(520, 0.14, 'sine', 0.07, 180); } },
-  smack: function () { if (this.ok('smack', 0.08)) { this.noise(0.18, 0.4, 1100); this.tone(240, 0.2, 'square', 0.13, 80); this.tone(660, 0.12, 'triangle', 0.1, 990, 0.05); } },
+  smack: function () { if (this.ok('smack', 0.08)) { this.noise(0.18, 0.34, 1100); this.tone(240 * this.jit(), 0.2, 'square', 0.13, 80); this.tone(660 * this.jit(), 0.12, 'triangle', 0.1, 990, 0.05); } },
   steal: function (n) { if (this.ok('steal', 0.08)) { this.noise(0.18, 0.4, 1100); this.tone(240, 0.2, 'square', 0.13, 80); var f = [660, 880, 1175][n - 1] || 660; this.tone(f, 0.13, 'triangle', 0.13, f * 1.5, 0.05); if (n >= 3) { var a = [784, 988, 1175, 1568]; for (var i = 0; i < a.length; i++) this.tone(a[i], 0.14, 'square', 0.06, 0, 0.14 + i * 0.07); } } },
   crown: function () { if (this.ok('crown', 0.5)) { var a = [659, 784, 1047, 1319]; for (var i = 0; i < a.length; i++) this.tone(a[i], 0.16, 'triangle', 0.14, 0, i * 0.09); } },
   spike: function () { if (this.ok('spike', 0.15)) { this.tone(900, 0.16, 'square', 0.1, 380); this.noise(0.12, 0.25, 3000); } },

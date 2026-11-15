@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Feed the Blob</title>
-<!-- version 2.5: 12 new skins incl. animated ones (bolt, flame, bubbles, swirl, facet); calmer big map -->
+<!-- v2.5 + B polish: start screen, help chip, styled event banners, sound variety -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;background:#bfa77f;color:#3b2a20;user-select:none;-webkit-user-select:none;touch-action:none;
@@ -12,6 +12,7 @@ html,body{height:100%;overflow:hidden;background:#bfa77f;color:#3b2a20;user-sele
 button{font-family:inherit;color:inherit}
 canvas#c{position:fixed;left:0;top:0;display:block;touch-action:none}
 #hud{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none}
+body.prestart #hud{display:none}
 .pill{background:#fff8ea;border:3px solid #3b2a20;border-radius:16px;box-shadow:0 4px 0 rgba(59,42,32,.28)}
 .gone{display:none!important}
 .coin{display:inline-block;width:26px;height:26px;border-radius:50%;background:#ffc93c;border:3px solid #3b2a20;box-shadow:inset -3px -3px 0 #e09a12;flex:none;vertical-align:middle}
@@ -51,10 +52,12 @@ canvas#c{position:fixed;left:0;top:0;display:block;touch-action:none}
 #evtxt{font-size:13px;font-weight:900;letter-spacing:.03em}
 #evbar{margin-top:2px;background:rgba(255,255,255,.5);height:8px}
 #evfill{display:block;height:100%;background:#3b2a20}
-#banner{position:absolute;top:32%;left:0;right:0;text-align:center;opacity:0;transform:scale(.6);padding:0 10px}
+#banner{position:absolute;top:30%;left:0;right:0;text-align:center;opacity:0;transform:scale(.6);padding:0 10px}
 #banner.show{animation:ban 4.2s both}
-#bt{font-size:clamp(34px,9vw,76px);font-weight:900;-webkit-text-stroke:7px #3b2a20;paint-order:stroke fill;letter-spacing:.02em;line-height:1}
-#bs{font-size:clamp(15px,3.4vw,24px);font-weight:900;color:#fff;-webkit-text-stroke:5px #3b2a20;paint-order:stroke fill;margin-top:6px}
+#bwrap{display:inline-block;padding:13px 26px 16px;background:rgba(59,42,32,.82);border:4px solid #3b2a20;border-radius:22px;box-shadow:0 7px 0 rgba(59,42,32,.3)}
+#bbar{height:7px;border-radius:5px;margin:0 auto 9px;width:60px;background:#ffd95e}
+#bt{font-size:clamp(30px,8vw,64px);font-weight:900;-webkit-text-stroke:6px #3b2a20;paint-order:stroke fill;letter-spacing:.02em;line-height:1}
+#bs{font-size:clamp(14px,3.2vw,22px);font-weight:900;color:#fff;margin-top:7px;text-shadow:0 2px 0 rgba(0,0,0,.4)}
 @keyframes ban{0%{opacity:0;transform:scale(.5) rotate(-4deg)}8%{opacity:1;transform:scale(1.12) rotate(2deg)}14%{transform:scale(1) rotate(0)}80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.25)}}
 @keyframes pulse{to{transform:scale(1.07)}}
 #toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);padding:8px 16px;font-size:14px;font-weight:900;z-index:30;background:#3b2a20;color:#fff;max-width:90vw;text-align:center;pointer-events:none}
@@ -63,7 +66,7 @@ canvas#c{position:fixed;left:0;top:0;display:block;touch-action:none}
 #carry{padding:6px 12px;font-size:17px;font-weight:900;display:flex;align-items:center;gap:6px}
 #carry svg{width:22px;height:22px}
 #carry.full{background:#ff8a7a;animation:pulse .5s infinite alternate}
-#keys{font-size:12px;font-weight:800;color:#fff;-webkit-text-stroke:3px #3b2a20;paint-order:stroke fill;align-self:center;padding:0 10px;text-align:center}
+#keys{font-size:11px;font-weight:800;color:#3b2a20;background:rgba(255,248,234,.92);border:2px solid #3b2a20;border-radius:12px;box-shadow:0 3px 0 rgba(59,42,32,.22);align-self:center;padding:5px 12px;text-align:center;max-width:62%;line-height:1.3}
 #sprint{pointer-events:auto;display:none;position:relative;width:88px;height:88px;border-radius:50%;overflow:hidden;font-weight:900;font-size:17px;cursor:pointer;touch-action:none}
 body.touch #sprint{display:block}
 body.touch #keys{display:none}
@@ -129,15 +132,20 @@ body.touch .up kbd{display:none}
 #card h1{font-size:clamp(34px,9vw,52px);font-weight:900;line-height:1;color:#59d16a;-webkit-text-stroke:6px #3b2a20;paint-order:stroke fill}
 #card p{font-size:15px;font-weight:700;margin-top:10px;line-height:1.35}
 #card ol{text-align:left;margin:10px auto 0;padding-left:22px;font-size:14px;font-weight:700;line-height:1.45;max-width:350px}
-#play{margin-top:14px;padding:12px 34px;font-weight:900;font-size:22px;background:#59d16a;cursor:pointer}
+#play{margin-top:16px;padding:13px 38px;font-weight:900;font-size:24px;background:#59d16a;cursor:pointer;display:inline-flex;align-items:center;gap:10px}
 #play:active{transform:translateY(3px)}
 #fresh{display:block;margin:12px auto 0;background:none;border:0;font-weight:800;font-size:13px;text-decoration:underline;cursor:pointer;opacity:.7}
+#card .tag{font-size:15px;font-weight:800;margin-top:8px;opacity:.9}
+.how{display:flex;flex-direction:column;gap:7px;margin:14px auto 2px;max-width:370px}
+.how .r{display:flex;gap:10px;align-items:center;text-align:left;font-size:13px;font-weight:800;line-height:1.3;background:#f1e4c9;border:2px solid #3b2a20;border-radius:12px;padding:7px 11px}
+.how .n{flex:none;width:24px;height:24px;border-radius:50%;background:#ffd95e;border:2px solid #3b2a20;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900}
+#play .tri{width:0;height:0;border-left:16px solid #3b2a20;border-top:10px solid transparent;border-bottom:10px solid transparent}
 @media (max-width:560px){
   #rank{display:none}#lvl{max-width:none;padding:6px 8px}#coins{font-size:17px}#coinbox{padding:5px 7px 5px 5px;gap:5px}.coin{width:22px;height:22px}
   .up{width:74px}.up .nm{font-size:10px}.up .ic svg{width:25px;height:25px}#quest{font-size:12px}#shopbtn{padding:0 8px;font-size:13px}#mute{width:40px;font-size:12px}#gembox{font-size:14px;padding:0 7px 0 3px}
 }
 @media (max-height:430px){
-  .up{flex-direction:row;justify-content:center;gap:6px;padding:4px;width:auto;min-width:86px}.up .nm,.up .lv{display:none}#mid{top:58px;align-items:flex-end}#sub{top:58px}#card{padding:12px}#card ol{display:none}#sprint{width:74px;height:74px}
+  .up{flex-direction:row;justify-content:center;gap:6px;padding:4px;width:auto;min-width:86px}.up .nm,.up .lv{display:none}#mid{top:58px;align-items:flex-end}#sub{top:58px}#card{padding:12px}#card ol,.how{display:none}#card .tag{margin-top:4px}#sprint{width:74px;height:74px}
 }
 </style>
 <!--__SDK__-->
@@ -160,7 +168,7 @@ body.touch .up kbd{display:none}
     <button id="rebirthbtn" class="pill gone" data-act="rebirthOpen">★ REBIRTH READY</button>
     <div id="ev" class="pill gone"><div id="evtxt"></div><div id="evbar"><i id="evfill"></i></div></div>
   </div>
-  <div id="banner"><div id="bt"></div><div id="bs"></div></div>
+  <div id="banner"><div id="bwrap"><div id="bbar"></div><div id="bt"></div><div id="bs"></div></div></div>
   <div id="bottom">
     <div id="row">
       <div id="carry" class="pill"><svg viewBox="0 0 24 24"><path d="M7.5 8V6.5a4.5 4.5 0 0 1 9 0V8" fill="none" stroke="#3b2a20" stroke-width="2.4"/><rect x="4" y="8" width="16" height="13" rx="4" fill="#c98a5a" stroke="#3b2a20" stroke-width="2.4"/></svg><span id="carrytxt">0/6</span></div>
@@ -175,15 +183,13 @@ body.touch .up kbd{display:none}
 <div id="start">
   <div id="card" class="pill">
     <h1>FEED THE BLOB</h1>
-    <p>Loot rains from the sky. Your blob is hungry. So are the others.</p>
-    <ol>
-      <li>Grab loot and carry it to your green blob.</li>
-      <li>Tap RUN or press Space to lunge. Lunge into rivals to make them drop loot.</li>
-      <li>Lunge into a rival blob to steal goo. It flies home by itself. Three hits in a row is a jackpot, then run.</li>
-      <li>Defend your own blob when the alarm goes off.</li>
-      <li>Explore the big map: follow the loot clouds, smash crates and use the portals.</li>
-    </ol>
-    <button id="play" class="pill" data-act="play">PLAY</button>
+    <p class="tag">Loot rains from the sky. Grow the hungriest blob on the map.</p>
+    <div class="how">
+      <div class="r"><span class="n">1</span>Grab loot and carry it home to your green blob to grow.</div>
+      <div class="r"><span class="n">2</span>Press RUN to lunge: bonk rivals, raid their blobs, smash crates.</div>
+      <div class="r"><span class="n">3</span>Explore the big map — loot clouds, speed pads and portals. Defend home on alarm.</div>
+    </div>
+    <button id="play" class="pill" data-act="play"><span class="tri"></span>PLAY</button>
     <button id="fresh" class="gone" data-act="fresh">Start a new game</button>
   </div>
 </div>
