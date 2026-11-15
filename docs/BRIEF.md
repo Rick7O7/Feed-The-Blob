@@ -27,11 +27,14 @@ Owner: Paul (Germany, Brandenburg). Agents decide and deliver finished work; Pau
 - Ads: break ads only at natural pauses, the SDK allows at most one every 3 minutes; rewarded ads only on request, never on the running game screen, always with an alternative and an equally large "continue without" button; no revive ad on every death; no do-nothing ad buttons during the trial. Real-money purchases are invite-only.
 - Payout minimum 100 €.
 
-## State on 2026-11-15
-- Version 2.2 is done (see `handover/001-A-to-B.md`). Paul's verdicts: "it's fun"; raids "pretty okay, keep going"; then asked to make it better overall (polish pass, not started).
-- Not tested yet: real phones, sound quality, the CrazyGames SDK build.
-- Still open before submission: name check, cover images, store description.
+## State on 2026-11-15 (evening)
+- Repo: https://github.com/Rick7O7/Feed-The-Blob. Version 2.5 plus two polish rounds by B (handovers 003, 005): title screen with animated blob, styled event banners with icons, daily streak (20 to 100 gems over 7 days), game-feel effects, music per world, phone pass, store package in `store/`.
+- Paul's decisions: the name is **Feed the Blob**. Direction: chill but a bit more dopamine-packed, more to do so it does not get boring quickly (handover 007).
+- Next round for B (handovers 006, 007): preview videos, first-minute onboarding, 5 languages, a CrazyGames SDK rules test, at least 4 new events plus combo, album, achievements.
+- Not tested yet: real phones, the CrazyGames SDK build on the portal itself.
+- Still open before submission: preview videos (006), Paul's go for the legal steps below.
 - Google Play was considered and postponed: needs an AdMob native wrapper, a closed test with 12 testers for 14 days, a public address and 25 USD.
+- Both agents can run unattended: a watcher on each machine starts the agent when a handover with numbered tasks for it arrives (agent A: `fb-watch` timer on Paul's desktop).
 
 ## Legal timeline (Germany), only after Paul says yes to submitting
 1. Notify his training company of the side job (text ready in the old plan, ask Paul).
