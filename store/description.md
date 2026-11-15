@@ -1,5 +1,7 @@
 # Feed the Blob: store package
 
+Final name: **Feed the Blob**.
+
 Cover images (made by `store/make_covers.py` from the game's own canvas art; run `node build.mjs` first):
 
 | File | Size | CrazyGames slot |
@@ -9,7 +11,14 @@ Cover images (made by `store/make_covers.py` from the game's own canvas art; run
 | `cover-square-800x800.png` | 800x800, 1:1 | Square |
 
 Sizes and rules checked on 2026-11-15 at https://docs.crazygames.com/requirements/game-covers/ : no borders, no text except the title, no icons or store logos, same look on all three. The covers follow that.
-Still needed for the submission and not made here: preview videos (CrazyGames asks for them together with the covers).
+Preview videos (made by `store/make_videos.py` from the real game, needs ffmpeg with libx264):
+
+| File | Size | Length | CrazyGames slot |
+| --- | --- | --- | --- |
+| `video-landscape-1920x1080.mp4` | 1920x1080, 16:9, H.264, no audio | 19 s, ~15 MB | Landscape (mandatory) |
+| `video-portrait-1080x1620.mp4` | 1080x1620, 2:3, H.264, no audio | 19 s, ~16 MB | Portrait (mandatory) |
+
+Rules checked on 2026-11-15 (same docs page): 15 to 20 s, max 50 MB, no sound, the cover as the first frame, no promo text, logos, black screens, black bars or mouse cursor, no fast-forward. The videos follow that: the cover fades into real gameplay recorded at true speed (collecting, a raid ending in a jackpot, Gold Rush, a level-up).
 
 ## Short description (one line)
 
@@ -61,9 +70,9 @@ Category: Casual (alternative: io)
 | itch.io | taken by several small jam games (fadeglow, Lidzard, XFajk, pr1nceJb) | web search |
 | Other | "Hungry Blob" is an Android app (Amazon Appstore); "Do Not Feed the Blob" exists on a small web portal | web search |
 
-Result: the name is free on CrazyGames and Poki and in the app stores. On itch.io it is used by unrelated free jam games. That is not a trademark, but it makes the name less unique in search. Usable, with a small risk of mix-ups.
+**Decision (2026-11-15, Paul): the final name is "Feed the Blob".** It is free on CrazyGames and Poki and in the app stores. On itch.io it is used by unrelated free jam games (not a trademark).
 
-Backup names (both returned 404 on CrazyGames and Poki on 2026-11-15, no known game found):
+Backup names, only if a portal rejects the name (both returned 404 on CrazyGames and Poki on 2026-11-15, no known game found):
 1. **Blob Feast**
 2. **Gobble Blob**
 

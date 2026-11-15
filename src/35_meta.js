@@ -18,7 +18,7 @@ function curQuest() {
   if (q) return { text: q.text, cur: q.level ? G.blobs[0].level : G.stats[q.stat], need: q.level || q.need, coin: q.coin || 0, gems: q.gems || 0 };
   var k = G.quest - QCHAIN.length, ty = QLOOP[k % QLOOP.length], round = Math.floor(k / QLOOP.length);
   if (!G.qbase || G.qbase.k !== k || G.qbase.ty !== ty[0]) G.qbase = { k: k, ty: ty[0], start: G.stats[ty[0]], need: ty[0] === 'bosses' ? Math.min(6, ty[1] + ty[2] * round) : ty[1] + ty[2] * round };
-  return { text: ty[3].replace('%n', G.qbase.need), cur: G.stats[ty[0]] - G.qbase.start, need: G.qbase.need, coin: Math.round(150 * lootMul() * UPG.stomach.eff(G.up.stomach) * starMul()), gems: 8 + 2 * Math.min(round, 10) };
+  return { text: T(ty[3]).replace('%n', G.qbase.need), cur: G.stats[ty[0]] - G.qbase.start, need: G.qbase.need, coin: Math.round(150 * lootMul() * UPG.stomach.eff(G.up.stomach) * starMul()), gems: 8 + 2 * Math.min(round, 10) };
 }
 function updQuest() {
   var q = curQuest(); if (q.cur < q.need) return;
@@ -79,7 +79,7 @@ function doRebirth(mult) {
   var st = Math.ceil(rebirthGain() * mult), keep = { gems: G.gems + 20, stars: G.stars + st, rb: G.rb + 1, stats: G.stats, quest: G.quest, qbase: G.qbase, skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, total: G.total };
   keep.stats.rebirths++;
   newGame(keep); G.started = true; cam.x = HOMES[0].x; cam.y = HOMES[0].y; G.flash = 0.8; Snd.level();
-  G.banner = { title: 'REBIRTH ' + G.rb, sub: '+' + st + ' stars. Everything grows ' + Math.round(starMul() * 100) + '% now. Welcome to ' + THEMES[G.rb % THEMES.length].name + '!', col: '#fff36b', t: 4.2 };
+  G.banner = { title: T('REBIRTH {0}', G.rb), sub: T('+{0} stars. Everything grows {1}% now. Welcome to {2}!', st, Math.round(starMul() * 100), T(THEMES[G.rb % THEMES.length].name)), col: '#fff36b', t: 4.2 };
   save(); uiModal(); hud();
 }
 var BOOSTS = [
@@ -100,13 +100,13 @@ var ACT = {
   shop: function (tab) { if (!G.started || G.modal) return; openModal({ type: 'shop', tab: tab || 'skins' }); },
   tab: function (t) { G.modal.tab = t; uiModal(); },
   close: function () { closeModal(); },
-  boostAd: function (id) { var b = boostById(id); if (b.can && !b.can()) return uiToast('Wait until the current event is over'); rewarded('b_' + id, b.cd, function () { b.run(); uiToast(b.name + ' is active'); }); },
-  boostGem: function (id) { var b = boostById(id); if (b.can && !b.can()) return uiToast('Wait until the current event is over'); if (spend(b.gems)) { b.run(); uiToast(b.name + ' is active'); uiModal(); hud(); } },
+  boostAd: function (id) { var b = boostById(id); if (b.can && !b.can()) return uiToast('Wait until the current event is over'); rewarded('b_' + id, b.cd, function () { b.run(); uiToast(T('{0} is active', T(b.name))); }); },
+  boostGem: function (id) { var b = boostById(id); if (b.can && !b.can()) return uiToast('Wait until the current event is over'); if (spend(b.gems)) { b.run(); uiToast(T('{0} is active', T(b.name))); uiModal(); hud(); } },
   gemAd: function () { rewarded('gems', 180, function () { G.gems += 15; Snd.gem(); uiToast('+15 gems'); }); },
   daily: function () {
     if (G.daily === today()) return;
     var n = dailyNext(), day = dailyDay(); G.streak = day; G.daily = today(); G.gems += n; Snd.gem();
-    uiToast('+' + n + ' gems. Day ' + day + ' in a row' + (day % 7 === 0 ? ', streak jackpot!' : '. Come back tomorrow for ' + DAILY[day % 7] + '.')); save(); uiModal(); hud();
+    uiToast(T('+{0} gems. Day {1} in a row', n, day) + (day % 7 === 0 ? T(', streak jackpot!') : T('. Come back tomorrow for {0}.', DAILY[day % 7]))); save(); uiModal(); hud();
   },
   skin: function (id) {
     var s = findIn(SKINS, id);

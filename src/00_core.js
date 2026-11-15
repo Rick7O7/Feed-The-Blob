@@ -34,10 +34,13 @@ var Snd = {
       this.setMute(); Music.start();
     } catch (e) { this.ctx = null; }
   },
-  // the argument is ignored: the state decides. Ads mute everything, the two toggles mute their own bus.
-  setMute: function () {
+  // setMute(true) comes from the ads layer when an ad really starts playing (adStarted), never at the request: CrazyGames rule.
+  // Any other call (setMute(Snd.muted) after the ad, or no argument) lifts the ad mute once no ad is busy. The two toggles mute their own bus.
+  adMute: false,
+  setMute: function (m) {
+    this.adMute = m === true && typeof Ads !== 'undefined' && Ads.busy;
     if (!this.ctx) return;
-    this.master.gain.value = (typeof Ads !== 'undefined' && Ads.busy) ? 0 : 1;
+    this.master.gain.value = this.adMute ? 0 : 1;
     this.sfx.gain.value = this.muted ? 0 : this.SFX;
   },
   ok: function (key, gap) {
@@ -117,7 +120,7 @@ var Music = {
   start: function () { if (this.timer || !Snd.ctx) return; var self = this; this.next = Snd.ctx.currentTime + 0.1; this.timer = setInterval(function () { self.tick(); }, 60); },
   tick: function () {
     var c = Snd.ctx; if (!c || c.state !== 'running') return;
-    var mg = typeof Ads !== 'undefined' && Ads.busy ? 0 : 1; if (Snd.master.gain.value !== mg) Snd.master.gain.value = mg;   // ads: silence everything
+    if (Snd.adMute && typeof Ads !== 'undefined' && !Ads.busy) Snd.setMute();   // safety: never stay silent after an ad
     var want = Snd.musicOff ? 0 : (!G || !G.started) ? 0.6 : G.modal ? 0.35 : 1;     // quieter on the start screen and under pop-ups
     if (Math.abs(want - this.vol) > 0.001) { this.vol = want; Snd.mus.gain.setTargetAtTime(want * Snd.MUS, c.currentTime, 0.4); }
     if (this.next < c.currentTime - 0.3) this.next = c.currentTime + 0.05;            // after a pause or a hidden tab: do not try to catch up

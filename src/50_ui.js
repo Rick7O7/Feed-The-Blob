@@ -18,7 +18,7 @@ function save() {
   if (!G || G.auto) return;
   try {
     localStorage.setItem(SAVEKEY, JSON.stringify({ coins: G.coins, total: G.total, gems: G.gems, stars: G.stars, rb: G.rb, up: G.up, stats: G.stats, quest: G.quest, qbase: G.qbase,
-      skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, mass: G.blobs.map(function (b) { return Math.round(b.mass); }), lvl: G.blobs.map(function (b) { return b.level; }), ts: Date.now(), mute: Snd.muted, musicOff: Snd.musicOff }));
+      skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, mass: G.blobs.map(function (b) { return Math.round(b.mass); }), lvl: G.blobs.map(function (b) { return b.level; }), ts: Date.now(), mute: Snd.muted, musicOff: Snd.musicOff, lang: LANG }));
   } catch (e) { /* storage can be unavailable; the game runs without it */ }
 }
 function load() { try { return JSON.parse(localStorage.getItem(SAVEKEY) || 'null'); } catch (e) { return null; } }
@@ -28,7 +28,7 @@ function mmss(s) { return Math.floor(s / 60) + ':' + ('0' + Math.floor(s % 60)).
 /* ---------- HUD ---------- */
 function buildHud() {
   var h = '';
-  UKEYS.forEach(function (k, i) { h += '<button class="up pill" data-act="buy:' + k + '"><span class="ic">' + ICON[k] + '</span><span class="nm">' + UPG[k].name + '</span><span class="lv" id="lv-' + k + '"></span><span class="ct"><i class="coin s"></i><b id="ct-' + k + '"></b></span><kbd>' + (i + 1) + '</kbd></button>'; });
+  UKEYS.forEach(function (k, i) { h += '<button class="up pill" data-act="buy:' + k + '"><span class="ic">' + ICON[k] + '</span><span class="nm" data-t="' + UPG[k].name + '">' + T(UPG[k].name) + '</span><span class="lv" id="lv-' + k + '"></span><span class="ct"><i class="coin s"></i><b id="ct-' + k + '"></b></span><kbd>' + (i + 1) + '</kbd></button>'; });
   $('shop').innerHTML = h;
   var s = $('sprint');
   s.addEventListener('pointerdown', function (e) { e.preventDefault(); sprintDown = true; IN.lunge = true; try { s.setPointerCapture(e.pointerId); } catch (x) { /* older browsers */ } });
@@ -43,6 +43,7 @@ function buildHud() {
     else if (p[0] === 'mute') toggleSound('sfx');
     else if (p[0] === 'music') toggleSound('music');
     else if (p[0] === 'setpop') $('setpop').classList.toggle('gone');
+    else if (p[0] === 'lang') setLang(p[1]);
     else if (p[0] === 'daily') claimDaily();
     else if (p[0] === 'play') startGame();
     else if (p[0] === 'fresh') { wipe(); newGame(null); AWAY = 0; cam.x = HOMES[0].x; cam.y = HOMES[0].y; startGame(); }
@@ -52,8 +53,17 @@ function buildHud() {
 }
 function toggleSound(which) {
   if (which === 'music') Snd.musicOff = !Snd.musicOff; else Snd.muted = !Snd.muted;
-  Snd.setMute(); soundUi(); save();
-  uiToast((which === 'music' ? 'Music ' + (Snd.musicOff ? 'off' : 'on') : 'Sounds ' + (Snd.muted ? 'off' : 'on')));
+  Snd.setMute(Snd.adMute); soundUi(); save();   // keeps an ad mute in place
+  uiToast(which === 'music' ? (Snd.musicOff ? 'Music off' : 'Music on') : (Snd.muted ? 'Sounds off' : 'Sounds on'));
+}
+// language: every element with data-t shows T(its English text); canvas texts and pop-ups read T() when drawn
+function setLang(l) { LANG = LANGS.indexOf(l) >= 0 ? l : 'en'; applyLang(); save(); }
+function applyLang() {
+  document.documentElement.lang = LANG;
+  $('shopbtn').classList.toggle('long', T('SHOP').length > 5);
+  Array.prototype.forEach.call(document.querySelectorAll('[data-t]'), function (el) { el.textContent = T(el.dataset.t); });
+  $('lgs').innerHTML = LANGS.map(function (l) { return '<button data-act="lang:' + l + '" class="' + (l === LANG ? 'on' : '') + '" lang="' + l + '">' + LANGNAME[l] + '</button>'; }).join('');
+  if (G) { hud(); if (G.modal) uiModal(); }
 }
 function soundUi() {
   $('mute').classList.toggle('off', Snd.muted && Snd.musicOff); $('mute').classList.toggle('half', Snd.muted !== Snd.musicOff);
@@ -61,7 +71,7 @@ function soundUi() {
 }
 function startGame() {
   if (G.started) return;
-  Snd.init(); Snd.setMute(); G.started = true; $('start').classList.add('gone'); document.body.classList.remove('prestart'); lastTs = 0;
+  Snd.init(); Snd.setMute(); obStart(); G.started = true; $('start').classList.add('gone'); document.body.classList.remove('prestart'); lastTs = 0;
   if (AWAY > 0) { G.pend.push({ type: 'away', reward: AWAY }); AWAY = 0; }
   sdkPlay(true); hud();
 }
@@ -125,11 +135,11 @@ function hud() {
   var P = G.actors[0], b = G.blobs[0], i, k, h;
   $('shopbtn').classList.toggle('gift', G.daily !== today());
   var c = cpsNow(); $('cps').textContent = '+' + (c < 10 ? c.toFixed(1) : fmt(c)) + '/s';
-  $('lvlname').textContent = 'Lv ' + b.level + ' ' + lvName(b.level) + (G.stars ? '  ★' + G.stars : '');
+  $('lvlname').textContent = T('Lv {0}', b.level) + ' ' + lvName(b.level) + (G.stars ? '  ★' + G.stars : '');
   var lo = LVT[b.level - 1], hi = LVT[b.level]; $('lvlfill').style.width = clamp((b.mass - lo) / (hi - lo) * 100, 0, 100) + '%';
   for (i = 0; i < UKEYS.length; i++) {
     k = UKEYS[i]; var n = G.up[k], max = n >= UPG[k].max, ct = cost(k), el = document.querySelector('.up[data-act="buy:' + k + '"]');
-    $('lv-' + k).textContent = max ? 'MAX' : 'Lv ' + n; $('ct-' + k).textContent = max ? '' : fmt(ct);
+    $('lv-' + k).textContent = max ? T('MAX') : T('Lv {0}', n); $('ct-' + k).textContent = max ? '' : fmt(ct);
     el.classList.toggle('can', !max && G.coins >= ct); el.classList.toggle('max', max);
   }
   var cap = capOf(P); $('carrytxt').textContent = P.used + '/' + cap; $('carry').classList.toggle('full', P.used >= cap);
@@ -138,17 +148,17 @@ function hud() {
   $('rank').innerHTML = h;
   h = ''; for (i = 0; i < 3; i++) h += '<span class="hp' + (i < G.hp ? ' on' : '') + '">' + ICON.heart + '</span>'; $('hearts').innerHTML = h;
   var fv = $('fever'); if (G.fever >= 1 || G.leader === 0) { fv.classList.remove('gone'); $('fevertxt').textContent = (G.leader === 0 ? '♛ ' : '') + 'x' + (feverMul() * (G.leader === 0 ? 1.25 : 1)).toFixed(1); fv.classList.toggle('hot', G.fever > 60); } else fv.classList.add('gone');
-  h = ''; if (G.boost.x2 > 0) h += '<span class="chip">2x ' + mmss(G.boost.x2) + '</span>'; if (P.starT > 0) h += '<span class="chip">Magnet ' + mmss(P.starT) + '</span>'; if (b.shield > 0) h += '<span class="chip">Shield ' + mmss(b.shield) + '</span>';
+  h = ''; if (G.boost.x2 > 0) h += '<span class="chip">2x ' + mmss(G.boost.x2) + '</span>'; if (P.starT > 0) h += '<span class="chip">' + T('Magnet {0}', mmss(P.starT)) + '</span>'; if (b.shield > 0) h += '<span class="chip">' + T('Shield {0}', mmss(b.shield)) + '</span>';
   $('chips').innerHTML = h;
   $('rebirthbtn').classList.toggle('gone', !canRebirth());
   var q = curQuest(), qe = $('quest');
-  if (G.questPop > 0) { qe.className = 'pill done'; $('qtxt').textContent = 'Done: ' + G.questDone.text; $('qnum').innerHTML = (G.questDone.coin ? '+' + fmt(G.questDone.coin) + ' ' : '') + (G.questDone.gems ? '+' + G.questDone.gems + ' ' + ICON.gem : ''); }
-  else { qe.className = 'pill'; $('qtxt').textContent = q.text; $('qnum').innerHTML = Math.min(q.cur, q.need) + '/' + q.need + (q.gems ? ' &nbsp;' + q.gems + ' ' + ICON.gem : ''); }
+  if (G.questPop > 0) { qe.className = 'pill done'; $('qtxt').textContent = T('Done: {0}', T(G.questDone.text)); $('qnum').innerHTML = (G.questDone.coin ? '+' + fmt(G.questDone.coin) + ' ' : '') + (G.questDone.gems ? '+' + G.questDone.gems + ' ' + ICON.gem : ''); }
+  else { qe.className = 'pill'; $('qtxt').textContent = T(q.text); $('qnum').innerHTML = Math.min(q.cur, q.need) + '/' + q.need + (q.gems ? ' &nbsp;' + q.gems + ' ' + ICON.gem : ''); }
   var e = G.event, ev = $('ev');
-  if (e && e.on) { ev.className = 'pill'; ev.style.background = EV[e.type].col; $('evtxt').textContent = EV[e.type].title; $('evfill').style.width = clamp((1 - e.t / EV[e.type].dur) * 100, 0, 100) + '%'; }
+  if (e && e.on) { ev.className = 'pill'; ev.style.background = EV[e.type].col; $('evtxt').textContent = T(EV[e.type].title); $('evfill').style.width = clamp((1 - e.t / EV[e.type].dur) * 100, 0, 100) + '%'; }
   else ev.className = 'pill gone';
   var bn = $('banner');
-  if (G.banner) { if (bn.dataset.t !== G.banner.title) { bn.dataset.t = G.banner.title; $('bicon').innerHTML = EVICON[evKey(G.banner.title)]; $('bt').textContent = G.banner.title; $('bs').textContent = G.banner.sub; $('bt').style.color = G.banner.col; $('bbar').style.background = G.banner.col; bn.className = ''; void bn.offsetWidth; bn.className = 'show'; } }
+  if (G.banner) { if (bn.dataset.t !== G.banner.title) { bn.dataset.t = G.banner.title; $('bicon').innerHTML = EVICON[evKey(G.banner.title)]; $('bt').textContent = T(G.banner.title); $('bs').textContent = T(G.banner.sub); $('bt').style.color = G.banner.col; $('bbar').style.background = G.banner.col; bn.className = ''; void bn.offsetWidth; bn.className = 'show'; } }
   else if (bn.className) { bn.className = ''; bn.dataset.t = ''; }
   $('sprintfill').style.height = (P.stam / stamMax(P) * 100) + '%'; $('sprint').classList.toggle('tired', P.tired > 0 || P.stam < 22);
   if (G.t > 45 && !$('keys').classList.contains('gone')) $('keys').classList.add('gone');
@@ -159,7 +169,7 @@ function btn(act, label, opt) { return '<button class="btn' + (opt && opt.cls ? 
 function adBtn(act, label, key) {       // a rewarded-ad button always shows the video icon; with a running cooldown it shows the time instead
   if (!adsOn()) return '';
   var cd = key ? cdLeft(key) : 0;
-  return '<button class="btn" data-act="' + act + '"' + (cd ? ' disabled' : '') + '>' + ICON.ad + ' <span' + (key ? ' data-cd="' + key + '" data-label="' + label + '"' : '') + '>' + (cd ? 'Ad again in ' + mmss(cd) : label) + '</span></button>';
+  return '<button class="btn" data-act="' + act + '"' + (cd ? ' disabled' : '') + '>' + ICON.ad + ' <span' + (key ? ' data-cd="' + key + '" data-label="' + label + '"' : '') + '>' + (cd ? T('Ad again in {0}', mmss(cd)) : label) + '</span></button>';
 }
 function drawPreview(cnv, fn) { var old = cx; cx = cnv.getContext('2d'); cx.setTransform(2, 0, 0, 2, 0, 0); cx.clearRect(0, 0, 80, 80); cx.lineJoin = 'round'; cx.lineCap = 'round'; fn(); cx = old; }
 function uiModal() {
@@ -167,30 +177,30 @@ function uiModal() {
   if (!m) { box.classList.add('gone'); return; }
   box.classList.remove('gone');
   if (m.type === 'levelup' || m.type === 'away') {
-    h = m.type === 'away' ? '<h2>WELCOME BACK</h2><p>Your blob kept snacking while you were away.</p>' : '<h2>LEVEL ' + m.level + '!</h2><p>Your blob evolved into <b>' + lvName(m.level) + '</b>. Loot is now worth 50% more. +2 ' + ICON.gem + '</p>';
-    h += '<div class="reward"><i class="coin"></i> ' + fmt(m.reward) + '</div><div class="btns">' + adBtn('collectAd', 'Collect x3') + btn('collect', 'Collect') + btn('collectGem', 'Collect x3 for 5 ' + ICON.gem, { off: G.gems < 5 }) + '</div>';
+    h = m.type === 'away' ? '<h2>' + T('WELCOME BACK') + '</h2><p>' + T('Your blob kept snacking while you were away.') + '</p>' : '<h2>' + T('LEVEL {0}!', m.level) + '</h2><p>' + T('Your blob evolved into <b>{0}</b>. Loot is now worth 50% more. +2 {1}', lvName(m.level), ICON.gem) + '</p>';
+    h += '<div class="reward"><i class="coin"></i> ' + fmt(m.reward) + '</div><div class="btns">' + adBtn('collectAd', T('Collect x3')) + btn('collect', T('Collect')) + btn('collectGem', T('Collect x3 for 5 {0}', ICON.gem), { off: G.gems < 5 }) + '</div>';
   } else if (m.type === 'ko') {
-    h = '<h2>KNOCKED OUT</h2><p>Respawning at home drops everything you carry and resets your fever bonus.</p><div class="btns">' + (m.offer ? adBtn('reviveAd', 'Revive right here') : '') + btn('respawn', 'Respawn at home') + btn('reviveGem', 'Revive right here for 15 ' + ICON.gem, { off: G.gems < 15 }) + '</div>';
-    if (!m.offer && adsOn()) h += '<p class="note">Ad revive is back in ' + mmss(cdLeft('revive')) + '.</p>';
+    h = '<h2>' + T('KNOCKED OUT') + '</h2><p>' + T('Respawning at home drops everything you carry and resets your fever bonus.') + '</p><div class="btns">' + (m.offer ? adBtn('reviveAd', T('Revive right here')) : '') + btn('respawn', T('Respawn at home')) + btn('reviveGem', T('Revive right here for 15 {0}', ICON.gem), { off: G.gems < 15 }) + '</div>';
+    if (!m.offer && adsOn()) h += '<p class="note">' + T('Ad revive is back in {0}.', mmss(cdLeft('revive'))) + '</p>';
   } else if (m.type === 'rebirth') {
     var st = rebirthGain(), st2 = Math.ceil(st * 1.5);
-    h = '<h2>REBIRTH</h2><p>Start again in a new world with tougher rivals. Coins, upgrades and blob size reset. You keep gems, skins and stars.</p><div class="reward">★ +' + st + ' stars = +' + st * 20 + '% coins and growth, forever</div><div class="btns">' +
-      adBtn('rebirthAd', 'Rebirth with ' + st2 + ' stars') + btn('rebirth', 'Rebirth with ' + st + ' stars') + btn('rebirthGem', 'Rebirth with ' + st2 + ' stars for 20 ' + ICON.gem, { off: G.gems < 20 }) + btn('close', 'Not yet') + '</div>';
+    h = '<h2>' + T('REBIRTH') + '</h2><p>' + T('Start again in a new world with tougher rivals. Coins, upgrades and blob size reset. You keep gems, skins and stars.') + '</p><div class="reward">' + T('★ +{0} stars = +{1}% coins and growth, forever', st, st * 20) + '</div><div class="btns">' +
+      adBtn('rebirthAd', T('Rebirth with {0} stars', st2)) + btn('rebirth', T('Rebirth with {0} stars', st)) + btn('rebirthGem', T('Rebirth with {0} stars for 20 {1}', st2, ICON.gem), { off: G.gems < 20 }) + btn('close', T('Not yet')) + '</div>';
   } else if (m.type === 'shop') {
-    var tabs = [['skins', 'Skins'], ['hats', 'Hats'], ['boosts', 'Boosts'], ['gems', 'Gems']];
-    h = '<div class="mhead"><span class="gemcount">' + ICON.gem + ' <b>' + fmt(SHOW.g + 0.001) + '</b></span><div class="tabs">' + tabs.map(function (t) { return '<button class="tab' + (m.tab === t[0] ? ' on' : '') + (t[0] === 'gems' && G.daily !== today() ? ' gift' : '') + '" data-act="tab:' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><button class="x" data-act="close" aria-label="Close">X</button></div><div class="mbody">';
+    var tabs = [['skins', T('Skins')], ['hats', T('Hats')], ['boosts', T('Boosts')], ['gems', T('Gems')]];
+    h = '<div class="mhead"><span class="gemcount">' + ICON.gem + ' <b>' + fmt(SHOW.g + 0.001) + '</b></span><div class="tabs">' + tabs.map(function (t) { return '<button class="tab' + (m.tab === t[0] ? ' on' : '') + (t[0] === 'gems' && G.daily !== today() ? ' gift' : '') + '" data-act="tab:' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><button class="x" data-act="close" aria-label="' + T('Close') + '">X</button></div><div class="mbody">';
     if (m.tab === 'skins' || m.tab === 'hats') {
       var list = m.tab === 'skins' ? SKINS : HATS, own = m.tab === 'skins' ? G.skins : G.hats, cur = m.tab === 'skins' ? G.skin : G.hat, act = m.tab === 'skins' ? 'skin' : 'hat';
       h += '<div class="grid">';
-      for (i = 0; i < list.length; i++) { var s = list[i], has = own.indexOf(s.id) >= 0; h += '<div class="card' + (cur === s.id ? ' on' : '') + '"><canvas width="160" height="160" data-pv="' + act + ':' + s.id + '"></canvas><b>' + s.name + '</b>' + (cur === s.id ? '<span class="tag">Equipped</span>' : has ? btn(act + ':' + s.id, 'Equip') : btn(act + ':' + s.id, s.price + ' ' + ICON.gem, { off: G.gems < s.price })) + '</div>'; }
+      for (i = 0; i < list.length; i++) { var s = list[i], has = own.indexOf(s.id) >= 0; h += '<div class="card' + (cur === s.id ? ' on' : '') + '"><canvas width="160" height="160" data-pv="' + act + ':' + s.id + '"></canvas><b>' + T(s.name) + '</b>' + (cur === s.id ? '<span class="tag">' + T('Equipped') + '</span>' : has ? btn(act + ':' + s.id, T('Equip')) : btn(act + ':' + s.id, s.price + ' ' + ICON.gem, { off: G.gems < s.price })) + '</div>'; }
       h += '</div>';
     } else if (m.tab === 'boosts') {
-      for (i = 0; i < BOOSTS.length; i++) { var bo = BOOSTS[i]; h += '<div class="rowi"><div><b>' + bo.name + '</b><span>' + bo.hint + '</span></div><div class="rbtn">' + adBtn('boostAd:' + bo.id, 'Free', 'b_' + bo.id) + btn('boostGem:' + bo.id, bo.gems + ' ' + ICON.gem, { off: G.gems < bo.gems }) + '</div></div>'; }
+      for (i = 0; i < BOOSTS.length; i++) { var bo = BOOSTS[i]; h += '<div class="rowi"><div><b>' + T(bo.name) + '</b><span>' + T(bo.hint) + '</span></div><div class="rbtn">' + adBtn('boostAd:' + bo.id, T('Free'), 'b_' + bo.id) + btn('boostGem:' + bo.id, bo.gems + ' ' + ICON.gem, { off: G.gems < bo.gems }) + '</div></div>'; }
     } else {
       h += streakRow();
-      if (adsOn()) h += '<div class="rowi"><div><b>Free gems</b><span>15 gems per video</span></div><div class="rbtn">' + adBtn('gemAd', 'Watch', 'gems') + '</div></div>';
-      h += '<div class="rowi"><div><b>Earn gems by playing</b><span>Quests, boss blobs, level-ups and every rebirth pay gems.</span></div></div>';
-      h += '<div class="rowi"><div><b>Buy gems</b><span>Purchases are switched off in this version. A portal has to enable them first.</span></div></div>';
+      if (adsOn()) h += '<div class="rowi"><div><b>' + T('Free gems') + '</b><span>' + T('15 gems per video') + '</span></div><div class="rbtn">' + adBtn('gemAd', T('Watch'), 'gems') + '</div></div>';
+      h += '<div class="rowi"><div><b>' + T('Earn gems by playing') + '</b><span>' + T('Quests, boss blobs, level-ups and every rebirth pay gems.') + '</span></div></div>';
+      h += '<div class="rowi"><div><b>' + T('Buy gems') + '</b><span>' + T('Purchases are switched off in this version. A portal has to enable them first.') + '</span></div></div>';
     }
     h += '</div>';
   }
@@ -206,15 +216,16 @@ function uiModal() {
 }
 function tickCooldowns() {
   Array.prototype.forEach.call(document.querySelectorAll('[data-cd]'), function (el) {
-    var cd = cdLeft(el.dataset.cd), b = el.closest('button'); el.textContent = cd ? 'Ad again in ' + mmss(cd) : el.dataset.label; if (b) b.disabled = cd > 0;
+    var cd = cdLeft(el.dataset.cd), b = el.closest('button'); el.textContent = cd ? T('Ad again in {0}', mmss(cd)) : el.dataset.label; if (b) b.disabled = cd > 0;
   });
 }
 var toastT = null;
-function uiToast(msg) { var t = $('toast'); t.textContent = msg; t.classList.remove('gone'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.add('gone'); }, 2400); }
-function uiAd(on) { $('adov').classList.toggle('gone', !on); if (on) { $('adtitle').textContent = 'Loading ad'; $('adsub').textContent = ''; } }
+function uiToast(msg) { var t = $('toast'); t.textContent = T(msg); t.classList.remove('gone'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.add('gone'); }, 2400); }
+function uiAd(on) { $('adov').classList.toggle('gone', !on); if (on) { $('adtitle').textContent = T('Loading ad'); $('adsub').textContent = ''; } }
 function uiTestAd(kind, done) {      // stands in for a real video while the game is not on a portal
-  var left = 3; $('adtitle').textContent = 'TEST AD'; $('adsub').textContent = kind + '. On a portal a real ad plays here. ' + left;
-  var iv = setInterval(function () { left--; $('adsub').textContent = kind + '. On a portal a real ad plays here. ' + Math.max(0, left); if (left <= 0) { clearInterval(iv); done(true); } }, 1000);
+  Snd.setMute(true);      // the placeholder 'plays' at once, so it mutes at once
+  var left = 3; kind = T(kind); $('adtitle').textContent = T('TEST AD'); $('adsub').textContent = T('{0}. On a portal a real ad plays here. {1}', kind, left);
+  var iv = setInterval(function () { left--; $('adsub').textContent = T('{0}. On a portal a real ad plays here. {1}', kind, Math.max(0, left)); if (left <= 0) { clearInterval(iv); done(true); } }, 1000);
 }
 
 /* ---------- event banner icons ---------- */
@@ -233,11 +244,11 @@ function streakRow() {
   var got = G.daily === today(), cur = got ? G.streak : dailyDay(), pos = (cur - 1) % 7 + 1, h = '', j;
   for (j = 1; j <= 7; j++) {
     var done = got ? j <= pos : j < pos, here = j === pos;
-    h += '<div class="day' + (done ? ' done' : '') + (here ? (got ? ' today' : ' next') : '') + (j === 7 ? ' d7' : '') + '"><small>Day ' + j + '</small><i class="gemi"></i><b>' + DAILY[j - 1] + '</b>' + (done ? '<em>✓</em>' : '') + '</div>';
+    h += '<div class="day' + (done ? ' done' : '') + (here ? (got ? ' today' : ' next') : '') + (j === 7 ? ' d7' : '') + '"><small>' + T('Day {0}', j) + '</small><i class="gemi"></i><b>' + DAILY[j - 1] + '</b>' + (done ? '<em>✓</em>' : '') + '</div>';
   }
-  var sub = got ? 'Day ' + G.streak + ' in a row. Come back tomorrow for ' + DAILY[G.streak % 7] + ' gems.' : cur > 1 ? 'Day ' + cur + ' in a row. Miss a day and the streak starts again.' : 'Come back every day: day 7 pays 100 gems.';
-  return '<div class="streak"><div class="sh"><b>Daily gift</b><span>' + sub + '</span></div><div class="days">' + h + '</div>' +
-    btn('daily', got ? 'Come back tomorrow' : 'Claim ' + dailyNext() + ' ' + ICON.gem, { off: got, cls: got ? '' : 'claim' }) + '</div>';
+  var sub = got ? T('Day {0} in a row. Come back tomorrow for {1} gems.', G.streak, DAILY[G.streak % 7]) : cur > 1 ? T('Day {0} in a row. Miss a day and the streak starts again.', cur) : T('Come back every day: day 7 pays 100 gems.');
+  return '<div class="streak"><div class="sh"><b>' + T('Daily gift') + '</b><span>' + sub + '</span></div><div class="days">' + h + '</div>' +
+    btn('daily', got ? T('Come back tomorrow') : T('Claim {0} {1}', dailyNext(), ICON.gem), { off: got, cls: got ? '' : 'claim' }) + '</div>';
 }
 function claimDaily() {
   if (G.daily === today()) return;
@@ -313,6 +324,28 @@ function hudAnim(dt) {
   if (g !== SHOW.lg) { SHOW.lg = g; $('gems').textContent = g; var gc = G.modal && document.querySelector('.gemcount b'); if (gc) gc.textContent = g; }
 }
 
+/* ---------- first-minute onboarding: move, grab, bring home, lunge. Reads G only, never writes it ---------- */
+var OB = { on: false, step: 0, k: 0, x0: 0, y0: 0, item: null, rival: null };
+function obStart() {      // only for a brand-new save: nothing earned yet, first world
+  var P = G.actors[0]; OB.on = G.total === 0 && G.rb === 0 && G.stats.fed === 0; OB.step = 0; OB.k = 0; OB.x0 = P.x; OB.y0 = P.y;
+}
+function obUpdate(dt) {
+  if (!OB.on || !G.started || G.modal) return;
+  var P = G.actors[0], st = G.stats, s = OB.step, i;
+  if (s === 0 && (hyp(P.x - OB.x0, P.y - OB.y0) > 140 || P.used > 0)) s = 1;
+  if (s === 1 && (P.used >= Math.min(3, capOf(P)) || st.fed > 0)) s = 2;
+  if (s === 2 && st.fed > 0 && P.used === 0) s = 3;
+  if (s === 3 && (st.bonks > 0 || st.raids > 0)) s = 4;
+  if (st.time > 90) s = 4;                       // a minute and a half in: the quests take over
+  if (s !== OB.step) { OB.step = s; OB.k = 0; if (s > 0 && s < 4) Snd.quest(); }
+  OB.k += dt;
+  if (s >= 4) { OB.on = false; $('sprint').classList.remove('hint'); return; }
+  OB.item = null; OB.rival = null;
+  if (s === 1) { var bd = 1e9; for (i = 0; i < G.items.length; i++) { var it = G.items[i]; if (it.state !== 1 || it.kind === 'heart') continue; var d = hyp(it.x - P.x, it.y - P.y); if (d < bd) { bd = d; OB.item = it; } } }
+  if (s === 3) { var rd = 700; for (i = 1; i < 4; i++) { var a = G.actors[i], d2 = hyp(a.x - P.x, a.y - P.y); if (d2 < rd) { rd = d2; OB.rival = a; } } }
+  $('sprint').classList.toggle('hint', s === 3);
+}
+
 /* ---------- main loop ---------- */
 function frame(ts) {
   requestAnimationFrame(frame);
@@ -326,17 +359,17 @@ function frame(ts) {
   }
   if (G.modal) { cdT -= dt; if (cdT <= 0) { cdT = 1; tickCooldowns(); } }
   if (rdt > 0) { FRAMEMS += (rdt * 1000 - FRAMEMS) * 0.03; LOWFX = LOWFX ? FRAMEMS > 21 : FRAMEMS > 25; }
-  FXDT = paused || Ads.busy ? 0 : rdt; watchFx(rdt); hudAnim(rdt);
+  FXDT = paused || Ads.busy ? 0 : rdt; watchFx(rdt); hudAnim(rdt); obUpdate(rdt);
   if (!G.started) drawHero($('hero'), ts);
   render();
 }
 function init() {
   cv = $('c'); cx = cv.getContext('2d'); buildSprites(); document.body.classList.add('prestart');
   try { if (window.matchMedia('(pointer:coarse)').matches) { TOUCH = true; document.body.classList.add('touch'); } } catch (e) { /* no media queries: keyboard layout stays */ }
-  var sv = load(); newGame(sv); Snd.muted = !!(sv && sv.mute); Snd.musicOff = !!(sv && sv.musicOff); SHOW.c = G.coins; SHOW.g = G.gems;
-  resize(); window.addEventListener('resize', resize); buildHud(); bindInput();
+  var sv = load(); newGame(sv); Snd.muted = !!(sv && sv.mute); Snd.musicOff = !!(sv && sv.musicOff); SHOW.c = G.coins; SHOW.g = G.gems; LANG = pickLang(sv && sv.lang);
+  resize(); window.addEventListener('resize', resize); buildHud(); bindInput(); applyLang();
   if (sv && sv.total > 0) {
-    $('play').innerHTML = '<span class="tri"></span>CONTINUE'; $('fresh').classList.remove('gone');
+    $('play').innerHTML = '<span class="tri"></span><span data-t="CONTINUE">' + T('CONTINUE') + '</span>'; $('fresh').classList.remove('gone');
     var away = Math.min(7200, (Date.now() - (sv.ts || Date.now())) / 1000);
     if (away > 120) AWAY = Math.round(cpsNow() * away * 0.35);
   }

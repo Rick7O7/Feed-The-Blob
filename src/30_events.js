@@ -64,8 +64,8 @@ function updBoss(dt) {
         burst(b.x, b.y, 40 + 5 * lvl + Math.min(40, b.eaten), function () { return rnd() < 0.3 ? 'gem' : rnd() < 0.5 ? 'gold' : rollKind(); }, 520);
         shock(b.x, b.y, 300, 500); Snd.boom(); G.shake = 16; G.flash = 0.5;
         for (k = 0; k < 50; k++) part(b.x, b.y, rand(-460, 460), rand(-460, 200), rand(0.5, 1.2), pick(['#b65cff', '#e0b3ff', '#fff']), rand(5, 11), 500);
-        if (b.last && !b.last.bot) { var bonus = Math.round(60 * lootMul() * coinMul()); addCoins(bonus); G.gems += 3; G.stats.bosses++; Snd.gem(); say(b.x, b.y - b.r - 50, 'BOSS POPPED! +' + fmt(bonus) + ' and 3 gems', '#ffd23c', 28); }
-        else say(b.x, b.y - b.r - 50, NAMES[b.last ? b.last.id : 1] + ' popped the boss!', '#ffffff', 24);
+        if (b.last && !b.last.bot) { var bonus = Math.round(60 * lootMul() * coinMul()); addCoins(bonus); G.gems += 3; G.stats.bosses++; Snd.gem(); say(b.x, b.y - b.r - 50, T('BOSS POPPED! +{0} and 3 gems', fmt(bonus)), '#ffd23c', 28); }
+        else say(b.x, b.y - b.r - 50, T('{0} popped the boss!', NAMES[b.last ? b.last.id : 1]), '#ffffff', 24);
         return true;
       }
     } else if (c.atk <= 0 && (c.bot ? c.immune <= 0 : c.inv <= 0)) {

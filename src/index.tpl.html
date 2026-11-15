@@ -72,6 +72,7 @@ body.touch #sprint{display:block}
 body.touch #keys{display:none}
 #sprintfill{position:absolute;left:0;right:0;bottom:0;background:#ffe14d;z-index:0}
 #sprint.tired #sprintfill{background:#ff8a7a}
+#sprint.hint{animation:playp 1s ease-in-out infinite}
 #sprint b{position:relative;z-index:1}
 #shop{display:flex;gap:6px;overflow-x:auto;pointer-events:auto;touch-action:pan-x;scrollbar-width:none;padding:4px 0 2px}
 #shop::-webkit-scrollbar{display:none}
@@ -157,7 +158,11 @@ body.touch .up kbd{display:none}
 #mute{display:flex;align-items:center;justify-content:center;padding:0}
 #mute svg{width:24px;height:24px}
 #mute.half{opacity:.75}
-#setpop{position:absolute;top:calc(66px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));z-index:6;pointer-events:auto;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:178px}
+#setpop{position:absolute;top:calc(66px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));z-index:6;pointer-events:auto;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:236px}
+.lrow{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:900;padding:2px 2px 0}
+#lgs{display:flex;gap:4px}
+#lgs button{flex:1;min-width:40px;min-height:44px;font-size:13px;font-weight:900;border:3px solid #3b2a20;border-radius:10px;background:#e9dcc3;cursor:pointer;padding:0}
+#lgs button.on{background:#ffd95e}
 #setpop small{font-size:11px;font-weight:800;opacity:.6;text-align:center}
 body.touch #setpop small{display:none}
 .tg{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:46px;padding:0 10px;font-size:15px;font-weight:900;background:#e9dcc3;border:3px solid #3b2a20;border-radius:12px;cursor:pointer}
@@ -223,7 +228,7 @@ body.touch #setpop small{display:none}
 body.touch .card .btn,body.touch .tag{min-height:44px}
 .tab,.x{min-height:44px;min-width:44px}
 .up .lv{font-size:11px}
-@media (max-width:560px){.mhead{flex-wrap:wrap;justify-content:space-between}.mhead .tabs{order:3;flex-basis:100%;flex-wrap:nowrap;gap:5px}.mhead .tab{flex:1;padding:6px 4px}#mute{width:44px}.days{gap:3px}.day small{font-size:9px}.day b{font-size:12px}#setpop{top:calc(60px + env(safe-area-inset-top))}}
+@media (max-width:560px){#shopbtn.long{font-size:11px;padding:0 6px}.mhead{flex-wrap:wrap;justify-content:space-between}.mhead .tabs{order:3;flex-basis:100%;flex-wrap:nowrap;gap:5px}.mhead .tab{flex:1;padding:6px 4px}#mute{width:44px}.days{gap:3px}.day small{font-size:9px}.day b{font-size:12px}#setpop{top:calc(60px + env(safe-area-inset-top))}}
 @media (max-height:430px){#hero{height:70px;max-width:200px;margin:-6px auto -2px}#mid{top:calc(58px + env(safe-area-inset-top))}#sub{top:calc(58px + env(safe-area-inset-top))}#setpop{top:calc(58px + env(safe-area-inset-top))}#mcard.shop{height:94vh}}
 @media (prefers-reduced-motion:reduce){#play,#play .tri,.day.next,.btn.claim,#mcard>.rays{animation:none}}
 </style>
@@ -239,22 +244,22 @@ body.touch .card .btn,body.touch .tag{min-height:44px}
     <button id="gembox" class="pill" data-act="shop:gems" aria-label="Gems"><i class="gemi"></i><b id="gems">0</b></button>
     <div id="lvl" class="pill"><div id="lvlname">Lv 1 Droplet</div><div id="lvlbar"><i id="lvlfill"></i></div></div>
     <div id="rank" class="pill"></div>
-    <button id="shopbtn" class="pill" data-act="shop:skins">SHOP</button>
+    <button id="shopbtn" class="pill" data-act="shop:skins" data-t="SHOP">SHOP</button>
     <button id="mute" class="pill" data-act="setpop" aria-label="Music and sound settings"><svg viewBox="0 0 24 24"><path d="M3.5 9h4l5-4.5v15l-5-4.5h-4z" fill="#fff8ea" stroke="#3b2a20" stroke-width="2.3" stroke-linejoin="round"/><path d="M16 8.5a5 5 0 0 1 0 7M18.6 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="#3b2a20" stroke-width="2.3" stroke-linecap="round"/></svg></button>
   </div>
-  <div id="setpop" class="pill gone"><button class="tg" id="tgmus" data-act="music"><span>Music</span><i></i></button><button class="tg" id="tgsfx" data-act="mute"><span>Sounds</span><i></i></button><small>Keys: N music, M sounds</small></div>
+  <div id="setpop" class="pill gone"><button class="tg" id="tgmus" data-act="music"><span data-t="Music">Music</span><i></i></button><button class="tg" id="tgsfx" data-act="mute"><span data-t="Sounds">Sounds</span><i></i></button><div class="lrow"><span data-t="Language">Language</span><div id="lgs"></div></div><small data-t="Keys: N music, M sounds">Keys: N music, M sounds</small></div>
   <div id="sub"><div id="hearts"></div><div id="fever" class="pill gone"><span id="fevertxt"></span></div><div id="chips"></div></div>
   <div id="mid">
     <div id="quest" class="pill"><span id="qtxt"></span><b id="qnum"></b></div>
-    <button id="rebirthbtn" class="pill gone" data-act="rebirthOpen">★ REBIRTH READY</button>
+    <button id="rebirthbtn" class="pill gone" data-act="rebirthOpen" data-t="★ REBIRTH READY">★ REBIRTH READY</button>
     <div id="ev" class="pill gone"><div id="evtxt"></div><div id="evbar"><i id="evfill"></i></div></div>
   </div>
   <div id="banner"><div id="bwrap"><div id="bicon"></div><div id="btx"><div id="bbar"></div><div id="bt"></div><div id="bs"></div></div></div></div>
   <div id="bottom">
     <div id="row">
       <div id="carry" class="pill"><svg viewBox="0 0 24 24"><path d="M7.5 8V6.5a4.5 4.5 0 0 1 9 0V8" fill="none" stroke="#3b2a20" stroke-width="2.4"/><rect x="4" y="8" width="16" height="13" rx="4" fill="#c98a5a" stroke="#3b2a20" stroke-width="2.4"/></svg><span id="carrytxt">0/6</span></div>
-      <div id="keys">Move: WASD, arrows or hold the mouse button &nbsp;·&nbsp; Lunge and sprint: Space, Shift or right click &nbsp;·&nbsp; Upgrades: 1 to 8 &nbsp;·&nbsp; Shop: B</div>
-      <button id="sprint" class="pill"><i id="sprintfill"></i><b>RUN</b></button>
+      <div id="keys" data-t="Move: WASD, arrows or hold the mouse button · Lunge and sprint: Space, Shift or right click · Upgrades: 1 to 8 · Shop: B">Move: WASD, arrows or hold the mouse button · Lunge and sprint: Space, Shift or right click · Upgrades: 1 to 8 · Shop: B</div>
+      <button id="sprint" class="pill"><i id="sprintfill"></i><b data-t="RUN">RUN</b></button>
     </div>
     <div id="shop"></div>
   </div>
@@ -266,14 +271,14 @@ body.touch .card .btn,body.touch .tag{min-height:44px}
   <div id="card" class="pill">
     <canvas id="hero" aria-hidden="true"></canvas>
     <h1>FEED THE BLOB</h1>
-    <p class="tag">Loot rains from the sky. Grow the hungriest blob on the map.</p>
+    <p class="tag" data-t="Loot rains from the sky. Grow the hungriest blob on the map.">Loot rains from the sky. Grow the hungriest blob on the map.</p>
     <div class="how">
-      <div class="r"><span class="n">1</span>Grab loot and carry it home to your green blob to grow.</div>
-      <div class="r"><span class="n">2</span>Press RUN to lunge: bonk rivals, raid their blobs, smash crates.</div>
-      <div class="r"><span class="n">3</span>Explore the big map — loot clouds, speed pads and portals. Defend home on alarm.</div>
+      <div class="r"><span class="n">1</span><span data-t="Grab loot and carry it home to your green blob to grow.">Grab loot and carry it home to your green blob to grow.</span></div>
+      <div class="r"><span class="n">2</span><span data-t="Press RUN to lunge: bonk rivals, raid their blobs, smash crates.">Press RUN to lunge: bonk rivals, raid their blobs, smash crates.</span></div>
+      <div class="r"><span class="n">3</span><span data-t="Explore the big map — loot clouds, speed pads and portals. Defend home on alarm.">Explore the big map — loot clouds, speed pads and portals. Defend home on alarm.</span></div>
     </div>
-    <button id="play" class="pill" data-act="play"><span class="tri"></span>PLAY</button>
-    <button id="fresh" class="gone" data-act="fresh">Start a new game</button>
+    <button id="play" class="pill" data-act="play"><span class="tri"></span><span data-t="PLAY">PLAY</span></button>
+    <button id="fresh" class="gone" data-act="fresh" data-t="Start a new game">Start a new game</button>
   </div>
 </div>
 <div id="adov" class="gone"><div id="adtitle"></div><div id="adsub"></div></div>

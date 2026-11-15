@@ -156,7 +156,7 @@ function bonk(att, vic, frac) {
   if (n > 0) dropFrom(vic, n);
   if (!att.bot && vic.bot && vic.ai.mode === 'raid' && vic.ai.blob === G.blobs[0]) {     // chased a raider off the own blob
     var c = Math.round(12 * lootMul() * coinMul()); addCoins(c); G.stats.defended++; vic.ai.mode = 'seek'; vic.ai.raidCd = rand(40, 60);
-    say(vic.x, vic.y - 66, 'DEFENDED!  +' + fmt(c), '#8cf58a', 24);
+    say(vic.x, vic.y - 66, T('DEFENDED!  +{0}', fmt(c)), '#8cf58a', 24);
   }
   if (!onScreen(vic.x, vic.y)) return;
   Snd.bump(); for (var i = 0; i < 8; i++) part(vic.x, vic.y, rand(-200, 200), rand(-220, 40), rand(0.25, 0.5), '#fff', rand(3, 6), 300);
@@ -198,7 +198,7 @@ function stealHit(a, b, n) {
   G.shake = 7 + 3 * n; G.hitStop = 0.03 + 0.03 * n; Snd.steal(n);
   say(b.x, b.y - b.r - 18, n >= 3 ? 'JACKPOT!' : n === 2 ? 'STEAL x2!' : 'STEAL!', n >= 3 ? '#ffd23c' : '#ffffff', 22 + 6 * n);
   var ty = a.y - 50 - 14 * k;
-  say(a.x - 7, ty, '+' + fmt(amt) + ' goo', '#8cf58a', 21, 'right'); say(a.x + 7, ty, '+' + fmt(coins) + ' coins', '#ffd23c', 21, 'left');
+  say(a.x - 7, ty, T('+{0} goo', fmt(amt)), '#8cf58a', 21, 'right'); say(a.x + 7, ty, T('+{0} coins', fmt(coins)), '#ffd23c', 21, 'left');
   G.calm = 2.5;
   if (king > 1 && n === 1) say(b.x, b.y - b.r - 52, 'KINGSLAYER x1.5', '#ffd23c', 20);
   if (n >= 3) {
@@ -210,7 +210,7 @@ function stealHit(a, b, n) {
 function enrage(b) {
   b.hits = 0; b.hitT = 0; b.rage = 0; b.shield = Math.max(b.shield, SPIKES); b.flash = 1; shock(b.x, b.y, b.r + BLAST + 50, 760, G.actors[b.id]);
   for (var i = 0; i < 4; i++) { var a = G.actors[i]; if (i !== b.id && hyp(a.x - b.x, a.y - b.y) < b.r + BLAST) hurt(a, 1, b.x, b.y); }
-  if (onScreen(b.x, b.y)) { Snd.boom(); G.shake = 12; say(b.x, b.y - b.r - 30, b.id ? NAMES[b.id] + ' is furious!' : 'SPIKES OUT!', '#ffffff', 24); }
+  if (onScreen(b.x, b.y)) { Snd.boom(); G.shake = 12; say(b.x, b.y - b.r - 30, b.id ? T('{0} is furious!', NAMES[b.id]) : 'SPIKES OUT!', '#ffffff', 24); }
 }
 function hurt(a, n, sx, sy) {
   var dx = a.x - sx, dy = a.y - sy, d = hyp(dx, dy) + 0.01;
@@ -272,6 +272,6 @@ function buy(key) {
   if (G.up[key] >= u.max) return false;
   var c = cost(key); if (G.coins < c) { Snd.nope(); return false; }
   G.coins -= c; G.up[key]++; G.stats.bought++; Snd.buy();
-  var P = G.actors[0]; say(P.x, P.y - 50, u.name + ' ' + G.up[key], '#8cf58a', 20);
+  var P = G.actors[0]; say(P.x, P.y - 50, T(u.name) + ' ' + G.up[key], '#8cf58a', 20);
   return true;
 }

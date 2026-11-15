@@ -103,7 +103,7 @@ async def main():
     errs = []
     async with async_playwright() as p:
         br = await p.chromium.launch(**launch_args())
-        pg = await (await br.new_context(viewport={'width': 1000, 'height': 650})).new_page()
+        pg = await (await br.new_context(viewport={'width': 1000, 'height': 650}, locale='en-US')).new_page()
         pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None); pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(URL); await pg.wait_for_timeout(300)
         if MODE in ('unit', 'all'): await unit(pg)

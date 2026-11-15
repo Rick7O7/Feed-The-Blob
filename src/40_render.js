@@ -189,7 +189,7 @@ function drawActor(a) {
       cx.lineCap = 'round'; cx.beginPath(); cx.arc(a.x, a.y, a.r + 11, a1, a0); cx.lineWidth = 7; cx.strokeStyle = 'rgba(59,42,32,.6)'; cx.stroke();
       if (f > 0.01) { cx.beginPath(); cx.arc(a.x, a.y, a.r + 11, a0 - (a0 - a1) * f, a0); cx.lineWidth = 4.5; cx.strokeStyle = a.tired > 0 ? '#ff5b5b' : a.stam < 22 ? '#ff9f2e' : '#ffe14d'; cx.stroke(); }
     }
-    if (G.t < 25) { var by = y - a.r - 16 - Math.abs(Math.sin(G.t * 4)) * 5; cx.beginPath(); cx.moveTo(x - 8, by - 9); cx.lineTo(x + 8, by - 9); cx.lineTo(x, by + 2); cx.closePath(); cx.fillStyle = '#fff'; cx.fill(); cx.lineWidth = 2.5; cx.strokeStyle = INK; cx.stroke(); }
+    if (G.t < 25 && !OB.on) { var by = y - a.r - 16 - Math.abs(Math.sin(G.t * 4)) * 5; cx.beginPath(); cx.moveTo(x - 8, by - 9); cx.lineTo(x + 8, by - 9); cx.lineTo(x, by + 2); cx.closePath(); cx.fillStyle = '#fff'; cx.fill(); cx.lineWidth = 2.5; cx.strokeStyle = INK; cx.stroke(); }
     if (a.starT > 0) { cx.beginPath(); cx.arc(a.x, a.y, pickR(a) * 2.3 * 3, 0, TAU); cx.strokeStyle = 'rgba(255,243,107,.5)'; cx.lineWidth = 3; cx.setLineDash([10, 12]); cx.lineDashOffset = -G.t * 60; cx.stroke(); cx.setLineDash([]); }
   } else txt(NAMES[a.id], a.x, y - a.r - 11, 12, '#fff', 0.9);
 }
@@ -204,7 +204,7 @@ function edgeArrow(wx, wy, col, label, pulse) {
   cx.save(); cx.translate(px, py); cx.scale(s, s);
   cx.beginPath(); cx.arc(0, 0, 20, 0, TAU); cx.fillStyle = col; cx.fill(); cx.lineWidth = 3; cx.strokeStyle = INK; cx.stroke();
   cx.rotate(ang); cx.beginPath(); cx.moveTo(30, 0); cx.lineTo(19, -9); cx.lineTo(19, 9); cx.closePath(); cx.fillStyle = col; cx.fill(); cx.stroke(); cx.restore();
-  txt(label, px, py, 10, '#fff');
+  var lb = T(label); txt(lb, px, py, lb.length > 6 ? 7.5 : lb.length > 4 ? 9 : 10, '#fff');
 }
 function near(x, y, r) { return Math.abs(x - VIEW.x) < VIEW.w / 2 + r && Math.abs(y - VIEW.y) < VIEW.h / 2 + r; }
 function wobPath(x, y, r, p, live) {
@@ -369,10 +369,10 @@ function render() {
     if (b.shield > 0) drawSpikes(b);
     drawBlobBody(b.x, b.y, b.r, skinOf(i), b.wob, i * 1.7, b.mouth, b.blink, o.x - b.x, o.y - b.y, lvl, b.rage > 0 ? 1 : b.sad > 0 ? 2 : 0);
     if (G.leader === i) crownAt(b.x, b.y - b.r * 0.86, b.r * 0.34);
-    if (i) txt(NAMES[i] + '  Lv ' + lvl, b.x, b.y + b.r * 0.9 + 20, 15, '#fff');
+    if (i) txt(T('{0}  Lv {1}', NAMES[i], lvl), b.x, b.y + b.r * 0.9 + 20, 15, '#fff');
     if (i && b.shield > 0) txt(Math.ceil(b.shield) + 's', b.x, b.y - b.r * 1.22 - (G.leader === i ? b.r * 0.3 : 0) - 14, 17, '#fff', 0.9);
-    if (b.rage > 0 && i) txt('RUN!', b.x, b.y + b.r * 0.9 + 58, 34, '#ff6b5b', 0.6 + 0.4 * Math.abs(Math.sin(G.t * 14)));
-    else if (i && G.started && G.stats.raids < 3 && G.t > 40 && b.shield <= 0 && b.hits === 0 && hyp(P.x - b.x, P.y - b.y) < b.r + 280) txt(TOUCH ? 'TAP RUN INTO IT: STEAL GOO' : 'LUNGE INTO IT: STEAL GOO', b.x, b.y - b.r - (G.leader === i ? b.r * 0.42 : 0) - 26, 16, '#fff36b');
+    if (b.rage > 0 && i) txt(T('RUN!'), b.x, b.y + b.r * 0.9 + 58, 34, '#ff6b5b', 0.6 + 0.4 * Math.abs(Math.sin(G.t * 14)));
+    else if (i && G.started && G.stats.raids < 3 && G.t > 40 && b.shield <= 0 && b.hits === 0 && hyp(P.x - b.x, P.y - b.y) < b.r + 280) txt(T(TOUCH ? 'TAP RUN INTO IT: STEAL GOO' : 'LUNGE INTO IT: STEAL GOO'), b.x, b.y - b.r - (G.leader === i ? b.r * 0.42 : 0) - 26, 16, '#fff36b');
     if (b.hits > 0 && b.shield <= 0) for (var hi = 0; hi < 3; hi++) { cx.beginPath(); cx.arc(b.x + (hi - 1) * 22, b.y - b.r - (G.leader === i ? b.r * 0.42 : 0) - 16, 7, 0, TAU); cx.fillStyle = hi < b.hits ? '#ff4d6d' : 'rgba(255,255,255,.7)'; cx.fill(); cx.lineWidth = 2.5; cx.strokeStyle = INK; cx.stroke(); }
   }
   if (G.boss) {
@@ -384,7 +384,7 @@ function render() {
   var order = G.actors.slice().sort(function (p, q) { return p.y - q.y; });
   for (i = 0; i < 4; i++) if (onScreen(order[i].x, order[i].y)) drawActor(order[i]);
   for (i = 0; i < G.items.length; i++) { it = G.items[i]; if ((it.state === 0 || it.state === 3) && onScreen(it.x, it.y - it.z * 0.5)) drawItem(it, false); }
-  drawClouds(P);
+  drawClouds(P); drawOnboard();
   if (G.quest === 0 && G.started) {
     if (P.used < Math.min(4, capOf(P))) { var near = null, nd = 1e9; for (i = 0; i < G.items.length; i++) { it = G.items[i]; if (it.state === 1 && it.kind !== 'heart') { var dn = hyp(it.x - P.x, it.y - P.y); if (dn < nd) { nd = dn; near = it; } } } if (near) chevron(near.x, near.y - 8, '#fff36b'); }
     else chevron(G.blobs[0].x, G.blobs[0].y - G.blobs[0].r, '#8cf58a');
@@ -392,14 +392,14 @@ function render() {
   if (MOUSE.down && !TOUCH) { cx.beginPath(); cx.arc(MOUSE.wx, MOUSE.wy, 9 + Math.sin(G.t * 8) * 2, 0, TAU); cx.lineWidth = 3; cx.strokeStyle = 'rgba(255,255,255,.8)'; cx.stroke(); }
   for (i = 0; i < G.parts.length; i++) { var p = G.parts[i]; cx.globalAlpha = clamp(p.life / p.max * 1.5, 0, 1); cx.fillStyle = p.col; cx.beginPath(); cx.arc(p.x, p.y, p.size * (0.4 + 0.6 * p.life / p.max), 0, TAU); cx.fill(); }
   cx.globalAlpha = 1;
-  for (i = 0; i < G.texts.length; i++) { var t = G.texts[i], k = t.life / t.max; txt(t.str, t.x, t.y, t.size * (k > 0.85 ? 1 + (1 - k) * 2 : 1.3 - (1 - k) * 0.3), t.col, clamp(k * 2.2, 0, 1), t.align); }
+  for (i = 0; i < G.texts.length; i++) { var t = G.texts[i], k = t.life / t.max; txt(T(t.str), t.x, t.y, t.size * (k > 0.85 ? 1 + (1 - k) * 2 : 1.3 - (1 - k) * 0.3), t.col, clamp(k * 2.2, 0, 1), t.align); }
   cx.restore();
   if (G.event && G.event.on) { cx.globalAlpha = 0.07; cx.fillStyle = EV[G.event.type].col; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
   if (G.alarm > 0 || (G.hp === 1 && G.started)) { var al = G.alarm > 0 ? 0.1 + 0.1 * Math.abs(Math.sin(G.t * 8)) : 0.06 + 0.04 * Math.sin(G.t * 4); cx.globalAlpha = al; cx.fillStyle = '#ff2d2d'; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
   if (G.flash > 0) { cx.globalAlpha = clamp(G.flash, 0, 0.6); cx.fillStyle = '#fff'; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
   if (G.started) {
     var hb = G.blobs[0];
-    if (G.alarm > 0) { edgeArrow(hb.x, hb.y, '#ff4d4d', 'HELP', true); txt('YOUR BLOB IS UNDER ATTACK!', VW / 2, TOUCH ? 172 : 150, Math.min(22, VW / 20), '#ff6b5b', 0.6 + 0.4 * Math.abs(Math.sin(G.t * 8))); }
+    if (G.alarm > 0) { edgeArrow(hb.x, hb.y, '#ff4d4d', 'HELP', true); txt(T('YOUR BLOB IS UNDER ATTACK!'), VW / 2, TOUCH ? 172 : 150, Math.min(22, VW / 22), '#ff6b5b', 0.6 + 0.4 * Math.abs(Math.sin(G.t * 8))); }
     else edgeArrow(hb.x, hb.y, '#59d16a', 'HOME', P.used >= capOf(P));
     if (G.boss) edgeArrow(G.boss.x, G.boss.y, '#b65cff', 'BOSS', false);
     var nc = null, ncd = 1e9; for (i = 0; i < G.clouds.length; i++) { var cd2 = hyp(G.clouds[i].x - P.x, G.clouds[i].y - P.y); if (cd2 < ncd) { ncd = cd2; nc = G.clouds[i]; } }
@@ -443,7 +443,7 @@ function drawFx(dt) {
       cx.restore();
       var pop = k < 0.12 ? 0.4 + k / 0.12 * 0.8 : k < 0.2 ? 1.2 - (k - 0.12) / 0.08 * 0.2 : 1, ts = Math.min(VW / 7, VH / 6.5, 78);
       cx.save(); cx.translate(VW / 2, cy); cx.scale(pop, pop);
-      txt('LEVEL ' + f.level, 0, -ts * 0.35, ts, '#ffd23c', fade);
+      txt(T('LEVEL {0}', f.level), 0, -ts * 0.35, ts, '#ffd23c', fade);
       txt(f.name, 0, ts * 0.55, ts * 0.5, '#fff', fade);
       cx.restore();
     }
@@ -474,4 +474,32 @@ function drawHero(cnv, now) {
     cx.globalAlpha = 1;
   }
   G.t = oldT; cx = old;
+}
+
+/* ---------- first-minute onboarding: one speech bubble in the world at a time (state lives in OB, see 50_ui.js) ---------- */
+function bubble(x, y, str, k) {
+  var s = Math.min(1, k * 5), pop = s < 1 ? 0.6 + s * 0.5 : 1 + 0.03 * Math.sin(G.t * 5);
+  cx.font = '900 17px ' + FONT; var w = cx.measureText(str).width + 26, h = 34, mx = VIEW.w / 2 - w / 2 - 10;
+  x = clamp(x, VIEW.x - mx, VIEW.x + mx); y = clamp(y, VIEW.y - VIEW.h / 2 + 150, VIEW.y + VIEW.h / 2 - 40);      // always inside the view
+  cx.save(); cx.translate(x, y - Math.abs(Math.sin(G.t * 3.2)) * 6); cx.scale(pop, pop); cx.font = '900 17px ' + FONT;
+  cx.beginPath(); cx.roundRect(-w / 2, -h - 12, w, h, 14); cx.moveTo(-9, -13); cx.lineTo(0, -1); cx.lineTo(9, -13);
+  cx.fillStyle = '#fff8ea'; cx.fill(); cx.lineWidth = 3.5; cx.strokeStyle = INK; cx.stroke();
+  cx.beginPath(); cx.rect(-w / 2 + 2, -16, w - 4, 4); cx.fillStyle = '#fff8ea'; cx.fill();
+  cx.fillStyle = INK; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText(str, 0, -h / 2 - 12);
+  cx.restore();
+}
+function drawOnboard() {
+  if (!OB.on || !G.started) return;
+  var P = G.actors[0], k = OB.k, i;
+  if (OB.step === 0) {           // move: arrows pulse out of the collector in four directions
+    bubble(P.x, P.y - P.r - 26, T(TOUCH ? 'DRAG TO MOVE' : 'WASD OR ARROWS TO MOVE'), k);
+    var d = P.r + 18 + (G.t * 30) % 14;
+    for (i = 0; i < 4; i++) { var a = i * Math.PI / 2; cx.save(); cx.translate(P.x + Math.cos(a) * d, P.y + Math.sin(a) * d); cx.rotate(a); cx.beginPath(); cx.moveTo(8, 0); cx.lineTo(-4, -8); cx.lineTo(-4, 8); cx.closePath(); cx.globalAlpha = 0.85; cx.fillStyle = '#fff'; cx.fill(); cx.lineWidth = 2.5; cx.strokeStyle = INK; cx.stroke(); cx.restore(); }
+    cx.globalAlpha = 1;
+  } else if (OB.step === 1 && OB.item) bubble(OB.item.x, OB.item.y - 40, T('GRAB LOOT!'), k);
+  else if (OB.step === 2) {       // home: a moving dashed path from the collector to the blob
+    var h = G.blobs[0], dx = h.x - P.x, dy = h.y - P.y, l = hyp(dx, dy) + 0.01;
+    if (l > h.r + 40) { cx.beginPath(); cx.moveTo(P.x + dx / l * (P.r + 10), P.y + dy / l * (P.r + 10)); cx.lineTo(h.x - dx / l * (h.r + 14), h.y - dy / l * (h.r + 14)); cx.setLineDash([14, 14]); cx.lineDashOffset = -G.t * 60; cx.lineWidth = 6; cx.strokeStyle = 'rgba(255,255,255,.85)'; cx.stroke(); cx.setLineDash([]); }
+    if (Math.abs(h.x - VIEW.x) < VIEW.w / 2 - 60 && Math.abs(h.y - h.r - VIEW.y) < VIEW.h / 2 - 160) bubble(h.x, h.y - h.r - 30, T('BRING IT HOME!'), k); else bubble(P.x, P.y - P.r - 26, T('BRING IT HOME!'), k);
+  } else if (OB.step === 3) { if (OB.rival) chevron(OB.rival.x, OB.rival.y - OB.rival.r - 6, '#ff8a7a'); bubble(P.x, P.y - P.r - 26, T(TOUCH ? 'TAP RUN TO LUNGE!' : 'SPACE TO LUNGE!'), k); }
 }

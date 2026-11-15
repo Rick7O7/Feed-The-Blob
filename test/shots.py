@@ -1,7 +1,7 @@
 """Fixed set of screenshots for before/after comparisons. Builds nothing: run `node build.mjs` first.
 Opens dist/index.html and saves to shots/<tag>/<view>-<nn>-<name>.png
 Views: desktop 1280x720, phone 390x844, land 844x390 (landscape phone).
-Call: python3 test/shots.py [tag] [views]     tag defaults to 'now', views e.g. desktop,phone (default: all three)
+Call: python3 test/shots.py [tag] [views] [lang]     tag defaults to 'now', views e.g. desktop,phone (default: all three), lang en|de|es|pt|fr
       python3 test/shots.py perf                 frame rate of the crowded late-game scene with 4x CPU throttling (Chrome DevTools)"""
 import asyncio, sys
 import os, sys as _s; _s.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from env import ROOT, DIST, launch_args
@@ -10,7 +10,8 @@ from playwright.async_api import async_playwright
 URL = DIST + 'index.html'
 TAG = sys.argv[1] if len(sys.argv) > 1 else 'now'
 VIEWS = [('desktop', {'width': 1280, 'height': 720}, False), ('phone', {'width': 390, 'height': 844}, True), ('land', {'width': 844, 'height': 390}, True)]
-if len(sys.argv) > 2: VIEWS = [v for v in VIEWS if v[0] in sys.argv[2].split(',')]
+if len(sys.argv) > 2 and sys.argv[2] != 'all': VIEWS = [v for v in VIEWS if v[0] in sys.argv[2].split(',')]
+LANG = sys.argv[3] if len(sys.argv) > 3 else 'en'
 OUT = ROOT / 'shots' / TAG
 if TAG != 'perf': OUT.mkdir(parents=True, exist_ok=True)
 
@@ -58,10 +59,17 @@ async def main():
                 await pg.wait_for_timeout(wait); n[0] += 1
                 await pg.screenshot(path=str(OUT / f'{name}-{n[0]:02d}-{label}.png'))
             await pg.goto(URL); await pg.wait_for_timeout(300)
-            await pg.evaluate('localStorage.clear(); __fb.seed(7); __fb.fresh()')
+            await pg.evaluate(f"localStorage.clear(); __fb.seed(7); __fb.fresh(); setLang('{LANG}')")
             await shot('start', 900)
             if touch: await pg.tap('#play')
             else: await pg.click('#play')
+            await shot('onboard-move', 400)
+            await pg.evaluate("var P = G.actors[0]; P.x += 160; for (var k = 0; k < 6; k++) step(1 / 60);")
+            await shot('onboard-grab', 300)
+            await pg.evaluate("var P = G.actors[0]; for (var i = 0; i < 4; i++) { var it = mkItem('apple', P.x, P.y, 0); it.state = 1; G.items.push(it); } for (var k = 0; k < 6; k++) step(1 / 60);")
+            await shot('onboard-home', 300)
+            await pg.evaluate("var P = G.actors[0], h = G.blobs[0]; P.x = h.x + h.r + 20; P.y = h.y; for (var k = 0; k < 120; k++) step(1 / 60); var a = G.actors[1]; a.x = P.x + 200; a.y = P.y; a.stun = 9;")
+            await shot('onboard-lunge', 400)
             await pg.evaluate('__fb.sim(25); ' + CALM)
             await shot('early', 400)
             await pg.evaluate("var b = G.blobs[0]; b.level++; levelUp(b); G.pend.length = 0; G.coins += 400;")

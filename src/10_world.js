@@ -17,7 +17,7 @@ var THEMES = [
     patch: 'rgba(150,110,255,.16)', lane: 'rgba(200,180,255,.12)', tuft: '#6a55c8', dots: ['#ffffff', '#ffe98a', '#b9a8ff'], rock: '#5b4b8f', slow: 'rgba(200,120,255,.4)', slowEdge: 'rgba(230,170,255,.7)', slowName: 'STAR GOO' }
 ];
 var LVNAME = ['', 'Droplet', 'Gloop', 'Wobbler', 'Chonk', 'Mega Chonk', 'Titan', 'Planet Eater', 'Star Swallower', 'Galaxy Gut', 'Void Belly', 'Universe'];
-function lvName(n) { return n <= 11 ? LVNAME[n] : 'Universe +' + (n - 11); }
+function lvName(n) { return n <= 11 ? T(LVNAME[n]) : T('Universe +{0}', n - 11); }
 // LVT[n] = mass needed to leave level n. Loot grows 1.5x per level, so every level stays a few minutes long.
 var LVB = [0, 45, 170, 540, 1700, 4500, 8500, 13500, 19000];
 var LVT = [0]; (function () { var s = 0; for (var n = 1; n <= 90; n++) { s += Math.round((n <= 8 ? LVB[n] : 19000 * Math.pow(n / 8, 2.2)) * Math.pow(1.5, n - 1)); LVT.push(s); } })();
@@ -183,7 +183,7 @@ function hitCrate(a, c, idx) {
   if (c.hp > 0) { if (!a.bot) G.shake = Math.max(G.shake, 5); return; }
   G.crates.splice(idx, 1);
   burst(c.x, c.y, 7, function () { var r = rnd(); return r < 0.15 ? 'gem' : r < 0.5 ? 'gold' : rollKind(); }, 300);
-  if (!a.bot) { var co = Math.round(5 * lootMul() * coinMul()); addCoins(co); G.shake = Math.max(G.shake, 9); say(c.x, c.y - 44, 'CRATE!  +' + fmt(co), '#ffd23c', 24); }
+  if (!a.bot) { var co = Math.round(5 * lootMul() * coinMul()); addCoins(co); G.shake = Math.max(G.shake, 9); say(c.x, c.y - 44, T('CRATE!  +{0}', fmt(co)), '#ffd23c', 24); }
 }
 function tip(key, a, str, col) { if (!G.tips[key] && G.started) { G.tips[key] = 1; say(a.x, a.y - 46, str, col, 22); } }
 // everything on the map that a collector can touch
@@ -213,7 +213,7 @@ function mapTouch(a, dt, il) {
   a.slowed = false;
   for (i = 0; i < M.slows.length; i++) { o = M.slows[i]; if (hyp(a.x - o.x, (a.y - o.y) / 0.9) < o.r * 0.94) { a.slowed = true; break; } }
   if (a.slowed && a.lunge <= 0) {
-    if (P) tip('slow', a, THEMES[G.rb % THEMES.length].slowName + '!  Lunge through it', '#ffffff');
+    if (P) tip('slow', a, T('{0}!  Lunge through it', T(THEMES[G.rb % THEMES.length].slowName)), '#ffffff');
     if (vis && il > 0.15 && rnd() < dt * 12) part(a.x + rand(-8, 8), a.y + 12, rand(-40, 40), rand(-90, -30), rand(0.3, 0.5), THEMES[G.rb % THEMES.length].slowEdge, rand(3, 6), 300);
   }
   for (i = 0; i < M.pads.length; i++) {
@@ -363,7 +363,7 @@ function eat(b, it) {
 }
 function levelUp(b) {
   b.flash = 1; G.flash = 0.6; G.shake = 10; Snd.level();
-  say(b.x, b.y - b.r - 40, 'LEVEL ' + b.level + '!', '#ffffff', 34);
+  say(b.x, b.y - b.r - 40, T('LEVEL {0}!', b.level), '#ffffff', 34);
   say(b.x, b.y - b.r - 8, lvName(b.level), '#ffe98a', 24);
   for (var i = 0; i < 40; i++) part(b.x, b.y, rand(-320, 320), rand(-420, 80), rand(0.6, 1.3), pick(['#fff36b', '#ff8fc7', '#7ad7ff', '#8cf58a']), rand(4, 8), 500);
   burst(b.x, b.y - b.r, 8 + Math.min(b.level, 10), function () { return rnd() < 0.25 ? 'gem' : 'gold'; }, 380);
@@ -396,7 +396,7 @@ function updBlobs(dt) {
     if (nl !== G.leader && G.leader >= 0 && G.t > 30 && G.t - G.crownT > 8 && (nl === 0 || G.leader === 0)) {
       G.crownT = G.t;
       if (nl === 0) { Snd.crown(); say(P.x, P.y - 70, 'YOU TOOK THE CROWN!  +25% coins', '#ffd23c', 24); }
-      else say(P.x, P.y - 70, NAMES[nl] + ' took your crown!', '#ff6b5b', 22);
+      else say(P.x, P.y - 70, T('{0} took your crown!', NAMES[nl]), '#ff6b5b', 22);
     }
     G.leader = nl;
   }

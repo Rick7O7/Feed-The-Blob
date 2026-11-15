@@ -72,6 +72,7 @@ body.touch #sprint{display:block}
 body.touch #keys{display:none}
 #sprintfill{position:absolute;left:0;right:0;bottom:0;background:#ffe14d;z-index:0}
 #sprint.tired #sprintfill{background:#ff8a7a}
+#sprint.hint{animation:playp 1s ease-in-out infinite}
 #sprint b{position:relative;z-index:1}
 #shop{display:flex;gap:6px;overflow-x:auto;pointer-events:auto;touch-action:pan-x;scrollbar-width:none;padding:4px 0 2px}
 #shop::-webkit-scrollbar{display:none}
@@ -157,7 +158,11 @@ body.touch .up kbd{display:none}
 #mute{display:flex;align-items:center;justify-content:center;padding:0}
 #mute svg{width:24px;height:24px}
 #mute.half{opacity:.75}
-#setpop{position:absolute;top:calc(66px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));z-index:6;pointer-events:auto;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:178px}
+#setpop{position:absolute;top:calc(66px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));z-index:6;pointer-events:auto;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:236px}
+.lrow{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:900;padding:2px 2px 0}
+#lgs{display:flex;gap:4px}
+#lgs button{flex:1;min-width:40px;min-height:44px;font-size:13px;font-weight:900;border:3px solid #3b2a20;border-radius:10px;background:#e9dcc3;cursor:pointer;padding:0}
+#lgs button.on{background:#ffd95e}
 #setpop small{font-size:11px;font-weight:800;opacity:.6;text-align:center}
 body.touch #setpop small{display:none}
 .tg{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:46px;padding:0 10px;font-size:15px;font-weight:900;background:#e9dcc3;border:3px solid #3b2a20;border-radius:12px;cursor:pointer}
@@ -223,7 +228,7 @@ body.touch #setpop small{display:none}
 body.touch .card .btn,body.touch .tag{min-height:44px}
 .tab,.x{min-height:44px;min-width:44px}
 .up .lv{font-size:11px}
-@media (max-width:560px){.mhead{flex-wrap:wrap;justify-content:space-between}.mhead .tabs{order:3;flex-basis:100%;flex-wrap:nowrap;gap:5px}.mhead .tab{flex:1;padding:6px 4px}#mute{width:44px}.days{gap:3px}.day small{font-size:9px}.day b{font-size:12px}#setpop{top:calc(60px + env(safe-area-inset-top))}}
+@media (max-width:560px){#shopbtn.long{font-size:11px;padding:0 6px}.mhead{flex-wrap:wrap;justify-content:space-between}.mhead .tabs{order:3;flex-basis:100%;flex-wrap:nowrap;gap:5px}.mhead .tab{flex:1;padding:6px 4px}#mute{width:44px}.days{gap:3px}.day small{font-size:9px}.day b{font-size:12px}#setpop{top:calc(60px + env(safe-area-inset-top))}}
 @media (max-height:430px){#hero{height:70px;max-width:200px;margin:-6px auto -2px}#mid{top:calc(58px + env(safe-area-inset-top))}#sub{top:calc(58px + env(safe-area-inset-top))}#setpop{top:calc(58px + env(safe-area-inset-top))}#mcard.shop{height:94vh}}
 @media (prefers-reduced-motion:reduce){#play,#play .tri,.day.next,.btn.claim,#mcard>.rays{animation:none}}
 </style>
@@ -239,22 +244,22 @@ body.touch .card .btn,body.touch .tag{min-height:44px}
     <button id="gembox" class="pill" data-act="shop:gems" aria-label="Gems"><i class="gemi"></i><b id="gems">0</b></button>
     <div id="lvl" class="pill"><div id="lvlname">Lv 1 Droplet</div><div id="lvlbar"><i id="lvlfill"></i></div></div>
     <div id="rank" class="pill"></div>
-    <button id="shopbtn" class="pill" data-act="shop:skins">SHOP</button>
+    <button id="shopbtn" class="pill" data-act="shop:skins" data-t="SHOP">SHOP</button>
     <button id="mute" class="pill" data-act="setpop" aria-label="Music and sound settings"><svg viewBox="0 0 24 24"><path d="M3.5 9h4l5-4.5v15l-5-4.5h-4z" fill="#fff8ea" stroke="#3b2a20" stroke-width="2.3" stroke-linejoin="round"/><path d="M16 8.5a5 5 0 0 1 0 7M18.6 6a8.6 8.6 0 0 1 0 12" fill="none" stroke="#3b2a20" stroke-width="2.3" stroke-linecap="round"/></svg></button>
   </div>
-  <div id="setpop" class="pill gone"><button class="tg" id="tgmus" data-act="music"><span>Music</span><i></i></button><button class="tg" id="tgsfx" data-act="mute"><span>Sounds</span><i></i></button><small>Keys: N music, M sounds</small></div>
+  <div id="setpop" class="pill gone"><button class="tg" id="tgmus" data-act="music"><span data-t="Music">Music</span><i></i></button><button class="tg" id="tgsfx" data-act="mute"><span data-t="Sounds">Sounds</span><i></i></button><div class="lrow"><span data-t="Language">Language</span><div id="lgs"></div></div><small data-t="Keys: N music, M sounds">Keys: N music, M sounds</small></div>
   <div id="sub"><div id="hearts"></div><div id="fever" class="pill gone"><span id="fevertxt"></span></div><div id="chips"></div></div>
   <div id="mid">
     <div id="quest" class="pill"><span id="qtxt"></span><b id="qnum"></b></div>
-    <button id="rebirthbtn" class="pill gone" data-act="rebirthOpen">★ REBIRTH READY</button>
+    <button id="rebirthbtn" class="pill gone" data-act="rebirthOpen" data-t="★ REBIRTH READY">★ REBIRTH READY</button>
     <div id="ev" class="pill gone"><div id="evtxt"></div><div id="evbar"><i id="evfill"></i></div></div>
   </div>
   <div id="banner"><div id="bwrap"><div id="bicon"></div><div id="btx"><div id="bbar"></div><div id="bt"></div><div id="bs"></div></div></div></div>
   <div id="bottom">
     <div id="row">
       <div id="carry" class="pill"><svg viewBox="0 0 24 24"><path d="M7.5 8V6.5a4.5 4.5 0 0 1 9 0V8" fill="none" stroke="#3b2a20" stroke-width="2.4"/><rect x="4" y="8" width="16" height="13" rx="4" fill="#c98a5a" stroke="#3b2a20" stroke-width="2.4"/></svg><span id="carrytxt">0/6</span></div>
-      <div id="keys">Move: WASD, arrows or hold the mouse button &nbsp;·&nbsp; Lunge and sprint: Space, Shift or right click &nbsp;·&nbsp; Upgrades: 1 to 8 &nbsp;·&nbsp; Shop: B</div>
-      <button id="sprint" class="pill"><i id="sprintfill"></i><b>RUN</b></button>
+      <div id="keys" data-t="Move: WASD, arrows or hold the mouse button · Lunge and sprint: Space, Shift or right click · Upgrades: 1 to 8 · Shop: B">Move: WASD, arrows or hold the mouse button · Lunge and sprint: Space, Shift or right click · Upgrades: 1 to 8 · Shop: B</div>
+      <button id="sprint" class="pill"><i id="sprintfill"></i><b data-t="RUN">RUN</b></button>
     </div>
     <div id="shop"></div>
   </div>
@@ -266,14 +271,14 @@ body.touch .card .btn,body.touch .tag{min-height:44px}
   <div id="card" class="pill">
     <canvas id="hero" aria-hidden="true"></canvas>
     <h1>FEED THE BLOB</h1>
-    <p class="tag">Loot rains from the sky. Grow the hungriest blob on the map.</p>
+    <p class="tag" data-t="Loot rains from the sky. Grow the hungriest blob on the map.">Loot rains from the sky. Grow the hungriest blob on the map.</p>
     <div class="how">
-      <div class="r"><span class="n">1</span>Grab loot and carry it home to your green blob to grow.</div>
-      <div class="r"><span class="n">2</span>Press RUN to lunge: bonk rivals, raid their blobs, smash crates.</div>
-      <div class="r"><span class="n">3</span>Explore the big map — loot clouds, speed pads and portals. Defend home on alarm.</div>
+      <div class="r"><span class="n">1</span><span data-t="Grab loot and carry it home to your green blob to grow.">Grab loot and carry it home to your green blob to grow.</span></div>
+      <div class="r"><span class="n">2</span><span data-t="Press RUN to lunge: bonk rivals, raid their blobs, smash crates.">Press RUN to lunge: bonk rivals, raid their blobs, smash crates.</span></div>
+      <div class="r"><span class="n">3</span><span data-t="Explore the big map — loot clouds, speed pads and portals. Defend home on alarm.">Explore the big map — loot clouds, speed pads and portals. Defend home on alarm.</span></div>
     </div>
-    <button id="play" class="pill" data-act="play"><span class="tri"></span>PLAY</button>
-    <button id="fresh" class="gone" data-act="fresh">Start a new game</button>
+    <button id="play" class="pill" data-act="play"><span class="tri"></span><span data-t="PLAY">PLAY</span></button>
+    <button id="fresh" class="gone" data-act="fresh" data-t="Start a new game">Start a new game</button>
   </div>
 </div>
 <div id="adov" class="gone"><div id="adtitle"></div><div id="adsub"></div></div>
@@ -315,10 +320,13 @@ var Snd = {
       this.setMute(); Music.start();
     } catch (e) { this.ctx = null; }
   },
-  // the argument is ignored: the state decides. Ads mute everything, the two toggles mute their own bus.
-  setMute: function () {
+  // setMute(true) comes from the ads layer when an ad really starts playing (adStarted), never at the request: CrazyGames rule.
+  // Any other call (setMute(Snd.muted) after the ad, or no argument) lifts the ad mute once no ad is busy. The two toggles mute their own bus.
+  adMute: false,
+  setMute: function (m) {
+    this.adMute = m === true && typeof Ads !== 'undefined' && Ads.busy;
     if (!this.ctx) return;
-    this.master.gain.value = (typeof Ads !== 'undefined' && Ads.busy) ? 0 : 1;
+    this.master.gain.value = this.adMute ? 0 : 1;
     this.sfx.gain.value = this.muted ? 0 : this.SFX;
   },
   ok: function (key, gap) {
@@ -398,7 +406,7 @@ var Music = {
   start: function () { if (this.timer || !Snd.ctx) return; var self = this; this.next = Snd.ctx.currentTime + 0.1; this.timer = setInterval(function () { self.tick(); }, 60); },
   tick: function () {
     var c = Snd.ctx; if (!c || c.state !== 'running') return;
-    var mg = typeof Ads !== 'undefined' && Ads.busy ? 0 : 1; if (Snd.master.gain.value !== mg) Snd.master.gain.value = mg;   // ads: silence everything
+    if (Snd.adMute && typeof Ads !== 'undefined' && !Ads.busy) Snd.setMute();   // safety: never stay silent after an ad
     var want = Snd.musicOff ? 0 : (!G || !G.started) ? 0.6 : G.modal ? 0.35 : 1;     // quieter on the start screen and under pop-ups
     if (Math.abs(want - this.vol) > 0.001) { this.vol = want; Snd.mus.gain.setTargetAtTime(want * Snd.MUS, c.currentTime, 0.4); }
     if (this.next < c.currentTime - 0.3) this.next = c.currentTime + 0.05;            // after a pause or a hidden tab: do not try to catch up
@@ -491,6 +499,253 @@ function buildSprites() {
   });
 }
 
+// ---- 05_lang.js ----
+/* ---------- languages: one row per player-visible text: English (the key), German, Spanish, Portuguese (BR), French ----------
+   T('English text', a, b) looks the text up in the active language and fills {0}, {1}, ... with the arguments.
+   A text missing here (or an empty cell) stays English, so a new string never breaks anything: add its row when you can.
+   Owner: B (texts). Game logic calls T() only where a text is built from numbers or names. */
+var LANGS = ['en', 'de', 'es', 'pt', 'fr'], LANGNAME = { en: 'EN', de: 'DE', es: 'ES', pt: 'PT', fr: 'FR' }, LANG = 'en', TT = {};
+var TROWS = [
+  // start screen, HUD, settings
+  ['Loot rains from the sky. Grow the hungriest blob on the map.', 'Beute regnet vom Himmel. Mach deinen Blob zum hungrigsten der Karte.', 'Llueve botín del cielo. Haz crecer al blob más hambriento del mapa.', 'Chove tesouro do céu. Faça crescer o blob mais faminto do mapa.', 'Le butin tombe du ciel. Fais grandir le blob le plus affamé de la carte.'],
+  ['Grab loot and carry it home to your green blob to grow.', 'Schnapp dir Beute und bring sie zu deinem grünen Blob, damit er wächst.', 'Recoge botín y llévalo a tu blob verde para que crezca.', 'Pegue tesouros e leve para o seu blob verde crescer.', 'Ramasse du butin et rapporte-le à ton blob vert pour qu’il grandisse.'],
+  ['Press RUN to lunge: bonk rivals, raid their blobs, smash crates.', 'Drück RUN zum Sprung: Rivalen rempeln, ihre Blobs plündern, Kisten knacken.', 'Pulsa RUN para embestir: golpea rivales, asalta sus blobs, rompe cajas.', 'Toque em RUN para investir: empurre rivais, saqueie blobs, quebre caixas.', 'Appuie sur RUN pour foncer : bouscule les rivaux, pille leurs blobs, casse des caisses.'],
+  ['Explore the big map — loot clouds, speed pads and portals. Defend home on alarm.', 'Erkunde die große Karte: Beutewolken, Turbofelder, Portale. Bei Alarm: Heimat verteidigen!', 'Explora el gran mapa: nubes de botín, turbos y portales. Defiende tu casa si suena la alarma.', 'Explore o mapa: nuvens de tesouro, turbos e portais. Defenda sua casa no alarme.', 'Explore la grande carte : nuages de butin, accélérateurs, portails. Défends ta base en cas d’alerte.'],
+  ['PLAY', 'SPIELEN', 'JUGAR', 'JOGAR', 'JOUER'],
+  ['CONTINUE', 'WEITER', 'CONTINUAR', 'CONTINUAR', 'CONTINUER'],
+  ['Start a new game', 'Neues Spiel starten', 'Empezar partida nueva', 'Começar novo jogo', 'Nouvelle partie'],
+  ['SHOP', 'SHOP', 'TIENDA', 'LOJA', 'BOUTIQUE'],
+  ['★ REBIRTH READY', '★ WIEDERGEBURT BEREIT', '★ RENACER LISTO', '★ RENASCER PRONTO', '★ RENAISSANCE PRÊTE'],
+  ['RUN', 'RUN', 'RUN', 'RUN', 'RUN'],
+  ['Move: WASD, arrows or hold the mouse button · Lunge and sprint: Space, Shift or right click · Upgrades: 1 to 8 · Shop: B', 'Laufen: WASD, Pfeile oder Maustaste halten · Sprung und Sprint: Leertaste, Shift oder Rechtsklick · Upgrades: 1 bis 8 · Shop: B', 'Mover: WASD, flechas o mantén el ratón · Embestir y correr: Espacio, Shift o clic derecho · Mejoras: 1 a 8 · Tienda: B', 'Mover: WASD, setas ou segure o mouse · Investir e correr: Espaço, Shift ou botão direito · Melhorias: 1 a 8 · Loja: B', 'Bouger : ZQSD/WASD, flèches ou clic maintenu · Foncer et sprinter : Espace, Maj ou clic droit · Améliorations : 1 à 8 · Boutique : B'],
+  ['Music', 'Musik', 'Música', 'Música', 'Musique'],
+  ['Sounds', 'Geräusche', 'Sonidos', 'Sons', 'Sons'],
+  ['Language', 'Sprache', 'Idioma', 'Idioma', 'Langue'],
+  ['Keys: N music, M sounds', 'Tasten: N Musik, M Geräusche', 'Teclas: N música, M sonidos', 'Teclas: N música, M sons', 'Touches : N musique, M sons'],
+  ['Music on', 'Musik an', 'Música activada', 'Música ligada', 'Musique activée'],
+  ['Music off', 'Musik aus', 'Música desactivada', 'Música desligada', 'Musique coupée'],
+  ['Sounds on', 'Geräusche an', 'Sonidos activados', 'Sons ligados', 'Sons activés'],
+  ['Sounds off', 'Geräusche aus', 'Sonidos desactivados', 'Sons desligados', 'Sons coupés'],
+  ['Lv {0}', 'Lv {0}', 'Nv {0}', 'Nv {0}', 'Nv {0}'],
+  ['MAX', 'MAX', 'MÁX', 'MÁX', 'MAX'],
+  ['Magnet {0}', 'Magnet {0}', 'Imán {0}', 'Ímã {0}', 'Aimant {0}'],
+  ['Shield {0}', 'Schild {0}', 'Escudo {0}', 'Escudo {0}', 'Bouclier {0}'],
+  ['Done: {0}', 'Geschafft: {0}', 'Hecho: {0}', 'Feito: {0}', 'Fait : {0}'],
+  ['Loading ad', 'Werbung lädt', 'Cargando anuncio', 'Carregando anúncio', 'Chargement de la pub'],
+  ['TEST AD', 'TESTWERBUNG', 'ANUNCIO DE PRUEBA', 'ANÚNCIO DE TESTE', 'PUB DE TEST'],
+  ['{0}. On a portal a real ad plays here. {1}', '{0}. Auf einem Portal läuft hier echte Werbung. {1}', '{0}. En un portal aquí se ve un anuncio real. {1}', '{0}. Num portal, aqui passa um anúncio real. {1}', '{0}. Sur un portail, une vraie pub passe ici. {1}'],
+  ['Rewarded video', 'Belohnungsvideo', 'Vídeo con premio', 'Vídeo com prêmio', 'Vidéo récompensée'],
+  ['Break ad', 'Werbepause', 'Pausa publicitaria', 'Intervalo comercial', 'Pause pub'],
+  // pop-ups
+  ['WELCOME BACK', 'WILLKOMMEN ZURÜCK', 'BIENVENIDO DE NUEVO', 'BEM-VINDO DE VOLTA', 'BON RETOUR'],
+  ['Your blob kept snacking while you were away.', 'Dein Blob hat weitergenascht, während du weg warst.', 'Tu blob siguió picoteando mientras no estabas.', 'Seu blob continuou beliscando enquanto você esteve fora.', 'Ton blob a continué à grignoter pendant ton absence.'],
+  ['LEVEL {0}!', 'LEVEL {0}!', '¡NIVEL {0}!', 'NÍVEL {0}!', 'NIVEAU {0} !'],
+  ['LEVEL {0}', 'LEVEL {0}', 'NIVEL {0}', 'NÍVEL {0}', 'NIVEAU {0}'],
+  ['Your blob evolved into <b>{0}</b>. Loot is now worth 50% more. +2 {1}', 'Dein Blob ist jetzt ein <b>{0}</b>. Beute ist 50 % mehr wert. +2 {1}', 'Tu blob evolucionó a <b>{0}</b>. El botín vale un 50 % más. +2 {1}', 'Seu blob evoluiu para <b>{0}</b>. O tesouro vale 50% a mais. +2 {1}', 'Ton blob devient <b>{0}</b>. Le butin vaut 50 % de plus. +2 {1}'],
+  ['Collect x3', 'x3 einsammeln', 'Cobrar x3', 'Pegar x3', 'Récupérer x3'],
+  ['Collect', 'Einsammeln', 'Cobrar', 'Pegar', 'Récupérer'],
+  ['Collect x3 for 5 {0}', 'x3 für 5 {0}', 'x3 por 5 {0}', 'x3 por 5 {0}', 'x3 pour 5 {0}'],
+  ['KNOCKED OUT', 'K.O.', 'NOQUEADO', 'NOCAUTE', 'K.-O.'],
+  ['Respawning at home drops everything you carry and resets your fever bonus.', 'Wer zu Hause neu startet, verliert alles Getragene und den Fieber-Bonus.', 'Reaparecer en casa suelta todo lo que llevas y reinicia tu bonus de fiebre.', 'Renascer em casa derruba tudo o que você carrega e zera o bônus de febre.', 'Réapparaître à la base fait tomber tout ce que tu portes et remet ton bonus de fièvre à zéro.'],
+  ['Revive right here', 'Hier wiederbeleben', 'Revivir aquí mismo', 'Reviver aqui mesmo', 'Revivre ici'],
+  ['Respawn at home', 'Zu Hause neu starten', 'Reaparecer en casa', 'Renascer em casa', 'Réapparaître à la base'],
+  ['Revive right here for 15 {0}', 'Hier wiederbeleben für 15 {0}', 'Revivir aquí por 15 {0}', 'Reviver aqui por 15 {0}', 'Revivre ici pour 15 {0}'],
+  ['Ad revive is back in {0}.', 'Wiederbeleben per Video wieder in {0}.', 'Revivir con anuncio vuelve en {0}.', 'Reviver com anúncio volta em {0}.', 'Réanimation par pub de retour dans {0}.'],
+  ['REBIRTH', 'WIEDERGEBURT', 'RENACER', 'RENASCER', 'RENAISSANCE'],
+  ['Start again in a new world with tougher rivals. Coins, upgrades and blob size reset. You keep gems, skins and stars.', 'Fang in einer neuen Welt mit stärkeren Rivalen neu an. Münzen, Upgrades und Blobgröße starten neu. Gems, Skins und Sterne bleiben.', 'Empieza de nuevo en un mundo nuevo con rivales más duros. Monedas, mejoras y tamaño se reinician. Conservas gemas, skins y estrellas.', 'Recomece num mundo novo com rivais mais fortes. Moedas, melhorias e tamanho zeram. Você mantém gemas, skins e estrelas.', 'Recommence dans un nouveau monde avec des rivaux plus coriaces. Pièces, améliorations et taille repartent à zéro. Tu gardes gemmes, skins et étoiles.'],
+  ['★ +{0} stars = +{1}% coins and growth, forever', '★ +{0} Sterne = +{1} % Münzen und Wachstum, für immer', '★ +{0} estrellas = +{1} % monedas y crecimiento, para siempre', '★ +{0} estrelas = +{1}% moedas e crescimento, para sempre', '★ +{0} étoiles = +{1} % de pièces et de croissance, pour toujours'],
+  ['Rebirth with {0} stars', 'Wiedergeburt mit {0} Sternen', 'Renacer con {0} estrellas', 'Renascer com {0} estrelas', 'Renaître avec {0} étoiles'],
+  ['Rebirth with {0} stars for 20 {1}', 'Mit {0} Sternen für 20 {1}', 'Con {0} estrellas por 20 {1}', 'Com {0} estrelas por 20 {1}', 'Avec {0} étoiles pour 20 {1}'],
+  ['Not yet', 'Noch nicht', 'Todavía no', 'Ainda não', 'Pas encore'],
+  // shop
+  ['Skins', 'Skins', 'Skins', 'Skins', 'Skins'],
+  ['Hats', 'Hüte', 'Gorros', 'Chapéus', 'Chapeaux'],
+  ['Boosts', 'Boosts', 'Boosts', 'Boosts', 'Bonus'],
+  ['Gems', 'Gems', 'Gemas', 'Gemas', 'Gemmes'],
+  ['Close', 'Schließen', 'Cerrar', 'Fechar', 'Fermer'],
+  ['Equipped', 'Angelegt', 'Equipado', 'Equipado', 'Équipé'],
+  ['Equip', 'Anlegen', 'Equipar', 'Equipar', 'Équiper'],
+  ['Free', 'Gratis', 'Gratis', 'Grátis', 'Gratuit'],
+  ['Free gems', 'Gratis-Gems', 'Gemas gratis', 'Gemas grátis', 'Gemmes gratuites'],
+  ['15 gems per video', '15 Gems pro Video', '15 gemas por vídeo', '15 gemas por vídeo', '15 gemmes par vidéo'],
+  ['Watch', 'Ansehen', 'Ver', 'Assistir', 'Regarder'],
+  ['Earn gems by playing', 'Gems durch Spielen', 'Gana gemas jugando', 'Ganhe gemas jogando', 'Gagne des gemmes en jouant'],
+  ['Quests, boss blobs, level-ups and every rebirth pay gems.', 'Aufgaben, Boss-Blobs, Level-ups und jede Wiedergeburt bringen Gems.', 'Misiones, jefes, subidas de nivel y cada renacer dan gemas.', 'Missões, chefões, subidas de nível e cada renascer dão gemas.', 'Quêtes, boss, niveaux gagnés et chaque renaissance rapportent des gemmes.'],
+  ['Buy gems', 'Gems kaufen', 'Comprar gemas', 'Comprar gemas', 'Acheter des gemmes'],
+  ['Purchases are switched off in this version. A portal has to enable them first.', 'Käufe sind in dieser Version aus. Ein Portal muss sie erst freischalten.', 'Las compras están desactivadas en esta versión. Un portal tiene que activarlas.', 'Compras estão desligadas nesta versão. Um portal precisa ativá-las.', 'Les achats sont désactivés dans cette version. Un portail doit d’abord les activer.'],
+  ['Ad again in {0}', 'Video wieder in {0}', 'Anuncio en {0}', 'Anúncio em {0}', 'Pub dans {0}'],
+  ['Day {0}', 'Tag {0}', 'Día {0}', 'Dia {0}', 'Jour {0}'],
+  ['Daily gift', 'Tagesgeschenk', 'Regalo diario', 'Presente diário', 'Cadeau du jour'],
+  ['Day {0} in a row. Come back tomorrow for {1} gems.', 'Tag {0} in Folge. Komm morgen wieder für {1} Gems.', 'Día {0} seguido. Vuelve mañana por {1} gemas.', 'Dia {0} seguido. Volte amanhã para {1} gemas.', 'Jour {0} d’affilée. Reviens demain pour {1} gemmes.'],
+  ['Day {0} in a row. Miss a day and the streak starts again.', 'Tag {0} in Folge. Verpasst du einen Tag, beginnt die Serie neu.', 'Día {0} seguido. Si fallas un día, la racha vuelve a empezar.', 'Dia {0} seguido. Perdeu um dia, a sequência recomeça.', 'Jour {0} d’affilée. Rate un jour et la série recommence.'],
+  ['Come back every day: day 7 pays 100 gems.', 'Komm jeden Tag wieder: Tag 7 bringt 100 Gems.', 'Vuelve cada día: el día 7 da 100 gemas.', 'Volte todo dia: o dia 7 dá 100 gemas.', 'Reviens chaque jour : le jour 7 rapporte 100 gemmes.'],
+  ['Come back tomorrow', 'Morgen wieder', 'Vuelve mañana', 'Volte amanhã', 'Reviens demain'],
+  ['Claim {0} {1}', '{0} {1} abholen', 'Recoger {0} {1}', 'Pegar {0} {1}', 'Récupérer {0} {1}'],
+  ['No ad available right now. Try again later.', 'Gerade ist kein Video verfügbar. Versuch es später.', 'No hay anuncio ahora. Inténtalo más tarde.', 'Nenhum anúncio agora. Tente mais tarde.', 'Aucune pub disponible. Réessaie plus tard.'],
+  ['Not enough gems', 'Nicht genug Gems', 'No tienes gemas suficientes', 'Gemas insuficientes', 'Pas assez de gemmes'],
+  ['Wait until the current event is over', 'Warte, bis das aktuelle Ereignis vorbei ist', 'Espera a que termine el evento actual', 'Espere o evento atual acabar', 'Attends la fin de l’événement en cours'],
+  ['{0} is active', '{0} ist aktiv', '{0} activado', '{0} ativado', '{0} est actif'],
+  ['+15 gems', '+15 Gems', '+15 gemas', '+15 gemas', '+15 gemmes'],
+  ['+{0} gems. Day {1} in a row', '+{0} Gems. Tag {1} in Folge', '+{0} gemas. Día {1} seguido', '+{0} gemas. Dia {1} seguido', '+{0} gemmes. Jour {1} d’affilée'],
+  [', streak jackpot!', ', Serien-Jackpot!', ', ¡premio de racha!', ', prêmio da sequência!', ', jackpot de série !'],
+  ['. Come back tomorrow for {0}.', '. Morgen gibt es {0}.', '. Vuelve mañana por {0}.', '. Volte amanhã para {0}.', '. Reviens demain pour {0}.'],
+  ['Double coins', 'Doppelte Münzen', 'Monedas dobles', 'Moedas em dobro', 'Pièces doublées'],
+  ['2 minutes', '2 Minuten', '2 minutos', '2 minutos', '2 minutes'],
+  ['Mega magnet', 'Mega-Magnet', 'Megaimán', 'Megaímã', 'Méga-aimant'],
+  ['60 seconds', '60 Sekunden', '60 segundos', '60 segundos', '60 secondes'],
+  ['Gold Rush', 'Goldrausch', 'Fiebre del oro', 'Corrida do ouro', 'Ruée vers l’or'],
+  ['starts right now', 'startet sofort', 'empieza ya', 'começa agora', 'commence tout de suite'],
+  ['Blob shield', 'Blob-Schild', 'Escudo de blob', 'Escudo do blob', 'Bouclier de blob'],
+  ['60 seconds, full hearts', '60 Sekunden, volle Herzen', '60 segundos, corazones llenos', '60 segundos, corações cheios', '60 secondes, cœurs pleins'],
+  // world: arrows and floating texts
+  ['RUN!', 'LAUF!', '¡CORRE!', 'CORRE!', 'FUIS !'],
+  ['TAP RUN INTO IT: STEAL GOO', 'MIT RUN REINSPRINGEN: GLIBBER KLAUEN', 'PULSA RUN CONTRA ÉL: ROBA BABA', 'TOQUE RUN NELE: ROUBE GOSMA', 'FONCE AVEC RUN : VOLE DU SLIME'],
+  ['LUNGE INTO IT: STEAL GOO', 'REINSPRINGEN: GLIBBER KLAUEN', 'EMBÍSTELO: ROBA BABA', 'INVISTA NELE: ROUBE GOSMA', 'FONCE DEDANS : VOLE DU SLIME'],
+  ['HELP', 'HILFE', 'AYUDA', 'SOCORRO', 'AIDE'],
+  ['HOME', 'HEIM', 'CASA', 'CASA', 'BASE'],
+  ['LOOT', 'BEUTE', 'BOTÍN', 'TESOURO', 'BUTIN'],
+  ['BOSS', 'BOSS', 'JEFE', 'CHEFÃO', 'BOSS'],
+  ['YOUR BLOB IS UNDER ATTACK!', 'DEIN BLOB WIRD ANGEGRIFFEN!', '¡ATACAN A TU BLOB!', 'SEU BLOB ESTÁ SOB ATAQUE!', 'TON BLOB EST ATTAQUÉ !'],
+  ['{0}  Lv {1}', '{0}  Lv {1}', '{0}  Nv {1}', '{0}  Nv {1}', '{0}  Nv {1}'],
+  ['BURP!', 'RÜLPS!', '¡BUAAP!', 'ARROTO!', 'BEURP !'],
+  ['POW!', 'BUMM!', '¡PUM!', 'POW!', 'BAM !'],
+  ['BOSS POPPED! +{0} and 3 gems', 'BOSS GEPLATZT! +{0} und 3 Gems', '¡JEFE REVENTADO! +{0} y 3 gemas', 'CHEFÃO ESTOURADO! +{0} e 3 gemas', 'BOSS ÉCLATÉ ! +{0} et 3 gemmes'],
+  ['{0} popped the boss!', '{0} hat den Boss geplatzt!', '¡{0} reventó al jefe!', '{0} estourou o chefão!', '{0} a éclaté le boss !'],
+  ['Loot eaten!', 'Beute gefressen!', '¡Botín devorado!', 'Tesouro devorado!', 'Butin dévoré !'],
+  ['CRATE!  +{0}', 'KISTE!  +{0}', '¡CAJA!  +{0}', 'CAIXA!  +{0}', 'CAISSE !  +{0}'],
+  ['LUNGE INTO THE CRATE!', 'SPRING IN DIE KISTE!', '¡EMBISTE LA CAJA!', 'INVISTA NA CAIXA!', 'FONCE DANS LA CAISSE !'],
+  ['{0}!  Lunge through it', '{0}!  Spring hindurch', '¡{0}!  Embiste para cruzar', '{0}!  Invista para passar', '{0} !  Fonce à travers'],
+  ['SPEED PAD!', 'TURBOFELD!', '¡TURBO!', 'TURBO!', 'ACCÉLÉRATEUR !'],
+  ['MEGA MAGNET!', 'MEGA-MAGNET!', '¡MEGAIMÁN!', 'MEGAÍMÃ!', 'MÉGA-AIMANT !'],
+  ['YOU TOOK THE CROWN!  +25% coins', 'DU HAST DIE KRONE!  +25 % Münzen', '¡TIENES LA CORONA!  +25 % monedas', 'A COROA É SUA!  +25% moedas', 'TU AS LA COURONNE !  +25 % de pièces'],
+  ['{0} took your crown!', '{0} hat deine Krone!', '¡{0} te quitó la corona!', '{0} pegou sua coroa!', '{0} t’a pris la couronne !'],
+  ['DEFENDED!  +{0}', 'VERTEIDIGT!  +{0}', '¡DEFENDIDO!  +{0}', 'DEFENDIDO!  +{0}', 'DÉFENDU !  +{0}'],
+  ['BONK!', 'BONK!', '¡BONK!', 'BONK!', 'BONK !'],
+  ['OUCH!', 'AUA!', '¡AY!', 'AI!', 'AÏE !'],
+  ['HEY!', 'HEY!', '¡EH!', 'EI!', 'HÉ !'],
+  ['SPIKES!', 'STACHELN!', '¡PINCHOS!', 'ESPINHOS!', 'PIQUANTS !'],
+  ['JACKPOT!', 'JACKPOT!', '¡PREMIO GORDO!', 'JACKPOT!', 'JACKPOT !'],
+  ['STEAL x2!', 'GEKLAUT x2!', '¡ROBO x2!', 'ROUBO x2!', 'VOL x2 !'],
+  ['STEAL!', 'GEKLAUT!', '¡ROBO!', 'ROUBO!', 'VOL !'],
+  ['+{0} goo', '+{0} Glibber', '+{0} baba', '+{0} gosma', '+{0} slime'],
+  ['+{0} coins', '+{0} Münzen', '+{0} monedas', '+{0} moedas', '+{0} pièces'],
+  ['KINGSLAYER x1.5', 'KÖNIGSSTURZ x1,5', 'MATARREYES x1,5', 'DERRUBA-REI x1,5', 'RÉGICIDE x1,5'],
+  ['+1 gem', '+1 Gem', '+1 gema', '+1 gema', '+1 gemme'],
+  ['{0} is furious!', '{0} ist wütend!', '¡{0} está furioso!', '{0} está furioso!', '{0} est furieux !'],
+  ['SPIKES OUT!', 'STACHELN RAUS!', '¡PINCHOS FUERA!', 'ESPINHOS PRA FORA!', 'PIQUANTS SORTIS !'],
+  ['REVIVED!', 'WIEDERBELEBT!', '¡REVIVIDO!', 'REVIVIDO!', 'RÉANIMÉ !'],
+  ['+1 HEART', '+1 HERZ', '+1 CORAZÓN', '+1 CORAÇÃO', '+1 CŒUR'],
+  ['FULL!', 'VOLL!', '¡LLENO!', 'CHEIO!', 'PLEIN !'],
+  // events and rebirth
+  ['GOLD RUSH', 'GOLDRAUSCH', 'FIEBRE DEL ORO', 'CORRIDA DO OURO', 'RUÉE VERS L’OR'],
+  ['Golden loot and meteors!', 'Goldene Beute und Meteore!', '¡Botín dorado y meteoritos!', 'Tesouro dourado e meteoros!', 'Butin doré et météores !'],
+  ['BOSS BLOB', 'BOSS-BLOB', 'BLOB JEFE', 'BLOB CHEFÃO', 'BLOB BOSS'],
+  ['Lunge into it to pop it!', 'Spring hinein, bis er platzt!', '¡Embístelo para reventarlo!', 'Invista nele para estourá-lo!', 'Fonce dedans pour l’éclater !'],
+  ['SPEED FRENZY', 'TEMPORAUSCH', 'FRENESÍ VELOZ', 'FRENESI VELOZ', 'FRÉNÉSIE'],
+  ['Endless energy, coins x1.5!', 'Endlos Energie, Münzen x1,5!', '¡Energía sin fin, monedas x1,5!', 'Energia infinita, moedas x1,5!', 'Énergie infinie, pièces x1,5 !'],
+  ['LOW GRAVITY', 'SCHWERELOS', 'BAJA GRAVEDAD', 'GRAVIDADE BAIXA', 'GRAVITÉ FAIBLE'],
+  ['Carry twice as much!', 'Trag doppelt so viel!', '¡Lleva el doble!', 'Carregue o dobro!', 'Porte deux fois plus !'],
+  ['LOOT TORNADO', 'BEUTE-TORNADO', 'TORNADO DE BOTÍN', 'TORNADO DE TESOURO', 'TORNADE DE BUTIN'],
+  ['Everything swirls to one spot!', 'Alles wirbelt an einen Ort!', '¡Todo gira hacia un punto!', 'Tudo gira para um só lugar!', 'Tout tourbillonne au même endroit !'],
+  ['REBIRTH {0}', 'WIEDERGEBURT {0}', 'RENACER {0}', 'RENASCER {0}', 'RENAISSANCE {0}'],
+  ['+{0} stars. Everything grows {1}% now. Welcome to {2}!', '+{0} Sterne. Alles wächst jetzt {1} %. Willkommen in: {2}!', '+{0} estrellas. Todo crece un {1} %. ¡Bienvenido a {2}!', '+{0} estrelas. Tudo cresce {1}% agora. Bem-vindo a {2}!', '+{0} étoiles. Tout grandit à {1} %. Bienvenue : {2} !'],
+  ['Meadow', 'Wiese', 'Pradera', 'Campina', 'Prairie'],
+  ['Lagoon', 'Lagune', 'Laguna', 'Lagoa', 'Lagon'],
+  ['Glacier', 'Gletscher', 'Glaciar', 'Geleira', 'Glacier'],
+  ['Volcano', 'Vulkan', 'Volcán', 'Vulcão', 'Volcan'],
+  ['Deep Space', 'Weltall', 'Espacio profundo', 'Espaço profundo', 'Espace lointain'],
+  ['MUD', 'SCHLAMM', 'BARRO', 'LAMA', 'BOUE'],
+  ['DEEP WATER', 'TIEFES WASSER', 'AGUA PROFUNDA', 'ÁGUA FUNDA', 'EAU PROFONDE'],
+  ['DEEP SNOW', 'TIEFSCHNEE', 'NIEVE PROFUNDA', 'NEVE FUNDA', 'NEIGE PROFONDE'],
+  ['HOT ASH', 'HEISSE ASCHE', 'CENIZA ARDIENTE', 'CINZA QUENTE', 'CENDRE BRÛLANTE'],
+  ['STAR GOO', 'STERNENGLIBBER', 'BABA ESTELAR', 'GOSMA ESTELAR', 'SLIME STELLAIRE'],
+  // level names
+  ['Droplet', 'Tröpfchen', 'Gotita', 'Gotinha', 'Gouttelette'],
+  ['Gloop', 'Glibber', 'Pegote', 'Gosminha', 'Gloop'],
+  ['Wobbler', 'Wackler', 'Temblón', 'Tremelique', 'Tremblotte'],
+  ['Chonk', 'Moppel', 'Gordito', 'Fofão', 'Dodu'],
+  ['Mega Chonk', 'Mega-Moppel', 'Megagordito', 'Megafofão', 'Méga-dodu'],
+  ['Titan', 'Titan', 'Titán', 'Titã', 'Titan'],
+  ['Planet Eater', 'Planetenfresser', 'Comeplanetas', 'Devora-planetas', 'Mangeur de planètes'],
+  ['Star Swallower', 'Sternenschlucker', 'Tragaestrellas', 'Engole-estrelas', 'Avaleur d’étoiles'],
+  ['Galaxy Gut', 'Galaxienbauch', 'Panza galáctica', 'Pança galáctica', 'Ventre galactique'],
+  ['Void Belly', 'Leerenbauch', 'Barriga del vacío', 'Barriga do vazio', 'Panse du néant'],
+  ['Universe', 'Universum', 'Universo', 'Universo', 'Univers'],
+  ['Universe +{0}', 'Universum +{0}', 'Universo +{0}', 'Universo +{0}', 'Univers +{0}'],
+  // upgrades, skins, hats
+  ['Backpack', 'Rucksack', 'Mochila', 'Mochila', 'Sac à dos'],
+  ['Sneakers', 'Schuhe', 'Zapas', 'Tênis', 'Baskets'],
+  ['Magnet', 'Magnet', 'Imán', 'Ímã', 'Aimant'],
+  ['Coins', 'Münzen', 'Monedas', 'Moedas', 'Pièces'],
+  ['Growth', 'Wachstum', 'Crecer', 'Crescer', 'Grandir'],
+  ['Energy', 'Energie', 'Energía', 'Energia', 'Énergie'],
+  ['Spikes', 'Stacheln', 'Pinchos', 'Espinhos', 'Piquants'],
+  ['Luck', 'Glück', 'Suerte', 'Sorte', 'Chance'],
+  ['Classic', 'Klassisch', 'Clásico', 'Clássico', 'Classique'],
+  ['Bubblegum', 'Kaugummi', 'Chicle', 'Chiclete', 'Chewing-gum'],
+  ['Sunny', 'Sonnig', 'Soleado', 'Solar', 'Soleil'],
+  ['Electric', 'Elektro', 'Eléctrico', 'Elétrico', 'Électrique'],
+  ['Fireball', 'Feuerball', 'Bola de fuego', 'Bola de fogo', 'Boule de feu'],
+  ['Lovebug', 'Herzchen', 'Amoroso', 'Amorzinho', 'Mon cœur'],
+  ['Watermelon', 'Melone', 'Sandía', 'Melancia', 'Pastèque'],
+  ['Moo', 'Muh', 'Mu', 'Mu', 'Meuh'],
+  ['Buzz', 'Summ', 'Bzzz', 'Bzzz', 'Bzzz'],
+  ['Tiger', 'Tiger', 'Tigre', 'Tigre', 'Tigre'],
+  ['Checkers', 'Kariert', 'Ajedrez', 'Xadrez', 'Damier'],
+  ['Donut', 'Donut', 'Dónut', 'Rosquinha', 'Donut'],
+  ['Fizz', 'Brause', 'Burbujas', 'Bolhas', 'Pétillant'],
+  ['Lava', 'Lava', 'Lava', 'Lava', 'Lave'],
+  ['Ice', 'Eis', 'Hielo', 'Gelo', 'Glace'],
+  ['Galaxy', 'Galaxie', 'Galaxia', 'Galáxia', 'Galaxie'],
+  ['Toxic', 'Giftig', 'Tóxico', 'Tóxico', 'Toxique'],
+  ['Solid Gold', 'Massivgold', 'Oro puro', 'Ouro puro', 'Or massif'],
+  ['Phoenix', 'Phönix', 'Fénix', 'Fênix', 'Phénix'],
+  ['Rainbow', 'Regenbogen', 'Arcoíris', 'Arco-íris', 'Arc-en-ciel'],
+  ['Aurora', 'Polarlicht', 'Aurora', 'Aurora', 'Aurore'],
+  ['Diamond', 'Diamant', 'Diamante', 'Diamante', 'Diamant'],
+  ['No hat', 'Kein Hut', 'Sin gorro', 'Sem chapéu', 'Sans chapeau'],
+  ['Cap', 'Kappe', 'Gorra', 'Boné', 'Casquette'],
+  ['Top Hat', 'Zylinder', 'Chistera', 'Cartola', 'Haut-de-forme'],
+  ['Cat Ears', 'Katzenohren', 'Orejas de gato', 'Orelhas de gato', 'Oreilles de chat'],
+  ['Halo', 'Heiligenschein', 'Aureola', 'Auréola', 'Auréole'],
+  ['Crown', 'Krone', 'Corona', 'Coroa', 'Couronne'],
+  // quests
+  ['Grab loot and bring it to your blob', 'Schnapp Beute und bring sie zu deinem Blob', 'Recoge botín y llévalo a tu blob', 'Pegue tesouro e leve ao seu blob', 'Ramasse du butin et rapporte-le à ton blob'],
+  ['Buy an upgrade', 'Kauf ein Upgrade', 'Compra una mejora', 'Compre uma melhoria', 'Achète une amélioration'],
+  ['Lunge into a rival: tap RUN or press Space', 'Spring einen Rivalen an: RUN oder Leertaste', 'Embiste a un rival: RUN o Espacio', 'Invista num rival: RUN ou Espaço', 'Fonce sur un rival : RUN ou Espace'],
+  ['Evolve your blob to level 3', 'Bring deinen Blob auf Level 3', 'Sube tu blob al nivel 3', 'Evolua seu blob ao nível 3', 'Fais évoluer ton blob au niveau 3'],
+  ['Raid a rival blob: lunge into it to steal goo', 'Plündere einen Rivalen-Blob: spring hinein', 'Asalta un blob rival: embístelo para robar', 'Saqueie um blob rival: invista nele', 'Pille un blob rival : fonce dedans'],
+  ['Pop a Boss Blob: lunge into it', 'Bring einen Boss-Blob zum Platzen', 'Revienta un blob jefe: embístelo', 'Estoure um blob chefão: invista nele', 'Éclate un blob boss : fonce dedans'],
+  ['Evolve your blob to level 5', 'Bring deinen Blob auf Level 5', 'Sube tu blob al nivel 5', 'Evolua seu blob ao nível 5', 'Fais évoluer ton blob au niveau 5'],
+  ['Feed 30 crystals to your blob', 'Füttere deinem Blob 30 Kristalle', 'Dale 30 cristales a tu blob', 'Dê 30 cristais ao seu blob', 'Donne 30 cristaux à ton blob'],
+  ['Raid rival blobs 10 times', 'Plündere Rivalen-Blobs 10-mal', 'Asalta blobs rivales 10 veces', 'Saqueie blobs rivais 10 vezes', 'Pille des blobs rivaux 10 fois'],
+  ['Evolve your blob to level 8', 'Bring deinen Blob auf Level 8', 'Sube tu blob al nivel 8', 'Evolua seu blob ao nível 8', 'Fais évoluer ton blob au niveau 8'],
+  ['Rebirth for the first time', 'Erste Wiedergeburt', 'Renace por primera vez', 'Renasça pela primeira vez', 'Renais pour la première fois'],
+  ['Feed %n more loot', 'Füttere %n weitere Beute', 'Da %n botines más', 'Entregue mais %n tesouros', 'Donne encore %n butins'],
+  ['Bonk rivals %n more times', 'Remple Rivalen noch %n-mal', 'Golpea rivales %n veces más', 'Empurre rivais mais %n vezes', 'Bouscule des rivaux encore %n fois'],
+  ['Raid rival blobs %n more times', 'Plündere Rivalen-Blobs noch %n-mal', 'Asalta blobs rivales %n veces más', 'Saqueie blobs rivais mais %n vezes', 'Pille des blobs rivaux encore %n fois'],
+  ['Hit %n raid jackpots: 3 hits in a row', 'Hol %n Jackpots: 3 Treffer in Folge', 'Logra %n premios gordos: 3 golpes seguidos', 'Faça %n jackpots: 3 acertos seguidos', 'Décroche %n jackpots : 3 coups d’affilée'],
+  ['Pop %n more Boss Blobs', 'Bring %n weitere Boss-Blobs zum Platzen', 'Revienta %n blobs jefe más', 'Estoure mais %n blobs chefões', 'Éclate encore %n blobs boss'],
+  ['Feed %n more crystals', 'Füttere %n weitere Kristalle', 'Da %n cristales más', 'Entregue mais %n cristais', 'Donne encore %n cristaux'],
+  // first-minute onboarding hints
+  ['DRAG TO MOVE', 'ZIEHEN ZUM LAUFEN', 'ARRASTRA PARA MOVERTE', 'ARRASTE PARA ANDAR', 'GLISSE POUR BOUGER'],
+  ['WASD OR ARROWS TO MOVE', 'WASD ODER PFEILE ZUM LAUFEN', 'WASD O FLECHAS PARA MOVERTE', 'WASD OU SETAS PARA ANDAR', 'WASD OU FLÈCHES POUR BOUGER'],
+  ['GRAB LOOT!', 'SCHNAPP DIR BEUTE!', '¡RECOGE BOTÍN!', 'PEGUE TESOUROS!', 'RAMASSE DU BUTIN !'],
+  ['BRING IT HOME!', 'BRING SIE HEIM!', '¡LLÉVALO A CASA!', 'LEVE PARA CASA!', 'RAPPORTE-LE !'],
+  ['TAP RUN TO LUNGE!', 'TIPP RUN ZUM SPRINGEN!', '¡PULSA RUN PARA EMBESTIR!', 'TOQUE RUN PARA INVESTIR!', 'TOUCHE RUN POUR FONCER !'],
+  ['SPACE TO LUNGE!', 'LEERTASTE ZUM SPRINGEN!', '¡ESPACIO PARA EMBESTIR!', 'ESPAÇO PARA INVESTIR!', 'ESPACE POUR FONCER !']
+];
+(function () { for (var i = 0; i < TROWS.length; i++) for (var j = 1; j < LANGS.length; j++) { var l = LANGS[j]; (TT[l] = TT[l] || {}); if (TROWS[i][j]) TT[l][TROWS[i][0]] = TROWS[i][j]; } })();
+function T(s) {
+  var out = (LANG !== 'en' && TT[LANG] && TT[LANG][s]) || s;
+  for (var i = 1; i < arguments.length; i++) out = out.split('{' + (i - 1) + '}').join(arguments[i]);
+  return out;
+}
+function pickLang(saved) {
+  if (saved && LANGS.indexOf(saved) >= 0) return saved;
+  try { var n = (navigator.languages && navigator.languages[0]) || navigator.language || 'en'; n = n.slice(0, 2).toLowerCase(); return LANGS.indexOf(n) >= 0 ? n : 'en'; } catch (e) { return 'en'; }
+}
+
 // ---- 10_world.js ----
 /* ---------- world data ---------- */
 var W = 3600, H = 2400, EDGE = 60;
@@ -511,7 +766,7 @@ var THEMES = [
     patch: 'rgba(150,110,255,.16)', lane: 'rgba(200,180,255,.12)', tuft: '#6a55c8', dots: ['#ffffff', '#ffe98a', '#b9a8ff'], rock: '#5b4b8f', slow: 'rgba(200,120,255,.4)', slowEdge: 'rgba(230,170,255,.7)', slowName: 'STAR GOO' }
 ];
 var LVNAME = ['', 'Droplet', 'Gloop', 'Wobbler', 'Chonk', 'Mega Chonk', 'Titan', 'Planet Eater', 'Star Swallower', 'Galaxy Gut', 'Void Belly', 'Universe'];
-function lvName(n) { return n <= 11 ? LVNAME[n] : 'Universe +' + (n - 11); }
+function lvName(n) { return n <= 11 ? T(LVNAME[n]) : T('Universe +{0}', n - 11); }
 // LVT[n] = mass needed to leave level n. Loot grows 1.5x per level, so every level stays a few minutes long.
 var LVB = [0, 45, 170, 540, 1700, 4500, 8500, 13500, 19000];
 var LVT = [0]; (function () { var s = 0; for (var n = 1; n <= 90; n++) { s += Math.round((n <= 8 ? LVB[n] : 19000 * Math.pow(n / 8, 2.2)) * Math.pow(1.5, n - 1)); LVT.push(s); } })();
@@ -677,7 +932,7 @@ function hitCrate(a, c, idx) {
   if (c.hp > 0) { if (!a.bot) G.shake = Math.max(G.shake, 5); return; }
   G.crates.splice(idx, 1);
   burst(c.x, c.y, 7, function () { var r = rnd(); return r < 0.15 ? 'gem' : r < 0.5 ? 'gold' : rollKind(); }, 300);
-  if (!a.bot) { var co = Math.round(5 * lootMul() * coinMul()); addCoins(co); G.shake = Math.max(G.shake, 9); say(c.x, c.y - 44, 'CRATE!  +' + fmt(co), '#ffd23c', 24); }
+  if (!a.bot) { var co = Math.round(5 * lootMul() * coinMul()); addCoins(co); G.shake = Math.max(G.shake, 9); say(c.x, c.y - 44, T('CRATE!  +{0}', fmt(co)), '#ffd23c', 24); }
 }
 function tip(key, a, str, col) { if (!G.tips[key] && G.started) { G.tips[key] = 1; say(a.x, a.y - 46, str, col, 22); } }
 // everything on the map that a collector can touch
@@ -707,7 +962,7 @@ function mapTouch(a, dt, il) {
   a.slowed = false;
   for (i = 0; i < M.slows.length; i++) { o = M.slows[i]; if (hyp(a.x - o.x, (a.y - o.y) / 0.9) < o.r * 0.94) { a.slowed = true; break; } }
   if (a.slowed && a.lunge <= 0) {
-    if (P) tip('slow', a, THEMES[G.rb % THEMES.length].slowName + '!  Lunge through it', '#ffffff');
+    if (P) tip('slow', a, T('{0}!  Lunge through it', T(THEMES[G.rb % THEMES.length].slowName)), '#ffffff');
     if (vis && il > 0.15 && rnd() < dt * 12) part(a.x + rand(-8, 8), a.y + 12, rand(-40, 40), rand(-90, -30), rand(0.3, 0.5), THEMES[G.rb % THEMES.length].slowEdge, rand(3, 6), 300);
   }
   for (i = 0; i < M.pads.length; i++) {
@@ -857,7 +1112,7 @@ function eat(b, it) {
 }
 function levelUp(b) {
   b.flash = 1; G.flash = 0.6; G.shake = 10; Snd.level();
-  say(b.x, b.y - b.r - 40, 'LEVEL ' + b.level + '!', '#ffffff', 34);
+  say(b.x, b.y - b.r - 40, T('LEVEL {0}!', b.level), '#ffffff', 34);
   say(b.x, b.y - b.r - 8, lvName(b.level), '#ffe98a', 24);
   for (var i = 0; i < 40; i++) part(b.x, b.y, rand(-320, 320), rand(-420, 80), rand(0.6, 1.3), pick(['#fff36b', '#ff8fc7', '#7ad7ff', '#8cf58a']), rand(4, 8), 500);
   burst(b.x, b.y - b.r, 8 + Math.min(b.level, 10), function () { return rnd() < 0.25 ? 'gem' : 'gold'; }, 380);
@@ -890,7 +1145,7 @@ function updBlobs(dt) {
     if (nl !== G.leader && G.leader >= 0 && G.t > 30 && G.t - G.crownT > 8 && (nl === 0 || G.leader === 0)) {
       G.crownT = G.t;
       if (nl === 0) { Snd.crown(); say(P.x, P.y - 70, 'YOU TOOK THE CROWN!  +25% coins', '#ffd23c', 24); }
-      else say(P.x, P.y - 70, NAMES[nl] + ' took your crown!', '#ff6b5b', 22);
+      else say(P.x, P.y - 70, T('{0} took your crown!', NAMES[nl]), '#ff6b5b', 22);
     }
     G.leader = nl;
   }
@@ -1078,7 +1333,7 @@ function bonk(att, vic, frac) {
   if (n > 0) dropFrom(vic, n);
   if (!att.bot && vic.bot && vic.ai.mode === 'raid' && vic.ai.blob === G.blobs[0]) {     // chased a raider off the own blob
     var c = Math.round(12 * lootMul() * coinMul()); addCoins(c); G.stats.defended++; vic.ai.mode = 'seek'; vic.ai.raidCd = rand(40, 60);
-    say(vic.x, vic.y - 66, 'DEFENDED!  +' + fmt(c), '#8cf58a', 24);
+    say(vic.x, vic.y - 66, T('DEFENDED!  +{0}', fmt(c)), '#8cf58a', 24);
   }
   if (!onScreen(vic.x, vic.y)) return;
   Snd.bump(); for (var i = 0; i < 8; i++) part(vic.x, vic.y, rand(-200, 200), rand(-220, 40), rand(0.25, 0.5), '#fff', rand(3, 6), 300);
@@ -1120,7 +1375,7 @@ function stealHit(a, b, n) {
   G.shake = 7 + 3 * n; G.hitStop = 0.03 + 0.03 * n; Snd.steal(n);
   say(b.x, b.y - b.r - 18, n >= 3 ? 'JACKPOT!' : n === 2 ? 'STEAL x2!' : 'STEAL!', n >= 3 ? '#ffd23c' : '#ffffff', 22 + 6 * n);
   var ty = a.y - 50 - 14 * k;
-  say(a.x - 7, ty, '+' + fmt(amt) + ' goo', '#8cf58a', 21, 'right'); say(a.x + 7, ty, '+' + fmt(coins) + ' coins', '#ffd23c', 21, 'left');
+  say(a.x - 7, ty, T('+{0} goo', fmt(amt)), '#8cf58a', 21, 'right'); say(a.x + 7, ty, T('+{0} coins', fmt(coins)), '#ffd23c', 21, 'left');
   G.calm = 2.5;
   if (king > 1 && n === 1) say(b.x, b.y - b.r - 52, 'KINGSLAYER x1.5', '#ffd23c', 20);
   if (n >= 3) {
@@ -1132,7 +1387,7 @@ function stealHit(a, b, n) {
 function enrage(b) {
   b.hits = 0; b.hitT = 0; b.rage = 0; b.shield = Math.max(b.shield, SPIKES); b.flash = 1; shock(b.x, b.y, b.r + BLAST + 50, 760, G.actors[b.id]);
   for (var i = 0; i < 4; i++) { var a = G.actors[i]; if (i !== b.id && hyp(a.x - b.x, a.y - b.y) < b.r + BLAST) hurt(a, 1, b.x, b.y); }
-  if (onScreen(b.x, b.y)) { Snd.boom(); G.shake = 12; say(b.x, b.y - b.r - 30, b.id ? NAMES[b.id] + ' is furious!' : 'SPIKES OUT!', '#ffffff', 24); }
+  if (onScreen(b.x, b.y)) { Snd.boom(); G.shake = 12; say(b.x, b.y - b.r - 30, b.id ? T('{0} is furious!', NAMES[b.id]) : 'SPIKES OUT!', '#ffffff', 24); }
 }
 function hurt(a, n, sx, sy) {
   var dx = a.x - sx, dy = a.y - sy, d = hyp(dx, dy) + 0.01;
@@ -1194,7 +1449,7 @@ function buy(key) {
   if (G.up[key] >= u.max) return false;
   var c = cost(key); if (G.coins < c) { Snd.nope(); return false; }
   G.coins -= c; G.up[key]++; G.stats.bought++; Snd.buy();
-  var P = G.actors[0]; say(P.x, P.y - 50, u.name + ' ' + G.up[key], '#8cf58a', 20);
+  var P = G.actors[0]; say(P.x, P.y - 50, T(u.name) + ' ' + G.up[key], '#8cf58a', 20);
   return true;
 }
 
@@ -1265,8 +1520,8 @@ function updBoss(dt) {
         burst(b.x, b.y, 40 + 5 * lvl + Math.min(40, b.eaten), function () { return rnd() < 0.3 ? 'gem' : rnd() < 0.5 ? 'gold' : rollKind(); }, 520);
         shock(b.x, b.y, 300, 500); Snd.boom(); G.shake = 16; G.flash = 0.5;
         for (k = 0; k < 50; k++) part(b.x, b.y, rand(-460, 460), rand(-460, 200), rand(0.5, 1.2), pick(['#b65cff', '#e0b3ff', '#fff']), rand(5, 11), 500);
-        if (b.last && !b.last.bot) { var bonus = Math.round(60 * lootMul() * coinMul()); addCoins(bonus); G.gems += 3; G.stats.bosses++; Snd.gem(); say(b.x, b.y - b.r - 50, 'BOSS POPPED! +' + fmt(bonus) + ' and 3 gems', '#ffd23c', 28); }
-        else say(b.x, b.y - b.r - 50, NAMES[b.last ? b.last.id : 1] + ' popped the boss!', '#ffffff', 24);
+        if (b.last && !b.last.bot) { var bonus = Math.round(60 * lootMul() * coinMul()); addCoins(bonus); G.gems += 3; G.stats.bosses++; Snd.gem(); say(b.x, b.y - b.r - 50, T('BOSS POPPED! +{0} and 3 gems', fmt(bonus)), '#ffd23c', 28); }
+        else say(b.x, b.y - b.r - 50, T('{0} popped the boss!', NAMES[b.last ? b.last.id : 1]), '#ffffff', 24);
         return true;
       }
     } else if (c.atk <= 0 && (c.bot ? c.immune <= 0 : c.inv <= 0)) {
@@ -1308,7 +1563,7 @@ function curQuest() {
   if (q) return { text: q.text, cur: q.level ? G.blobs[0].level : G.stats[q.stat], need: q.level || q.need, coin: q.coin || 0, gems: q.gems || 0 };
   var k = G.quest - QCHAIN.length, ty = QLOOP[k % QLOOP.length], round = Math.floor(k / QLOOP.length);
   if (!G.qbase || G.qbase.k !== k || G.qbase.ty !== ty[0]) G.qbase = { k: k, ty: ty[0], start: G.stats[ty[0]], need: ty[0] === 'bosses' ? Math.min(6, ty[1] + ty[2] * round) : ty[1] + ty[2] * round };
-  return { text: ty[3].replace('%n', G.qbase.need), cur: G.stats[ty[0]] - G.qbase.start, need: G.qbase.need, coin: Math.round(150 * lootMul() * UPG.stomach.eff(G.up.stomach) * starMul()), gems: 8 + 2 * Math.min(round, 10) };
+  return { text: T(ty[3]).replace('%n', G.qbase.need), cur: G.stats[ty[0]] - G.qbase.start, need: G.qbase.need, coin: Math.round(150 * lootMul() * UPG.stomach.eff(G.up.stomach) * starMul()), gems: 8 + 2 * Math.min(round, 10) };
 }
 function updQuest() {
   var q = curQuest(); if (q.cur < q.need) return;
@@ -1369,7 +1624,7 @@ function doRebirth(mult) {
   var st = Math.ceil(rebirthGain() * mult), keep = { gems: G.gems + 20, stars: G.stars + st, rb: G.rb + 1, stats: G.stats, quest: G.quest, qbase: G.qbase, skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, total: G.total };
   keep.stats.rebirths++;
   newGame(keep); G.started = true; cam.x = HOMES[0].x; cam.y = HOMES[0].y; G.flash = 0.8; Snd.level();
-  G.banner = { title: 'REBIRTH ' + G.rb, sub: '+' + st + ' stars. Everything grows ' + Math.round(starMul() * 100) + '% now. Welcome to ' + THEMES[G.rb % THEMES.length].name + '!', col: '#fff36b', t: 4.2 };
+  G.banner = { title: T('REBIRTH {0}', G.rb), sub: T('+{0} stars. Everything grows {1}% now. Welcome to {2}!', st, Math.round(starMul() * 100), T(THEMES[G.rb % THEMES.length].name)), col: '#fff36b', t: 4.2 };
   save(); uiModal(); hud();
 }
 var BOOSTS = [
@@ -1390,13 +1645,13 @@ var ACT = {
   shop: function (tab) { if (!G.started || G.modal) return; openModal({ type: 'shop', tab: tab || 'skins' }); },
   tab: function (t) { G.modal.tab = t; uiModal(); },
   close: function () { closeModal(); },
-  boostAd: function (id) { var b = boostById(id); if (b.can && !b.can()) return uiToast('Wait until the current event is over'); rewarded('b_' + id, b.cd, function () { b.run(); uiToast(b.name + ' is active'); }); },
-  boostGem: function (id) { var b = boostById(id); if (b.can && !b.can()) return uiToast('Wait until the current event is over'); if (spend(b.gems)) { b.run(); uiToast(b.name + ' is active'); uiModal(); hud(); } },
+  boostAd: function (id) { var b = boostById(id); if (b.can && !b.can()) return uiToast('Wait until the current event is over'); rewarded('b_' + id, b.cd, function () { b.run(); uiToast(T('{0} is active', T(b.name))); }); },
+  boostGem: function (id) { var b = boostById(id); if (b.can && !b.can()) return uiToast('Wait until the current event is over'); if (spend(b.gems)) { b.run(); uiToast(T('{0} is active', T(b.name))); uiModal(); hud(); } },
   gemAd: function () { rewarded('gems', 180, function () { G.gems += 15; Snd.gem(); uiToast('+15 gems'); }); },
   daily: function () {
     if (G.daily === today()) return;
     var n = dailyNext(), day = dailyDay(); G.streak = day; G.daily = today(); G.gems += n; Snd.gem();
-    uiToast('+' + n + ' gems. Day ' + day + ' in a row' + (day % 7 === 0 ? ', streak jackpot!' : '. Come back tomorrow for ' + DAILY[day % 7] + '.')); save(); uiModal(); hud();
+    uiToast(T('+{0} gems. Day {1} in a row', n, day) + (day % 7 === 0 ? T(', streak jackpot!') : T('. Come back tomorrow for {0}.', DAILY[day % 7]))); save(); uiModal(); hud();
   },
   skin: function (id) {
     var s = findIn(SKINS, id);
@@ -1606,7 +1861,7 @@ function drawActor(a) {
       cx.lineCap = 'round'; cx.beginPath(); cx.arc(a.x, a.y, a.r + 11, a1, a0); cx.lineWidth = 7; cx.strokeStyle = 'rgba(59,42,32,.6)'; cx.stroke();
       if (f > 0.01) { cx.beginPath(); cx.arc(a.x, a.y, a.r + 11, a0 - (a0 - a1) * f, a0); cx.lineWidth = 4.5; cx.strokeStyle = a.tired > 0 ? '#ff5b5b' : a.stam < 22 ? '#ff9f2e' : '#ffe14d'; cx.stroke(); }
     }
-    if (G.t < 25) { var by = y - a.r - 16 - Math.abs(Math.sin(G.t * 4)) * 5; cx.beginPath(); cx.moveTo(x - 8, by - 9); cx.lineTo(x + 8, by - 9); cx.lineTo(x, by + 2); cx.closePath(); cx.fillStyle = '#fff'; cx.fill(); cx.lineWidth = 2.5; cx.strokeStyle = INK; cx.stroke(); }
+    if (G.t < 25 && !OB.on) { var by = y - a.r - 16 - Math.abs(Math.sin(G.t * 4)) * 5; cx.beginPath(); cx.moveTo(x - 8, by - 9); cx.lineTo(x + 8, by - 9); cx.lineTo(x, by + 2); cx.closePath(); cx.fillStyle = '#fff'; cx.fill(); cx.lineWidth = 2.5; cx.strokeStyle = INK; cx.stroke(); }
     if (a.starT > 0) { cx.beginPath(); cx.arc(a.x, a.y, pickR(a) * 2.3 * 3, 0, TAU); cx.strokeStyle = 'rgba(255,243,107,.5)'; cx.lineWidth = 3; cx.setLineDash([10, 12]); cx.lineDashOffset = -G.t * 60; cx.stroke(); cx.setLineDash([]); }
   } else txt(NAMES[a.id], a.x, y - a.r - 11, 12, '#fff', 0.9);
 }
@@ -1621,7 +1876,7 @@ function edgeArrow(wx, wy, col, label, pulse) {
   cx.save(); cx.translate(px, py); cx.scale(s, s);
   cx.beginPath(); cx.arc(0, 0, 20, 0, TAU); cx.fillStyle = col; cx.fill(); cx.lineWidth = 3; cx.strokeStyle = INK; cx.stroke();
   cx.rotate(ang); cx.beginPath(); cx.moveTo(30, 0); cx.lineTo(19, -9); cx.lineTo(19, 9); cx.closePath(); cx.fillStyle = col; cx.fill(); cx.stroke(); cx.restore();
-  txt(label, px, py, 10, '#fff');
+  var lb = T(label); txt(lb, px, py, lb.length > 6 ? 7.5 : lb.length > 4 ? 9 : 10, '#fff');
 }
 function near(x, y, r) { return Math.abs(x - VIEW.x) < VIEW.w / 2 + r && Math.abs(y - VIEW.y) < VIEW.h / 2 + r; }
 function wobPath(x, y, r, p, live) {
@@ -1786,10 +2041,10 @@ function render() {
     if (b.shield > 0) drawSpikes(b);
     drawBlobBody(b.x, b.y, b.r, skinOf(i), b.wob, i * 1.7, b.mouth, b.blink, o.x - b.x, o.y - b.y, lvl, b.rage > 0 ? 1 : b.sad > 0 ? 2 : 0);
     if (G.leader === i) crownAt(b.x, b.y - b.r * 0.86, b.r * 0.34);
-    if (i) txt(NAMES[i] + '  Lv ' + lvl, b.x, b.y + b.r * 0.9 + 20, 15, '#fff');
+    if (i) txt(T('{0}  Lv {1}', NAMES[i], lvl), b.x, b.y + b.r * 0.9 + 20, 15, '#fff');
     if (i && b.shield > 0) txt(Math.ceil(b.shield) + 's', b.x, b.y - b.r * 1.22 - (G.leader === i ? b.r * 0.3 : 0) - 14, 17, '#fff', 0.9);
-    if (b.rage > 0 && i) txt('RUN!', b.x, b.y + b.r * 0.9 + 58, 34, '#ff6b5b', 0.6 + 0.4 * Math.abs(Math.sin(G.t * 14)));
-    else if (i && G.started && G.stats.raids < 3 && G.t > 40 && b.shield <= 0 && b.hits === 0 && hyp(P.x - b.x, P.y - b.y) < b.r + 280) txt(TOUCH ? 'TAP RUN INTO IT: STEAL GOO' : 'LUNGE INTO IT: STEAL GOO', b.x, b.y - b.r - (G.leader === i ? b.r * 0.42 : 0) - 26, 16, '#fff36b');
+    if (b.rage > 0 && i) txt(T('RUN!'), b.x, b.y + b.r * 0.9 + 58, 34, '#ff6b5b', 0.6 + 0.4 * Math.abs(Math.sin(G.t * 14)));
+    else if (i && G.started && G.stats.raids < 3 && G.t > 40 && b.shield <= 0 && b.hits === 0 && hyp(P.x - b.x, P.y - b.y) < b.r + 280) txt(T(TOUCH ? 'TAP RUN INTO IT: STEAL GOO' : 'LUNGE INTO IT: STEAL GOO'), b.x, b.y - b.r - (G.leader === i ? b.r * 0.42 : 0) - 26, 16, '#fff36b');
     if (b.hits > 0 && b.shield <= 0) for (var hi = 0; hi < 3; hi++) { cx.beginPath(); cx.arc(b.x + (hi - 1) * 22, b.y - b.r - (G.leader === i ? b.r * 0.42 : 0) - 16, 7, 0, TAU); cx.fillStyle = hi < b.hits ? '#ff4d6d' : 'rgba(255,255,255,.7)'; cx.fill(); cx.lineWidth = 2.5; cx.strokeStyle = INK; cx.stroke(); }
   }
   if (G.boss) {
@@ -1801,7 +2056,7 @@ function render() {
   var order = G.actors.slice().sort(function (p, q) { return p.y - q.y; });
   for (i = 0; i < 4; i++) if (onScreen(order[i].x, order[i].y)) drawActor(order[i]);
   for (i = 0; i < G.items.length; i++) { it = G.items[i]; if ((it.state === 0 || it.state === 3) && onScreen(it.x, it.y - it.z * 0.5)) drawItem(it, false); }
-  drawClouds(P);
+  drawClouds(P); drawOnboard();
   if (G.quest === 0 && G.started) {
     if (P.used < Math.min(4, capOf(P))) { var near = null, nd = 1e9; for (i = 0; i < G.items.length; i++) { it = G.items[i]; if (it.state === 1 && it.kind !== 'heart') { var dn = hyp(it.x - P.x, it.y - P.y); if (dn < nd) { nd = dn; near = it; } } } if (near) chevron(near.x, near.y - 8, '#fff36b'); }
     else chevron(G.blobs[0].x, G.blobs[0].y - G.blobs[0].r, '#8cf58a');
@@ -1809,14 +2064,14 @@ function render() {
   if (MOUSE.down && !TOUCH) { cx.beginPath(); cx.arc(MOUSE.wx, MOUSE.wy, 9 + Math.sin(G.t * 8) * 2, 0, TAU); cx.lineWidth = 3; cx.strokeStyle = 'rgba(255,255,255,.8)'; cx.stroke(); }
   for (i = 0; i < G.parts.length; i++) { var p = G.parts[i]; cx.globalAlpha = clamp(p.life / p.max * 1.5, 0, 1); cx.fillStyle = p.col; cx.beginPath(); cx.arc(p.x, p.y, p.size * (0.4 + 0.6 * p.life / p.max), 0, TAU); cx.fill(); }
   cx.globalAlpha = 1;
-  for (i = 0; i < G.texts.length; i++) { var t = G.texts[i], k = t.life / t.max; txt(t.str, t.x, t.y, t.size * (k > 0.85 ? 1 + (1 - k) * 2 : 1.3 - (1 - k) * 0.3), t.col, clamp(k * 2.2, 0, 1), t.align); }
+  for (i = 0; i < G.texts.length; i++) { var t = G.texts[i], k = t.life / t.max; txt(T(t.str), t.x, t.y, t.size * (k > 0.85 ? 1 + (1 - k) * 2 : 1.3 - (1 - k) * 0.3), t.col, clamp(k * 2.2, 0, 1), t.align); }
   cx.restore();
   if (G.event && G.event.on) { cx.globalAlpha = 0.07; cx.fillStyle = EV[G.event.type].col; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
   if (G.alarm > 0 || (G.hp === 1 && G.started)) { var al = G.alarm > 0 ? 0.1 + 0.1 * Math.abs(Math.sin(G.t * 8)) : 0.06 + 0.04 * Math.sin(G.t * 4); cx.globalAlpha = al; cx.fillStyle = '#ff2d2d'; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
   if (G.flash > 0) { cx.globalAlpha = clamp(G.flash, 0, 0.6); cx.fillStyle = '#fff'; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
   if (G.started) {
     var hb = G.blobs[0];
-    if (G.alarm > 0) { edgeArrow(hb.x, hb.y, '#ff4d4d', 'HELP', true); txt('YOUR BLOB IS UNDER ATTACK!', VW / 2, TOUCH ? 172 : 150, Math.min(22, VW / 20), '#ff6b5b', 0.6 + 0.4 * Math.abs(Math.sin(G.t * 8))); }
+    if (G.alarm > 0) { edgeArrow(hb.x, hb.y, '#ff4d4d', 'HELP', true); txt(T('YOUR BLOB IS UNDER ATTACK!'), VW / 2, TOUCH ? 172 : 150, Math.min(22, VW / 22), '#ff6b5b', 0.6 + 0.4 * Math.abs(Math.sin(G.t * 8))); }
     else edgeArrow(hb.x, hb.y, '#59d16a', 'HOME', P.used >= capOf(P));
     if (G.boss) edgeArrow(G.boss.x, G.boss.y, '#b65cff', 'BOSS', false);
     var nc = null, ncd = 1e9; for (i = 0; i < G.clouds.length; i++) { var cd2 = hyp(G.clouds[i].x - P.x, G.clouds[i].y - P.y); if (cd2 < ncd) { ncd = cd2; nc = G.clouds[i]; } }
@@ -1860,7 +2115,7 @@ function drawFx(dt) {
       cx.restore();
       var pop = k < 0.12 ? 0.4 + k / 0.12 * 0.8 : k < 0.2 ? 1.2 - (k - 0.12) / 0.08 * 0.2 : 1, ts = Math.min(VW / 7, VH / 6.5, 78);
       cx.save(); cx.translate(VW / 2, cy); cx.scale(pop, pop);
-      txt('LEVEL ' + f.level, 0, -ts * 0.35, ts, '#ffd23c', fade);
+      txt(T('LEVEL {0}', f.level), 0, -ts * 0.35, ts, '#ffd23c', fade);
       txt(f.name, 0, ts * 0.55, ts * 0.5, '#fff', fade);
       cx.restore();
     }
@@ -1893,6 +2148,34 @@ function drawHero(cnv, now) {
   G.t = oldT; cx = old;
 }
 
+/* ---------- first-minute onboarding: one speech bubble in the world at a time (state lives in OB, see 50_ui.js) ---------- */
+function bubble(x, y, str, k) {
+  var s = Math.min(1, k * 5), pop = s < 1 ? 0.6 + s * 0.5 : 1 + 0.03 * Math.sin(G.t * 5);
+  cx.font = '900 17px ' + FONT; var w = cx.measureText(str).width + 26, h = 34, mx = VIEW.w / 2 - w / 2 - 10;
+  x = clamp(x, VIEW.x - mx, VIEW.x + mx); y = clamp(y, VIEW.y - VIEW.h / 2 + 150, VIEW.y + VIEW.h / 2 - 40);      // always inside the view
+  cx.save(); cx.translate(x, y - Math.abs(Math.sin(G.t * 3.2)) * 6); cx.scale(pop, pop); cx.font = '900 17px ' + FONT;
+  cx.beginPath(); cx.roundRect(-w / 2, -h - 12, w, h, 14); cx.moveTo(-9, -13); cx.lineTo(0, -1); cx.lineTo(9, -13);
+  cx.fillStyle = '#fff8ea'; cx.fill(); cx.lineWidth = 3.5; cx.strokeStyle = INK; cx.stroke();
+  cx.beginPath(); cx.rect(-w / 2 + 2, -16, w - 4, 4); cx.fillStyle = '#fff8ea'; cx.fill();
+  cx.fillStyle = INK; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText(str, 0, -h / 2 - 12);
+  cx.restore();
+}
+function drawOnboard() {
+  if (!OB.on || !G.started) return;
+  var P = G.actors[0], k = OB.k, i;
+  if (OB.step === 0) {           // move: arrows pulse out of the collector in four directions
+    bubble(P.x, P.y - P.r - 26, T(TOUCH ? 'DRAG TO MOVE' : 'WASD OR ARROWS TO MOVE'), k);
+    var d = P.r + 18 + (G.t * 30) % 14;
+    for (i = 0; i < 4; i++) { var a = i * Math.PI / 2; cx.save(); cx.translate(P.x + Math.cos(a) * d, P.y + Math.sin(a) * d); cx.rotate(a); cx.beginPath(); cx.moveTo(8, 0); cx.lineTo(-4, -8); cx.lineTo(-4, 8); cx.closePath(); cx.globalAlpha = 0.85; cx.fillStyle = '#fff'; cx.fill(); cx.lineWidth = 2.5; cx.strokeStyle = INK; cx.stroke(); cx.restore(); }
+    cx.globalAlpha = 1;
+  } else if (OB.step === 1 && OB.item) bubble(OB.item.x, OB.item.y - 40, T('GRAB LOOT!'), k);
+  else if (OB.step === 2) {       // home: a moving dashed path from the collector to the blob
+    var h = G.blobs[0], dx = h.x - P.x, dy = h.y - P.y, l = hyp(dx, dy) + 0.01;
+    if (l > h.r + 40) { cx.beginPath(); cx.moveTo(P.x + dx / l * (P.r + 10), P.y + dy / l * (P.r + 10)); cx.lineTo(h.x - dx / l * (h.r + 14), h.y - dy / l * (h.r + 14)); cx.setLineDash([14, 14]); cx.lineDashOffset = -G.t * 60; cx.lineWidth = 6; cx.strokeStyle = 'rgba(255,255,255,.85)'; cx.stroke(); cx.setLineDash([]); }
+    if (Math.abs(h.x - VIEW.x) < VIEW.w / 2 - 60 && Math.abs(h.y - h.r - VIEW.y) < VIEW.h / 2 - 160) bubble(h.x, h.y - h.r - 30, T('BRING IT HOME!'), k); else bubble(P.x, P.y - P.r - 26, T('BRING IT HOME!'), k);
+  } else if (OB.step === 3) { if (OB.rival) chevron(OB.rival.x, OB.rival.y - OB.rival.r - 6, '#ff8a7a'); bubble(P.x, P.y - P.r - 26, T(TOUCH ? 'TAP RUN TO LUNGE!' : 'SPACE TO LUNGE!'), k); }
+}
+
 // ---- 50_ui.js ----
 /* ---------- input, HUD, pop-ups, saving, main loop ---------- */
 var rawTs = 0, FXDT = 0, JOY = null, KEYS = {}, MOUSE = { down: false, x: 0, y: 0, wx: 0, wy: 0 }, sprintDown = false, paused = false, hudT = 0, lastTs = 0, acc = 0, AWAY = 0, cdT = 0;
@@ -1914,7 +2197,7 @@ function save() {
   if (!G || G.auto) return;
   try {
     localStorage.setItem(SAVEKEY, JSON.stringify({ coins: G.coins, total: G.total, gems: G.gems, stars: G.stars, rb: G.rb, up: G.up, stats: G.stats, quest: G.quest, qbase: G.qbase,
-      skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, mass: G.blobs.map(function (b) { return Math.round(b.mass); }), lvl: G.blobs.map(function (b) { return b.level; }), ts: Date.now(), mute: Snd.muted, musicOff: Snd.musicOff }));
+      skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, mass: G.blobs.map(function (b) { return Math.round(b.mass); }), lvl: G.blobs.map(function (b) { return b.level; }), ts: Date.now(), mute: Snd.muted, musicOff: Snd.musicOff, lang: LANG }));
   } catch (e) { /* storage can be unavailable; the game runs without it */ }
 }
 function load() { try { return JSON.parse(localStorage.getItem(SAVEKEY) || 'null'); } catch (e) { return null; } }
@@ -1924,7 +2207,7 @@ function mmss(s) { return Math.floor(s / 60) + ':' + ('0' + Math.floor(s % 60)).
 /* ---------- HUD ---------- */
 function buildHud() {
   var h = '';
-  UKEYS.forEach(function (k, i) { h += '<button class="up pill" data-act="buy:' + k + '"><span class="ic">' + ICON[k] + '</span><span class="nm">' + UPG[k].name + '</span><span class="lv" id="lv-' + k + '"></span><span class="ct"><i class="coin s"></i><b id="ct-' + k + '"></b></span><kbd>' + (i + 1) + '</kbd></button>'; });
+  UKEYS.forEach(function (k, i) { h += '<button class="up pill" data-act="buy:' + k + '"><span class="ic">' + ICON[k] + '</span><span class="nm" data-t="' + UPG[k].name + '">' + T(UPG[k].name) + '</span><span class="lv" id="lv-' + k + '"></span><span class="ct"><i class="coin s"></i><b id="ct-' + k + '"></b></span><kbd>' + (i + 1) + '</kbd></button>'; });
   $('shop').innerHTML = h;
   var s = $('sprint');
   s.addEventListener('pointerdown', function (e) { e.preventDefault(); sprintDown = true; IN.lunge = true; try { s.setPointerCapture(e.pointerId); } catch (x) { /* older browsers */ } });
@@ -1939,6 +2222,7 @@ function buildHud() {
     else if (p[0] === 'mute') toggleSound('sfx');
     else if (p[0] === 'music') toggleSound('music');
     else if (p[0] === 'setpop') $('setpop').classList.toggle('gone');
+    else if (p[0] === 'lang') setLang(p[1]);
     else if (p[0] === 'daily') claimDaily();
     else if (p[0] === 'play') startGame();
     else if (p[0] === 'fresh') { wipe(); newGame(null); AWAY = 0; cam.x = HOMES[0].x; cam.y = HOMES[0].y; startGame(); }
@@ -1948,8 +2232,17 @@ function buildHud() {
 }
 function toggleSound(which) {
   if (which === 'music') Snd.musicOff = !Snd.musicOff; else Snd.muted = !Snd.muted;
-  Snd.setMute(); soundUi(); save();
-  uiToast((which === 'music' ? 'Music ' + (Snd.musicOff ? 'off' : 'on') : 'Sounds ' + (Snd.muted ? 'off' : 'on')));
+  Snd.setMute(Snd.adMute); soundUi(); save();   // keeps an ad mute in place
+  uiToast(which === 'music' ? (Snd.musicOff ? 'Music off' : 'Music on') : (Snd.muted ? 'Sounds off' : 'Sounds on'));
+}
+// language: every element with data-t shows T(its English text); canvas texts and pop-ups read T() when drawn
+function setLang(l) { LANG = LANGS.indexOf(l) >= 0 ? l : 'en'; applyLang(); save(); }
+function applyLang() {
+  document.documentElement.lang = LANG;
+  $('shopbtn').classList.toggle('long', T('SHOP').length > 5);
+  Array.prototype.forEach.call(document.querySelectorAll('[data-t]'), function (el) { el.textContent = T(el.dataset.t); });
+  $('lgs').innerHTML = LANGS.map(function (l) { return '<button data-act="lang:' + l + '" class="' + (l === LANG ? 'on' : '') + '" lang="' + l + '">' + LANGNAME[l] + '</button>'; }).join('');
+  if (G) { hud(); if (G.modal) uiModal(); }
 }
 function soundUi() {
   $('mute').classList.toggle('off', Snd.muted && Snd.musicOff); $('mute').classList.toggle('half', Snd.muted !== Snd.musicOff);
@@ -1957,7 +2250,7 @@ function soundUi() {
 }
 function startGame() {
   if (G.started) return;
-  Snd.init(); Snd.setMute(); G.started = true; $('start').classList.add('gone'); document.body.classList.remove('prestart'); lastTs = 0;
+  Snd.init(); Snd.setMute(); obStart(); G.started = true; $('start').classList.add('gone'); document.body.classList.remove('prestart'); lastTs = 0;
   if (AWAY > 0) { G.pend.push({ type: 'away', reward: AWAY }); AWAY = 0; }
   sdkPlay(true); hud();
 }
@@ -2021,11 +2314,11 @@ function hud() {
   var P = G.actors[0], b = G.blobs[0], i, k, h;
   $('shopbtn').classList.toggle('gift', G.daily !== today());
   var c = cpsNow(); $('cps').textContent = '+' + (c < 10 ? c.toFixed(1) : fmt(c)) + '/s';
-  $('lvlname').textContent = 'Lv ' + b.level + ' ' + lvName(b.level) + (G.stars ? '  ★' + G.stars : '');
+  $('lvlname').textContent = T('Lv {0}', b.level) + ' ' + lvName(b.level) + (G.stars ? '  ★' + G.stars : '');
   var lo = LVT[b.level - 1], hi = LVT[b.level]; $('lvlfill').style.width = clamp((b.mass - lo) / (hi - lo) * 100, 0, 100) + '%';
   for (i = 0; i < UKEYS.length; i++) {
     k = UKEYS[i]; var n = G.up[k], max = n >= UPG[k].max, ct = cost(k), el = document.querySelector('.up[data-act="buy:' + k + '"]');
-    $('lv-' + k).textContent = max ? 'MAX' : 'Lv ' + n; $('ct-' + k).textContent = max ? '' : fmt(ct);
+    $('lv-' + k).textContent = max ? T('MAX') : T('Lv {0}', n); $('ct-' + k).textContent = max ? '' : fmt(ct);
     el.classList.toggle('can', !max && G.coins >= ct); el.classList.toggle('max', max);
   }
   var cap = capOf(P); $('carrytxt').textContent = P.used + '/' + cap; $('carry').classList.toggle('full', P.used >= cap);
@@ -2034,17 +2327,17 @@ function hud() {
   $('rank').innerHTML = h;
   h = ''; for (i = 0; i < 3; i++) h += '<span class="hp' + (i < G.hp ? ' on' : '') + '">' + ICON.heart + '</span>'; $('hearts').innerHTML = h;
   var fv = $('fever'); if (G.fever >= 1 || G.leader === 0) { fv.classList.remove('gone'); $('fevertxt').textContent = (G.leader === 0 ? '♛ ' : '') + 'x' + (feverMul() * (G.leader === 0 ? 1.25 : 1)).toFixed(1); fv.classList.toggle('hot', G.fever > 60); } else fv.classList.add('gone');
-  h = ''; if (G.boost.x2 > 0) h += '<span class="chip">2x ' + mmss(G.boost.x2) + '</span>'; if (P.starT > 0) h += '<span class="chip">Magnet ' + mmss(P.starT) + '</span>'; if (b.shield > 0) h += '<span class="chip">Shield ' + mmss(b.shield) + '</span>';
+  h = ''; if (G.boost.x2 > 0) h += '<span class="chip">2x ' + mmss(G.boost.x2) + '</span>'; if (P.starT > 0) h += '<span class="chip">' + T('Magnet {0}', mmss(P.starT)) + '</span>'; if (b.shield > 0) h += '<span class="chip">' + T('Shield {0}', mmss(b.shield)) + '</span>';
   $('chips').innerHTML = h;
   $('rebirthbtn').classList.toggle('gone', !canRebirth());
   var q = curQuest(), qe = $('quest');
-  if (G.questPop > 0) { qe.className = 'pill done'; $('qtxt').textContent = 'Done: ' + G.questDone.text; $('qnum').innerHTML = (G.questDone.coin ? '+' + fmt(G.questDone.coin) + ' ' : '') + (G.questDone.gems ? '+' + G.questDone.gems + ' ' + ICON.gem : ''); }
-  else { qe.className = 'pill'; $('qtxt').textContent = q.text; $('qnum').innerHTML = Math.min(q.cur, q.need) + '/' + q.need + (q.gems ? ' &nbsp;' + q.gems + ' ' + ICON.gem : ''); }
+  if (G.questPop > 0) { qe.className = 'pill done'; $('qtxt').textContent = T('Done: {0}', T(G.questDone.text)); $('qnum').innerHTML = (G.questDone.coin ? '+' + fmt(G.questDone.coin) + ' ' : '') + (G.questDone.gems ? '+' + G.questDone.gems + ' ' + ICON.gem : ''); }
+  else { qe.className = 'pill'; $('qtxt').textContent = T(q.text); $('qnum').innerHTML = Math.min(q.cur, q.need) + '/' + q.need + (q.gems ? ' &nbsp;' + q.gems + ' ' + ICON.gem : ''); }
   var e = G.event, ev = $('ev');
-  if (e && e.on) { ev.className = 'pill'; ev.style.background = EV[e.type].col; $('evtxt').textContent = EV[e.type].title; $('evfill').style.width = clamp((1 - e.t / EV[e.type].dur) * 100, 0, 100) + '%'; }
+  if (e && e.on) { ev.className = 'pill'; ev.style.background = EV[e.type].col; $('evtxt').textContent = T(EV[e.type].title); $('evfill').style.width = clamp((1 - e.t / EV[e.type].dur) * 100, 0, 100) + '%'; }
   else ev.className = 'pill gone';
   var bn = $('banner');
-  if (G.banner) { if (bn.dataset.t !== G.banner.title) { bn.dataset.t = G.banner.title; $('bicon').innerHTML = EVICON[evKey(G.banner.title)]; $('bt').textContent = G.banner.title; $('bs').textContent = G.banner.sub; $('bt').style.color = G.banner.col; $('bbar').style.background = G.banner.col; bn.className = ''; void bn.offsetWidth; bn.className = 'show'; } }
+  if (G.banner) { if (bn.dataset.t !== G.banner.title) { bn.dataset.t = G.banner.title; $('bicon').innerHTML = EVICON[evKey(G.banner.title)]; $('bt').textContent = T(G.banner.title); $('bs').textContent = T(G.banner.sub); $('bt').style.color = G.banner.col; $('bbar').style.background = G.banner.col; bn.className = ''; void bn.offsetWidth; bn.className = 'show'; } }
   else if (bn.className) { bn.className = ''; bn.dataset.t = ''; }
   $('sprintfill').style.height = (P.stam / stamMax(P) * 100) + '%'; $('sprint').classList.toggle('tired', P.tired > 0 || P.stam < 22);
   if (G.t > 45 && !$('keys').classList.contains('gone')) $('keys').classList.add('gone');
@@ -2055,7 +2348,7 @@ function btn(act, label, opt) { return '<button class="btn' + (opt && opt.cls ? 
 function adBtn(act, label, key) {       // a rewarded-ad button always shows the video icon; with a running cooldown it shows the time instead
   if (!adsOn()) return '';
   var cd = key ? cdLeft(key) : 0;
-  return '<button class="btn" data-act="' + act + '"' + (cd ? ' disabled' : '') + '>' + ICON.ad + ' <span' + (key ? ' data-cd="' + key + '" data-label="' + label + '"' : '') + '>' + (cd ? 'Ad again in ' + mmss(cd) : label) + '</span></button>';
+  return '<button class="btn" data-act="' + act + '"' + (cd ? ' disabled' : '') + '>' + ICON.ad + ' <span' + (key ? ' data-cd="' + key + '" data-label="' + label + '"' : '') + '>' + (cd ? T('Ad again in {0}', mmss(cd)) : label) + '</span></button>';
 }
 function drawPreview(cnv, fn) { var old = cx; cx = cnv.getContext('2d'); cx.setTransform(2, 0, 0, 2, 0, 0); cx.clearRect(0, 0, 80, 80); cx.lineJoin = 'round'; cx.lineCap = 'round'; fn(); cx = old; }
 function uiModal() {
@@ -2063,30 +2356,30 @@ function uiModal() {
   if (!m) { box.classList.add('gone'); return; }
   box.classList.remove('gone');
   if (m.type === 'levelup' || m.type === 'away') {
-    h = m.type === 'away' ? '<h2>WELCOME BACK</h2><p>Your blob kept snacking while you were away.</p>' : '<h2>LEVEL ' + m.level + '!</h2><p>Your blob evolved into <b>' + lvName(m.level) + '</b>. Loot is now worth 50% more. +2 ' + ICON.gem + '</p>';
-    h += '<div class="reward"><i class="coin"></i> ' + fmt(m.reward) + '</div><div class="btns">' + adBtn('collectAd', 'Collect x3') + btn('collect', 'Collect') + btn('collectGem', 'Collect x3 for 5 ' + ICON.gem, { off: G.gems < 5 }) + '</div>';
+    h = m.type === 'away' ? '<h2>' + T('WELCOME BACK') + '</h2><p>' + T('Your blob kept snacking while you were away.') + '</p>' : '<h2>' + T('LEVEL {0}!', m.level) + '</h2><p>' + T('Your blob evolved into <b>{0}</b>. Loot is now worth 50% more. +2 {1}', lvName(m.level), ICON.gem) + '</p>';
+    h += '<div class="reward"><i class="coin"></i> ' + fmt(m.reward) + '</div><div class="btns">' + adBtn('collectAd', T('Collect x3')) + btn('collect', T('Collect')) + btn('collectGem', T('Collect x3 for 5 {0}', ICON.gem), { off: G.gems < 5 }) + '</div>';
   } else if (m.type === 'ko') {
-    h = '<h2>KNOCKED OUT</h2><p>Respawning at home drops everything you carry and resets your fever bonus.</p><div class="btns">' + (m.offer ? adBtn('reviveAd', 'Revive right here') : '') + btn('respawn', 'Respawn at home') + btn('reviveGem', 'Revive right here for 15 ' + ICON.gem, { off: G.gems < 15 }) + '</div>';
-    if (!m.offer && adsOn()) h += '<p class="note">Ad revive is back in ' + mmss(cdLeft('revive')) + '.</p>';
+    h = '<h2>' + T('KNOCKED OUT') + '</h2><p>' + T('Respawning at home drops everything you carry and resets your fever bonus.') + '</p><div class="btns">' + (m.offer ? adBtn('reviveAd', T('Revive right here')) : '') + btn('respawn', T('Respawn at home')) + btn('reviveGem', T('Revive right here for 15 {0}', ICON.gem), { off: G.gems < 15 }) + '</div>';
+    if (!m.offer && adsOn()) h += '<p class="note">' + T('Ad revive is back in {0}.', mmss(cdLeft('revive'))) + '</p>';
   } else if (m.type === 'rebirth') {
     var st = rebirthGain(), st2 = Math.ceil(st * 1.5);
-    h = '<h2>REBIRTH</h2><p>Start again in a new world with tougher rivals. Coins, upgrades and blob size reset. You keep gems, skins and stars.</p><div class="reward">★ +' + st + ' stars = +' + st * 20 + '% coins and growth, forever</div><div class="btns">' +
-      adBtn('rebirthAd', 'Rebirth with ' + st2 + ' stars') + btn('rebirth', 'Rebirth with ' + st + ' stars') + btn('rebirthGem', 'Rebirth with ' + st2 + ' stars for 20 ' + ICON.gem, { off: G.gems < 20 }) + btn('close', 'Not yet') + '</div>';
+    h = '<h2>' + T('REBIRTH') + '</h2><p>' + T('Start again in a new world with tougher rivals. Coins, upgrades and blob size reset. You keep gems, skins and stars.') + '</p><div class="reward">' + T('★ +{0} stars = +{1}% coins and growth, forever', st, st * 20) + '</div><div class="btns">' +
+      adBtn('rebirthAd', T('Rebirth with {0} stars', st2)) + btn('rebirth', T('Rebirth with {0} stars', st)) + btn('rebirthGem', T('Rebirth with {0} stars for 20 {1}', st2, ICON.gem), { off: G.gems < 20 }) + btn('close', T('Not yet')) + '</div>';
   } else if (m.type === 'shop') {
-    var tabs = [['skins', 'Skins'], ['hats', 'Hats'], ['boosts', 'Boosts'], ['gems', 'Gems']];
-    h = '<div class="mhead"><span class="gemcount">' + ICON.gem + ' <b>' + fmt(SHOW.g + 0.001) + '</b></span><div class="tabs">' + tabs.map(function (t) { return '<button class="tab' + (m.tab === t[0] ? ' on' : '') + (t[0] === 'gems' && G.daily !== today() ? ' gift' : '') + '" data-act="tab:' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><button class="x" data-act="close" aria-label="Close">X</button></div><div class="mbody">';
+    var tabs = [['skins', T('Skins')], ['hats', T('Hats')], ['boosts', T('Boosts')], ['gems', T('Gems')]];
+    h = '<div class="mhead"><span class="gemcount">' + ICON.gem + ' <b>' + fmt(SHOW.g + 0.001) + '</b></span><div class="tabs">' + tabs.map(function (t) { return '<button class="tab' + (m.tab === t[0] ? ' on' : '') + (t[0] === 'gems' && G.daily !== today() ? ' gift' : '') + '" data-act="tab:' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><button class="x" data-act="close" aria-label="' + T('Close') + '">X</button></div><div class="mbody">';
     if (m.tab === 'skins' || m.tab === 'hats') {
       var list = m.tab === 'skins' ? SKINS : HATS, own = m.tab === 'skins' ? G.skins : G.hats, cur = m.tab === 'skins' ? G.skin : G.hat, act = m.tab === 'skins' ? 'skin' : 'hat';
       h += '<div class="grid">';
-      for (i = 0; i < list.length; i++) { var s = list[i], has = own.indexOf(s.id) >= 0; h += '<div class="card' + (cur === s.id ? ' on' : '') + '"><canvas width="160" height="160" data-pv="' + act + ':' + s.id + '"></canvas><b>' + s.name + '</b>' + (cur === s.id ? '<span class="tag">Equipped</span>' : has ? btn(act + ':' + s.id, 'Equip') : btn(act + ':' + s.id, s.price + ' ' + ICON.gem, { off: G.gems < s.price })) + '</div>'; }
+      for (i = 0; i < list.length; i++) { var s = list[i], has = own.indexOf(s.id) >= 0; h += '<div class="card' + (cur === s.id ? ' on' : '') + '"><canvas width="160" height="160" data-pv="' + act + ':' + s.id + '"></canvas><b>' + T(s.name) + '</b>' + (cur === s.id ? '<span class="tag">' + T('Equipped') + '</span>' : has ? btn(act + ':' + s.id, T('Equip')) : btn(act + ':' + s.id, s.price + ' ' + ICON.gem, { off: G.gems < s.price })) + '</div>'; }
       h += '</div>';
     } else if (m.tab === 'boosts') {
-      for (i = 0; i < BOOSTS.length; i++) { var bo = BOOSTS[i]; h += '<div class="rowi"><div><b>' + bo.name + '</b><span>' + bo.hint + '</span></div><div class="rbtn">' + adBtn('boostAd:' + bo.id, 'Free', 'b_' + bo.id) + btn('boostGem:' + bo.id, bo.gems + ' ' + ICON.gem, { off: G.gems < bo.gems }) + '</div></div>'; }
+      for (i = 0; i < BOOSTS.length; i++) { var bo = BOOSTS[i]; h += '<div class="rowi"><div><b>' + T(bo.name) + '</b><span>' + T(bo.hint) + '</span></div><div class="rbtn">' + adBtn('boostAd:' + bo.id, T('Free'), 'b_' + bo.id) + btn('boostGem:' + bo.id, bo.gems + ' ' + ICON.gem, { off: G.gems < bo.gems }) + '</div></div>'; }
     } else {
       h += streakRow();
-      if (adsOn()) h += '<div class="rowi"><div><b>Free gems</b><span>15 gems per video</span></div><div class="rbtn">' + adBtn('gemAd', 'Watch', 'gems') + '</div></div>';
-      h += '<div class="rowi"><div><b>Earn gems by playing</b><span>Quests, boss blobs, level-ups and every rebirth pay gems.</span></div></div>';
-      h += '<div class="rowi"><div><b>Buy gems</b><span>Purchases are switched off in this version. A portal has to enable them first.</span></div></div>';
+      if (adsOn()) h += '<div class="rowi"><div><b>' + T('Free gems') + '</b><span>' + T('15 gems per video') + '</span></div><div class="rbtn">' + adBtn('gemAd', T('Watch'), 'gems') + '</div></div>';
+      h += '<div class="rowi"><div><b>' + T('Earn gems by playing') + '</b><span>' + T('Quests, boss blobs, level-ups and every rebirth pay gems.') + '</span></div></div>';
+      h += '<div class="rowi"><div><b>' + T('Buy gems') + '</b><span>' + T('Purchases are switched off in this version. A portal has to enable them first.') + '</span></div></div>';
     }
     h += '</div>';
   }
@@ -2102,15 +2395,16 @@ function uiModal() {
 }
 function tickCooldowns() {
   Array.prototype.forEach.call(document.querySelectorAll('[data-cd]'), function (el) {
-    var cd = cdLeft(el.dataset.cd), b = el.closest('button'); el.textContent = cd ? 'Ad again in ' + mmss(cd) : el.dataset.label; if (b) b.disabled = cd > 0;
+    var cd = cdLeft(el.dataset.cd), b = el.closest('button'); el.textContent = cd ? T('Ad again in {0}', mmss(cd)) : el.dataset.label; if (b) b.disabled = cd > 0;
   });
 }
 var toastT = null;
-function uiToast(msg) { var t = $('toast'); t.textContent = msg; t.classList.remove('gone'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.add('gone'); }, 2400); }
-function uiAd(on) { $('adov').classList.toggle('gone', !on); if (on) { $('adtitle').textContent = 'Loading ad'; $('adsub').textContent = ''; } }
+function uiToast(msg) { var t = $('toast'); t.textContent = T(msg); t.classList.remove('gone'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.add('gone'); }, 2400); }
+function uiAd(on) { $('adov').classList.toggle('gone', !on); if (on) { $('adtitle').textContent = T('Loading ad'); $('adsub').textContent = ''; } }
 function uiTestAd(kind, done) {      // stands in for a real video while the game is not on a portal
-  var left = 3; $('adtitle').textContent = 'TEST AD'; $('adsub').textContent = kind + '. On a portal a real ad plays here. ' + left;
-  var iv = setInterval(function () { left--; $('adsub').textContent = kind + '. On a portal a real ad plays here. ' + Math.max(0, left); if (left <= 0) { clearInterval(iv); done(true); } }, 1000);
+  Snd.setMute(true);      // the placeholder 'plays' at once, so it mutes at once
+  var left = 3; kind = T(kind); $('adtitle').textContent = T('TEST AD'); $('adsub').textContent = T('{0}. On a portal a real ad plays here. {1}', kind, left);
+  var iv = setInterval(function () { left--; $('adsub').textContent = T('{0}. On a portal a real ad plays here. {1}', kind, Math.max(0, left)); if (left <= 0) { clearInterval(iv); done(true); } }, 1000);
 }
 
 /* ---------- event banner icons ---------- */
@@ -2129,11 +2423,11 @@ function streakRow() {
   var got = G.daily === today(), cur = got ? G.streak : dailyDay(), pos = (cur - 1) % 7 + 1, h = '', j;
   for (j = 1; j <= 7; j++) {
     var done = got ? j <= pos : j < pos, here = j === pos;
-    h += '<div class="day' + (done ? ' done' : '') + (here ? (got ? ' today' : ' next') : '') + (j === 7 ? ' d7' : '') + '"><small>Day ' + j + '</small><i class="gemi"></i><b>' + DAILY[j - 1] + '</b>' + (done ? '<em>✓</em>' : '') + '</div>';
+    h += '<div class="day' + (done ? ' done' : '') + (here ? (got ? ' today' : ' next') : '') + (j === 7 ? ' d7' : '') + '"><small>' + T('Day {0}', j) + '</small><i class="gemi"></i><b>' + DAILY[j - 1] + '</b>' + (done ? '<em>✓</em>' : '') + '</div>';
   }
-  var sub = got ? 'Day ' + G.streak + ' in a row. Come back tomorrow for ' + DAILY[G.streak % 7] + ' gems.' : cur > 1 ? 'Day ' + cur + ' in a row. Miss a day and the streak starts again.' : 'Come back every day: day 7 pays 100 gems.';
-  return '<div class="streak"><div class="sh"><b>Daily gift</b><span>' + sub + '</span></div><div class="days">' + h + '</div>' +
-    btn('daily', got ? 'Come back tomorrow' : 'Claim ' + dailyNext() + ' ' + ICON.gem, { off: got, cls: got ? '' : 'claim' }) + '</div>';
+  var sub = got ? T('Day {0} in a row. Come back tomorrow for {1} gems.', G.streak, DAILY[G.streak % 7]) : cur > 1 ? T('Day {0} in a row. Miss a day and the streak starts again.', cur) : T('Come back every day: day 7 pays 100 gems.');
+  return '<div class="streak"><div class="sh"><b>' + T('Daily gift') + '</b><span>' + sub + '</span></div><div class="days">' + h + '</div>' +
+    btn('daily', got ? T('Come back tomorrow') : T('Claim {0} {1}', dailyNext(), ICON.gem), { off: got, cls: got ? '' : 'claim' }) + '</div>';
 }
 function claimDaily() {
   if (G.daily === today()) return;
@@ -2209,6 +2503,28 @@ function hudAnim(dt) {
   if (g !== SHOW.lg) { SHOW.lg = g; $('gems').textContent = g; var gc = G.modal && document.querySelector('.gemcount b'); if (gc) gc.textContent = g; }
 }
 
+/* ---------- first-minute onboarding: move, grab, bring home, lunge. Reads G only, never writes it ---------- */
+var OB = { on: false, step: 0, k: 0, x0: 0, y0: 0, item: null, rival: null };
+function obStart() {      // only for a brand-new save: nothing earned yet, first world
+  var P = G.actors[0]; OB.on = G.total === 0 && G.rb === 0 && G.stats.fed === 0; OB.step = 0; OB.k = 0; OB.x0 = P.x; OB.y0 = P.y;
+}
+function obUpdate(dt) {
+  if (!OB.on || !G.started || G.modal) return;
+  var P = G.actors[0], st = G.stats, s = OB.step, i;
+  if (s === 0 && (hyp(P.x - OB.x0, P.y - OB.y0) > 140 || P.used > 0)) s = 1;
+  if (s === 1 && (P.used >= Math.min(3, capOf(P)) || st.fed > 0)) s = 2;
+  if (s === 2 && st.fed > 0 && P.used === 0) s = 3;
+  if (s === 3 && (st.bonks > 0 || st.raids > 0)) s = 4;
+  if (st.time > 90) s = 4;                       // a minute and a half in: the quests take over
+  if (s !== OB.step) { OB.step = s; OB.k = 0; if (s > 0 && s < 4) Snd.quest(); }
+  OB.k += dt;
+  if (s >= 4) { OB.on = false; $('sprint').classList.remove('hint'); return; }
+  OB.item = null; OB.rival = null;
+  if (s === 1) { var bd = 1e9; for (i = 0; i < G.items.length; i++) { var it = G.items[i]; if (it.state !== 1 || it.kind === 'heart') continue; var d = hyp(it.x - P.x, it.y - P.y); if (d < bd) { bd = d; OB.item = it; } } }
+  if (s === 3) { var rd = 700; for (i = 1; i < 4; i++) { var a = G.actors[i], d2 = hyp(a.x - P.x, a.y - P.y); if (d2 < rd) { rd = d2; OB.rival = a; } } }
+  $('sprint').classList.toggle('hint', s === 3);
+}
+
 /* ---------- main loop ---------- */
 function frame(ts) {
   requestAnimationFrame(frame);
@@ -2222,17 +2538,17 @@ function frame(ts) {
   }
   if (G.modal) { cdT -= dt; if (cdT <= 0) { cdT = 1; tickCooldowns(); } }
   if (rdt > 0) { FRAMEMS += (rdt * 1000 - FRAMEMS) * 0.03; LOWFX = LOWFX ? FRAMEMS > 21 : FRAMEMS > 25; }
-  FXDT = paused || Ads.busy ? 0 : rdt; watchFx(rdt); hudAnim(rdt);
+  FXDT = paused || Ads.busy ? 0 : rdt; watchFx(rdt); hudAnim(rdt); obUpdate(rdt);
   if (!G.started) drawHero($('hero'), ts);
   render();
 }
 function init() {
   cv = $('c'); cx = cv.getContext('2d'); buildSprites(); document.body.classList.add('prestart');
   try { if (window.matchMedia('(pointer:coarse)').matches) { TOUCH = true; document.body.classList.add('touch'); } } catch (e) { /* no media queries: keyboard layout stays */ }
-  var sv = load(); newGame(sv); Snd.muted = !!(sv && sv.mute); Snd.musicOff = !!(sv && sv.musicOff); SHOW.c = G.coins; SHOW.g = G.gems;
-  resize(); window.addEventListener('resize', resize); buildHud(); bindInput();
+  var sv = load(); newGame(sv); Snd.muted = !!(sv && sv.mute); Snd.musicOff = !!(sv && sv.musicOff); SHOW.c = G.coins; SHOW.g = G.gems; LANG = pickLang(sv && sv.lang);
+  resize(); window.addEventListener('resize', resize); buildHud(); bindInput(); applyLang();
   if (sv && sv.total > 0) {
-    $('play').innerHTML = '<span class="tri"></span>CONTINUE'; $('fresh').classList.remove('gone');
+    $('play').innerHTML = '<span class="tri"></span><span data-t="CONTINUE">' + T('CONTINUE') + '</span>'; $('fresh').classList.remove('gone');
     var away = Math.min(7200, (Date.now() - (sv.ts || Date.now())) / 1000);
     if (away > 120) AWAY = Math.round(cpsNow() * away * 0.35);
   }
@@ -2251,114 +2567,6 @@ window.__fb = {
   sim: function (sec, auto, rebirth) { G.started = true; G.auto = auto !== false; for (var i = 0, n = Math.round(sec * 60); i < n; i++) { step(1 / 60); if (rebirth && canRebirth()) { G.auto = false; doRebirth(1); G.auto = true; } } G.auto = false; return this.state(); },
   seed: function (s) { _seed = s >>> 0; }, fresh: function () { newGame(null); }, event: function (ty) { G.event = null; G.boss = null; G.grav = 900; G.nextEvent = G.t; G.evForce = ty; }
 };
-
-// ---- admin/loader.js ----
-/* ---------- admin gate (test build only; portal builds do not contain this file) ----------
-   The admin menu is NOT in this file. It is stored below in encrypted form, and only the admin passphrase
-   turns it back into code. There is no "is admin" switch to flip: without the passphrase there is nothing to run.
-   Open or close: F2 on a keyboard, five quick taps on the level label on a touch screen, or the address ending in #admin. */
-(function () {
-  var PAY = {"s":"l49vn1kTGzFZP3texpegeA==","i":"DCttvPG6RRCwAuPj","c":"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","n":300000};        // { s: salt, i: iv, c: ciphertext, n: rounds }, all base64
-  if (!PAY) return;
-  var STORE = 'feedblob.admin', busy = false, box = null, taps = [];
-
-  function bytes(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
-  function text(u) { var s = ''; for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); }
-  function saved() { try { return localStorage.getItem(STORE); } catch (e) { return null; } }
-  function forget() { try { localStorage.removeItem(STORE); } catch (e) { /* nothing stored */ } }
-
-  // passphrase -> key (slow on purpose, so guessing is expensive)
-  function derive(pass) {
-    return crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveBits'])
-      .then(function (k) { return crypto.subtle.deriveBits({ name: 'PBKDF2', salt: bytes(PAY.s), iterations: PAY.n, hash: 'SHA-256' }, k, 256); })
-      .then(function (bits) { return new Uint8Array(bits); });
-  }
-  // key -> source of the menu; a wrong key fails here, it never yields half-working code
-  function decrypt(raw) {
-    return crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt'])
-      .then(function (k) { return crypto.subtle.decrypt({ name: 'AES-GCM', iv: bytes(PAY.i) }, k, bytes(PAY.c)); })
-      .then(function (buf) { return new TextDecoder().decode(buf); });
-  }
-  // pages differ in what they allow, so try the three ways a script can be started
-  function run(code) {
-    return new Promise(function (done) {
-      var el;
-      try { el = document.createElement('script'); el.textContent = code; document.head.appendChild(el); el.remove(); } catch (e) { /* next way */ }
-      if (window.FBAdmin) return done(true);
-      try { (new Function(code))(); } catch (e) { /* next way */ }
-      if (window.FBAdmin) return done(true);
-      try {
-        var url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' })); el = document.createElement('script');
-        el.onload = function () { URL.revokeObjectURL(url); done(!!window.FBAdmin); }; el.onerror = function () { done(false); };
-        el.src = url; document.head.appendChild(el);
-      } catch (e) { done(false); }
-    });
-  }
-  // result: 'ok', 'wrong' (passphrase or key does not fit) or 'blocked' (right key, but the page refuses to start the menu)
-  function unlock(raw, remember) {
-    return decrypt(raw).then(function (code) {
-      return run(code).then(function (ok) {
-        if (!ok) return 'blocked';
-        window.FBAdmin.onLock = forget;
-        if (remember) try { localStorage.setItem(STORE, text(raw)); } catch (e) { /* works without remembering */ }
-        return 'ok';
-      });
-    }, function () { return 'wrong'; });
-  }
-
-  function toggle() {
-    if (window.FBAdmin) return window.FBAdmin.toggle();
-    if (busy) return;
-    if (box) return closeBox();
-    if (!window.crypto || !crypto.subtle) return ask('This page cannot unlock the menu (no secure connection).');
-    var key = saved();
-    if (!key) return ask('');
-    busy = true;
-    unlock(bytes(key), false).then(function (r) { busy = false; if (r === 'ok') window.FBAdmin.toggle(); else { if (r === 'wrong') forget(); ask(r === 'blocked' ? 'This page does not allow loading the menu.' : ''); } });
-  }
-
-  function closeBox() { if (box) { box.remove(); box = null; } }
-  function ask(msg) {
-    closeBox();
-    box = document.createElement('div');
-    box.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:rgba(30,20,15,.55);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif';
-    box.innerHTML = '<form style="background:#fff8ea;border:3px solid #3b2a20;border-radius:16px;padding:18px;width:min(320px,88vw);display:flex;flex-direction:column;gap:10px;color:#3b2a20">' +
-      '<b style="font-size:18px">Admin</b>' +
-      '<input type="password" autocomplete="off" placeholder="Passphrase" style="font:inherit;font-size:16px;padding:9px 10px;border:2px solid #3b2a20;border-radius:10px;background:#fff">' +
-      '<label style="font-size:13px;display:flex;gap:7px;align-items:center"><input type="checkbox" checked> Remember on this device</label>' +
-      '<div data-err style="font-size:13px;color:#c0392b;min-height:17px"></div>' +
-      '<div style="display:flex;gap:8px"><button type="submit" style="flex:1;font:inherit;font-weight:700;padding:9px;border:2px solid #3b2a20;border-radius:10px;background:#8cf58a;cursor:pointer">Unlock</button>' +
-      '<button type="button" data-x style="font:inherit;font-weight:700;padding:9px 14px;border:2px solid #3b2a20;border-radius:10px;background:#fff;cursor:pointer">Cancel</button></div></form>';
-    var form = box.firstChild, inp = form.querySelector('input[type=password]'), err = form.querySelector('[data-err]'), btn = form.querySelector('button[type=submit]');
-    err.textContent = msg || '';
-    ['keydown', 'keyup', 'keypress', 'pointerdown', 'mousedown', 'touchstart'].forEach(function (ev) { box.addEventListener(ev, function (e) { if (ev === 'keydown' && e.code === 'Escape') closeBox(); e.stopPropagation(); }); });
-    form.querySelector('[data-x]').addEventListener('click', closeBox);
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      if (busy || !inp.value) return;
-      if (!window.crypto || !crypto.subtle) { err.textContent = 'This page cannot unlock the menu (no secure connection).'; return; }
-      busy = true; btn.textContent = 'Checking…'; err.textContent = '';
-      var remember = form.querySelector('input[type=checkbox]').checked;
-      derive(inp.value).then(function (raw) { return unlock(raw, remember); }, function () { return 'wrong'; }).then(function (r) {
-        busy = false; btn.textContent = 'Unlock';
-        if (r === 'ok') { closeBox(); window.FBAdmin.toggle(); }
-        else { err.textContent = r === 'blocked' ? 'Right passphrase, but this page does not allow loading the menu.' : 'Wrong passphrase.'; inp.value = ''; inp.focus(); }
-      });
-    });
-    document.body.appendChild(box); inp.focus();
-  }
-
-  window.addEventListener('keydown', function (e) { if (e.code === 'F2') { e.preventDefault(); e.stopPropagation(); toggle(); } }, true);
-  document.addEventListener('pointerdown', function (e) {
-    var el = document.getElementById('lvl'); if (!el || box || (window.FBAdmin && window.FBAdmin.isOpen())) return;
-    var r = el.getBoundingClientRect(), now = Date.now();
-    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) { taps.length = 0; return; }
-    taps.push(now); while (taps.length && now - taps[0] > 2500) taps.shift();
-    if (taps.length >= 5) { taps.length = 0; toggle(); }
-  }, true);
-  if (location.hash === '#admin') setTimeout(toggle, 400);
-  window.addEventListener('hashchange', function () { if (location.hash === '#admin' && !(window.FBAdmin && window.FBAdmin.isOpen()) && !box) toggle(); });
-})();
 
 </script>
 </body>
