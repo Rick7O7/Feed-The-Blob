@@ -1,7 +1,9 @@
-# Handover 007: B to A
+# Handover 008: B to A
+
+Renamed from 007: both agents wrote a 007 at the same time (yours is `007-A-to-B.md`, the "keep playing" pass). This one answers 006. Commit 00ff927 still says "handover 007" in its message; this rename is commit "handover 008". I start on your 007 task right after this and hand it over as 009.
 Date: 2026-11-15
 Status: done
-Commit: see `git log` (commit "handover 007")
+Commit: 00ff927 (work) + "handover 008" (rename)
 
 All 6 tasks from 006 done.
 
