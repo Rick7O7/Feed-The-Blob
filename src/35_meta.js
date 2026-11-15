@@ -76,7 +76,7 @@ function dailyNext() { return DAILY[(dailyDay() - 1) % 7]; }
 function rebirthGain() { return 3 + Math.max(0, G.blobs[0].level - rbLevel()); }
 function canRebirth() { return G.blobs[0].level >= rbLevel(); }
 function doRebirth(mult) {
-  var st = Math.ceil(rebirthGain() * mult), keep = { gems: G.gems + 20, stars: G.stars + st, rb: G.rb + 1, stats: G.stats, quest: G.quest, qbase: G.qbase, skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, total: G.total };
+  var st = Math.ceil(rebirthGain() * mult), keep = { gems: G.gems + 20, stars: G.stars + st, rb: G.rb + 1, stats: G.stats, quest: G.quest, qbase: G.qbase, skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, total: G.total, album: G.album, albumDone: G.albumDone, ach: G.ach, pbest: G.pbest };
   keep.stats.rebirths++;
   newGame(keep); G.started = true; cam.x = HOMES[0].x; cam.y = HOMES[0].y; G.flash = 0.8; Snd.level();
   G.banner = { title: T('REBIRTH {0}', G.rb), sub: T('+{0} stars. Everything grows {1}% now. Welcome to {2}!', st, Math.round(starMul() * 100), T(THEMES[G.rb % THEMES.length].name)), col: '#fff36b', t: 4.2 };
@@ -123,3 +123,67 @@ var ACT = {
   rebirthAd: function () { rewarded('rebirth', 0, function () { doRebirth(1.5); }); },
   rebirthGem: function () { if (spend(20)) doRebirth(1.5); }
 };
+
+/* ---------- keep-playing loops: pickup combo, surprises, achievements, album. All rewards are earned, never bought ---------- */
+// pickup combo: pickups less than 1.2 s apart chain up; every 10th in a chain pays a small, growing coin bonus
+function comboStep() {
+  G.pcombo = G.t - G.pcomboT < 1.2 ? G.pcombo + 1 : 1; G.pcomboT = G.t; if (G.pcombo > G.pbest) G.pbest = G.pcombo;
+  if (G.pcombo % 10 === 0) {
+    var P = G.actors[0], c = Math.round(3 * lootMul() * coinMul() * G.pcombo / 10); addCoins(c); Snd.quest();
+    say(P.x, P.y - 70, T('COMBO x{0}!  +{1}', G.pcombo, fmt(c)), '#ff8fe0', 22 + Math.min(10, G.pcombo / 5));
+  }
+}
+// surprise moments between events: a golden cake drops near you, or a lucky crate appears
+function surprise() {
+  var P = G.actors[0], x, y, ok, n = 0, i;
+  do {          // a spot near the player but never on or next to a blob, so no blob swallows the surprise
+    var a = rnd() * TAU; x = clamp(P.x + Math.cos(a) * 330, 220, W - 220); y = clamp(P.y + Math.sin(a) * 260, 220, H - 220); ok = true;
+    for (i = 0; i < 4; i++) if (hyp(x - G.blobs[i].x, y - G.blobs[i].y) < G.blobs[i].r + 120) ok = false;
+  } while (!ok && ++n < 12);
+  if (!ok) { G.surpriseT = 3; return; }      // no free spot right now: try again in a moment
+  G.stats.surprises++; G.surpriseN++;
+  if (G.surpriseN % 2) { var it = mkItem('cake', x, y, 640); it.life = 30; G.items.push(it); say(P.x, P.y - 60, 'A GOLDEN CAKE FALLS!', '#ffd23c', 22); Snd.boing(); }
+  else { G.crates.push({ x: x, y: y, hp: 2, wob: 1, age: 0, lucky: true }); say(P.x, P.y - 60, 'A LUCKY CRATE!', '#fff36b', 22); Snd.zoom(); }
+}
+var ACH = [
+  { id: 'fed100', text: 'Feed 100 loot', gems: 5, ok: function () { return G.stats.fed >= 100; } },
+  { id: 'fed1k', text: 'Feed 1,000 loot', gems: 15, ok: function () { return G.stats.fed >= 1000; } },
+  { id: 'fed10k', text: 'Feed 10,000 loot', gems: 40, ok: function () { return G.stats.fed >= 10000; } },
+  { id: 'combo20', text: 'Pickup combo x20', gems: 10, ok: function () { return G.pbest >= 20; } },
+  { id: 'combo50', text: 'Pickup combo x50', gems: 25, ok: function () { return G.pbest >= 50; } },
+  { id: 'raid10', text: 'Raid rival blobs 10 times', gems: 10, ok: function () { return G.stats.raids >= 10; } },
+  { id: 'raid100', text: 'Raid rival blobs 100 times', gems: 30, ok: function () { return G.stats.raids >= 100; } },
+  { id: 'jack5', text: 'Hit 5 raid jackpots', gems: 15, ok: function () { return G.stats.jackpots >= 5; } },
+  { id: 'def10', text: 'Chase off 10 raiders', gems: 15, ok: function () { return G.stats.defended >= 10; } },
+  { id: 'boss3', text: 'Pop 3 Boss Blobs', gems: 15, ok: function () { return G.stats.bosses >= 3; } },
+  { id: 'boss15', text: 'Pop 15 Boss Blobs', gems: 40, ok: function () { return G.stats.bosses >= 15; } },
+  { id: 'tre1', text: 'Catch a Treasure Blob', gems: 10, ok: function () { return G.stats.treasures >= 1; } },
+  { id: 'tre5', text: 'Catch 5 Treasure Blobs', gems: 25, ok: function () { return G.stats.treasures >= 5; } },
+  { id: 'ev10', text: 'Live through 10 events', gems: 15, ok: function () { return G.stats.events >= 10; } },
+  { id: 'crown', text: 'Take the crown', gems: 10, ok: function () { return G.leader === 0 && G.t > 60; } },
+  { id: 'lvl5', text: 'Reach level 5', gems: 10, ok: function () { return G.blobs[0].level >= 5; } },
+  { id: 'lvl10', text: 'Reach level 10', gems: 30, ok: function () { return G.blobs[0].level >= 10; } },
+  { id: 'rb1', text: 'Rebirth for the first time', gems: 20, ok: function () { return G.stats.rebirths >= 1; } },
+  { id: 'rb5', text: 'Rebirth 5 times', gems: 60, ok: function () { return G.stats.rebirths >= 5; } },
+  { id: 'day7', text: 'Daily gift 7 days in a row', gems: 30, ok: function () { return G.streak >= 7; } }
+];
+function checkAch() {
+  for (var i = 0; i < ACH.length; i++) { var a = ACH[i]; if (G.ach[a.id] || !a.ok()) continue; G.ach[a.id] = 1; G.gems += a.gems; if (!G.auto) { Snd.quest(); uiAch(a); } }
+}
+// album: one sticker per loot kind, event, skin and hat seen or owned; a full page pays gems once
+var ALBUM = [
+  { id: 'loot', name: 'Loot', gems: 15, list: function () { return ['apple', 'donut', 'pizza', 'fish', 'can', 'boot', 'gem', 'gold', 'star', 'heart', 'cake']; }, has: function (k) { return !!G.album.loot[k]; } },
+  { id: 'ev', name: 'Events', gems: 25, list: function () { return Object.keys(EV); }, has: function (k) { return !!G.album.ev[k]; } },
+  { id: 'skins', name: 'Skins', gems: 50, list: function () { return SKINS.map(function (s) { return s.id; }); }, has: function (k) { return G.skins.indexOf(k) >= 0; } },
+  { id: 'hats', name: 'Hats', gems: 15, list: function () { return HATS.map(function (h) { return h.id; }); }, has: function (k) { return G.hats.indexOf(k) >= 0; } }
+];
+function albumCount(pg) { var l = pg.list(), n = 0; for (var i = 0; i < l.length; i++) if (pg.has(l[i])) n++; return [n, l.length]; }
+function albumReady() { for (var i = 0; i < ALBUM.length; i++) { var c = albumCount(ALBUM[i]); if (c[0] >= c[1] && !G.albumDone[ALBUM[i].id]) return true; } return false; }
+ACT.album = function (id) {
+  for (var i = 0; i < ALBUM.length; i++) { var pg = ALBUM[i], c = albumCount(pg); if (pg.id !== id || c[0] < c[1] || G.albumDone[id]) continue; G.albumDone[id] = 1; G.gems += pg.gems; Snd.fanfare(); uiToast(T('Page complete! +{0} gems', pg.gems)); save(); uiModal(); hud(); }
+};
+var metaT = 0;
+function updMeta(dt) {
+  if (!G.event && !G.boss) { G.surpriseT -= dt; if (G.surpriseT <= 0) { G.surpriseT = G.stats.time < 600 ? rand(20, 30) : rand(24, 38); surprise(); } }      // a little more often in the first 10 minutes
+  metaT -= dt; if (metaT <= 0) { metaT = 1; checkAch(); }
+}

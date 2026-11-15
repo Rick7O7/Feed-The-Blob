@@ -230,6 +230,30 @@ body.touch .card .btn,body.touch .tag{min-height:44px}
 .up .lv{font-size:11px}
 @media (max-width:560px){#shopbtn.long{font-size:11px;padding:0 6px}.mhead{flex-wrap:wrap;justify-content:space-between}.mhead .tabs{order:3;flex-basis:100%;flex-wrap:nowrap;gap:5px}.mhead .tab{flex:1;padding:6px 4px}#mute{width:44px}.days{gap:3px}.day small{font-size:9px}.day b{font-size:12px}#setpop{top:calc(60px + env(safe-area-inset-top))}}
 @media (max-height:430px){#hero{height:70px;max-width:200px;margin:-6px auto -2px}#mid{top:calc(58px + env(safe-area-inset-top))}#sub{top:calc(58px + env(safe-area-inset-top))}#setpop{top:calc(58px + env(safe-area-inset-top))}#mcard.shop{height:94vh}}
+#ach{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translateX(-50%);z-index:31;padding:8px 16px;display:flex;flex-direction:column;align-items:center;gap:1px;background:#fff36b;pointer-events:none;max-width:90vw;text-align:center}
+#ach.show{animation:achin .5s cubic-bezier(.2,1.6,.4,1) both}
+#ach b{font-size:13px;font-weight:900;letter-spacing:.04em}
+#ach span{font-size:15px;font-weight:900}
+#ach em{font-style:normal;font-size:14px;font-weight:900}
+@keyframes achin{from{transform:translateX(-50%) translateY(-70px) scale(.6)}to{transform:translateX(-50%)}}
+.apage{background:#f1e4c9;border:3px solid #3b2a20;border-radius:14px;padding:8px 10px 10px;margin-bottom:8px}
+.ah{display:flex;align-items:center;gap:8px;min-height:40px}
+.ah b{font-size:15px}
+.acount{font-size:13px;font-weight:900;opacity:.6;margin-right:auto}
+.ah .btn{width:auto;min-height:40px;font-size:13px;padding:4px 10px}
+.adone{font-size:13px;font-weight:900;color:#2f8f3a}
+.arew{font-size:13px;font-weight:900;opacity:.6}
+.stk{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.st{width:44px;height:44px;border-radius:10px;background:#fff8ea;border:2px solid #3b2a20;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.st svg{width:34px;height:34px}
+.st canvas{width:42px;height:42px}
+.st.off{background:#e3d4b6}
+.st.off svg,.st.off canvas{filter:brightness(0);opacity:.18}
+.arow{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:800;padding:6px 2px;border-top:2px dashed rgba(59,42,32,.18)}
+.arow b{white-space:nowrap}
+.arow.done{color:#2f8f3a}
+.arow:not(.done){opacity:.7}
+@media (max-width:560px){.mhead .tab{font-size:11px;padding:6px 2px}}
 @media (prefers-reduced-motion:reduce){#play,#play .tri,.day.next,.btn.claim,#mcard>.rays{animation:none}}
 </style>
 
@@ -265,6 +289,7 @@ body.touch .card .btn,body.touch .tag{min-height:44px}
   </div>
 </div>
 <div id="toast" class="pill gone"></div>
+<div id="ach" class="pill gone"></div>
 <div id="fly"></div>
 <div id="modal" class="gone"><div id="mcard" class="pill"></div></div>
 <div id="start">
@@ -377,6 +402,14 @@ var Snd = {
   boing: function () { if (this.ok('boing', 0.12)) this.tone(170 * this.jit(), 0.2, 'sine', 0.17, 560); },
   zoom: function () { if (this.ok('zoom', 0.3)) { this.tone(420, 0.16, 'triangle', 0.11, 940); this.noise(0.12, 0.1, 3200); } },
   heal: function () { if (this.ok('heal', 0.2)) { var j = this.jit(); this.tone(660 * j, 0.12, 'sine', 0.12); this.tone(880 * j, 0.2, 'sine', 0.12, 0, 0.1); } },
+  // a short tune when an event starts; it runs on the music bus, so the music switch silences it too
+  STINGS: { treasure: [[784, 'triangle'], [988], [1175], [1568]], rainbow: [[523, 'sine'], [659], [784], [988], [1175], [1319]], feast: [[392, 'square'], [523], [392], [659]],
+            party: [[523, 'triangle'], [659], [784], [659], [784], [1047]], lucky: [[1047, 'sine'], [1319], [1568], [2093]] },
+  sting: function (ty) {
+    var m = this.STINGS[ty]; if (!m || !this.ctx || this.musicOff || this.ctx.state !== 'running') return;
+    var type = m[0][1]; for (var i = 0; i < m.length; i++) this.tone(m[i][0], 0.22, type, 0.5, 0, 0.5 + i * 0.11, this.mus);
+    this.tone(m[m.length - 1][0] / 2, 0.6, 'triangle', 0.4, 0, 0.5 + m.length * 0.11, this.mus);
+  },
   fanfare: function () { if (this.ok('fanfare', 1)) { var a = [523, 659, 784, 1047], i; for (i = 0; i < a.length; i++) { this.tone(a[i], 0.14, 'square', 0.05, 0, i * 0.1); this.tone(a[i] / 2, 0.14, 'triangle', 0.1, 0, i * 0.1); } this.tone(1047, 0.6, 'triangle', 0.13, 0, 0.42); this.tone(1319, 0.6, 'triangle', 0.1, 0, 0.42); this.tone(1568, 0.6, 'sine', 0.08, 0, 0.42); } }
 };
 
@@ -491,6 +524,14 @@ function buildSprites() {
       g.beginPath(); g.moveTo(0, -13); g.bezierCurveTo(11, -3, 12, 4, 12, 5); g.arc(0, 5, 12, 0, Math.PI); g.bezierCurveTo(-12, 4, -11, -3, 0, -13); g.closePath(); g.fillStyle = col; g.fill(); outl(g);
       g.beginPath(); g.arc(-4, 3, 3.4, 0, TAU); g.fillStyle = 'rgba(255,255,255,.75)'; g.fill();
     });
+  });
+  SPR.cake = mkSprite(48, function (g) {       // golden cake: surprise moment loot
+    g.beginPath(); g.roundRect(-14, -2, 28, 14, 4); g.fillStyle = '#ffc93c'; g.fill(); outl(g);
+    g.beginPath(); g.roundRect(-11, -12, 22, 11, 4); g.fillStyle = '#ffe14d'; g.fill(); outl(g);
+    g.beginPath(); g.moveTo(-14, 3); g.quadraticCurveTo(-7, 8, 0, 3); g.quadraticCurveTo(7, 8, 14, 3); g.strokeStyle = '#fff8ea'; g.lineWidth = 3; g.stroke();
+    g.beginPath(); g.moveTo(0, -12); g.lineTo(0, -19); g.strokeStyle = INK; g.lineWidth = 2.5; g.stroke();
+    g.beginPath(); g.ellipse(0, -21, 2.6, 3.6, 0, 0, TAU); g.fillStyle = '#ff6b5b'; g.fill();
+    g.beginPath(); g.arc(-6, -8, 2.2, 0, TAU); g.fillStyle = 'rgba(255,255,255,.8)'; g.fill();
   });
   SPR.star = mkSprite(48, function (g) {
     g.beginPath(); for (var i = 0; i < 10; i++) { var r = i % 2 ? 7 : 16, a = -Math.PI / 2 + i * Math.PI / 5; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
@@ -727,6 +768,56 @@ var TROWS = [
   ['Hit %n raid jackpots: 3 hits in a row', 'Hol %n Jackpots: 3 Treffer in Folge', 'Logra %n premios gordos: 3 golpes seguidos', 'Faça %n jackpots: 3 acertos seguidos', 'Décroche %n jackpots : 3 coups d’affilée'],
   ['Pop %n more Boss Blobs', 'Bring %n weitere Boss-Blobs zum Platzen', 'Revienta %n blobs jefe más', 'Estoure mais %n blobs chefões', 'Éclate encore %n blobs boss'],
   ['Feed %n more crystals', 'Füttere %n weitere Kristalle', 'Da %n cristales más', 'Entregue mais %n cristais', 'Donne encore %n cristaux'],
+  // keep-playing pass: new events, combo, surprises, album, achievements
+  ['TREASURE BLOB', 'SCHATZ-BLOB', 'BLOB DEL TESORO', 'BLOB DO TESOURO', 'BLOB TRÉSOR'],
+  ['Catch it! Lunge into it 3 times!', 'Fang ihn! Spring 3-mal hinein!', '¡Atrápalo! ¡Embístelo 3 veces!', 'Pegue! Invista nele 3 vezes!', 'Attrape-le ! Fonce dedans 3 fois !'],
+  ['RAINBOW RAIN', 'REGENBOGENREGEN', 'LLUVIA ARCOÍRIS', 'CHUVA ARCO-ÍRIS', 'PLUIE ARC-EN-CIEL'],
+  ['Rare loot everywhere!', 'Seltene Beute überall!', '¡Botín raro por todas partes!', 'Tesouro raro por toda parte!', 'Du butin rare partout !'],
+  ['GIANT SNACK', 'RIESEN-SNACK', 'APERITIVO GIGANTE', 'LANCHE GIGANTE', 'GOÛTER GÉANT'],
+  ['Race to the middle and bite chunks off!', 'Renn zur Mitte und beiß Stücke ab!', '¡Corre al centro y arranca trozos!', 'Corra ao centro e arranque pedaços!', 'Fonce au centre et croque des morceaux !'],
+  ['BLOB PARTY', 'BLOB-PARTY', 'FIESTA BLOB', 'FESTA DOS BLOBS', 'FÊTE DES BLOBS'],
+  ['Rivals are friends now and send gifts!', 'Die Rivalen sind Freunde und schicken Geschenke!', '¡Los rivales son amigos y envían regalos!', 'Os rivais viraram amigos e mandam presentes!', 'Les rivaux sont amis et t’envoient des cadeaux !'],
+  ['LUCKY STAR', 'GLÜCKSSTERN', 'ESTRELLA DE LA SUERTE', 'ESTRELA DA SORTE', 'ÉTOILE PORTE-BONHEUR'],
+  ['Your next 10 snacks pay double!', 'Deine nächsten 10 Snacks zählen doppelt!', '¡Tus próximos 10 bocados valen doble!', 'Seus próximos 10 lanches valem o dobro!', 'Tes 10 prochains snacks rapportent double !'],
+  ['GOTCHA!', 'ERWISCHT!', '¡TE PILLÉ!', 'PEGUEI!', 'ATTRAPÉ !'],
+  ['TREASURE! +3 gems', 'SCHATZ! +3 Gems', '¡TESORO! +3 gemas', 'TESOURO! +3 gemas', 'TRÉSOR ! +3 gemmes'],
+  ['It got away!', 'Entwischt!', '¡Se escapó!', 'Escapou!', 'Il s’est échappé !'],
+  ['CHOMP!', 'MAMPF!', '¡ÑAM!', 'NHAC!', 'CROC !'],
+  ['ALL GONE!', 'ALLES WEG!', '¡SE ACABÓ!', 'ACABOU!', 'PLUS RIEN !'],
+  ['GIFT!', 'GESCHENK!', '¡REGALO!', 'PRESENTE!', 'CADEAU !'],
+  ['LUCKY x2!  {0} left', 'GLÜCK x2!  noch {0}', '¡SUERTE x2!  quedan {0}', 'SORTE x2!  faltam {0}', 'CHANCE x2 !  encore {0}'],
+  ['GOLDEN CAKE!', 'GOLDKUCHEN!', '¡PASTEL DORADO!', 'BOLO DOURADO!', 'GÂTEAU DORÉ !'],
+  ['LUCKY CRATE! +2 gems', 'GLÜCKSKISTE! +2 Gems', '¡CAJA DE LA SUERTE! +2 gemas', 'CAIXA DA SORTE! +2 gemas', 'CAISSE CHANCEUSE ! +2 gemmes'],
+  ['COMBO x{0}!  +{1}', 'COMBO x{0}!  +{1}', '¡COMBO x{0}!  +{1}', 'COMBO x{0}!  +{1}', 'COMBO x{0} !  +{1}'],
+  ['A GOLDEN CAKE FALLS!', 'EIN GOLDKUCHEN FÄLLT!', '¡CAE UN PASTEL DORADO!', 'CAIU UM BOLO DOURADO!', 'UN GÂTEAU DORÉ TOMBE !'],
+  ['A LUCKY CRATE!', 'EINE GLÜCKSKISTE!', '¡UNA CAJA DE LA SUERTE!', 'UMA CAIXA DA SORTE!', 'UNE CAISSE CHANCEUSE !'],
+  ['CATCH', 'FANGEN', 'ATRAPA', 'PEGUE', 'ATTRAPE'],
+  ['SNACK', 'SNACK', 'COMIDA', 'LANCHE', 'GOÛTER'],
+  ['Album', 'Album', 'Álbum', 'Álbum', 'Album'],
+  ['Loot', 'Beute', 'Botín', 'Tesouros', 'Butin'],
+  ['Events', 'Ereignisse', 'Eventos', 'Eventos', 'Événements'],
+  ['Achievements', 'Erfolge', 'Logros', 'Conquistas', 'Succès'],
+  ['Achievement!', 'Erfolg!', '¡Logro!', 'Conquista!', 'Succès !'],
+  ['Page complete! +{0} gems', 'Seite voll! +{0} Gems', '¡Página completa! +{0} gemas', 'Página completa! +{0} gemas', 'Page complète ! +{0} gemmes'],
+  ['Feed 100 loot', '100 Beute verfüttern', 'Da 100 botines', 'Entregue 100 tesouros', 'Donne 100 butins'],
+  ['Feed 1,000 loot', '1.000 Beute verfüttern', 'Da 1.000 botines', 'Entregue 1.000 tesouros', 'Donne 1 000 butins'],
+  ['Feed 10,000 loot', '10.000 Beute verfüttern', 'Da 10.000 botines', 'Entregue 10.000 tesouros', 'Donne 10 000 butins'],
+  ['Pickup combo x20', 'Sammel-Combo x20', 'Combo de recogida x20', 'Combo de coleta x20', 'Combo de ramassage x20'],
+  ['Pickup combo x50', 'Sammel-Combo x50', 'Combo de recogida x50', 'Combo de coleta x50', 'Combo de ramassage x50'],
+  ['Raid rival blobs 10 times', 'Plündere Rivalen-Blobs 10-mal', 'Asalta blobs rivales 10 veces', 'Saqueie blobs rivais 10 vezes', 'Pille des blobs rivaux 10 fois'],
+  ['Raid rival blobs 100 times', 'Plündere Rivalen-Blobs 100-mal', 'Asalta blobs rivales 100 veces', 'Saqueie blobs rivais 100 vezes', 'Pille des blobs rivaux 100 fois'],
+  ['Hit 5 raid jackpots', '5 Raid-Jackpots holen', 'Logra 5 premios gordos', 'Faça 5 jackpots', 'Décroche 5 jackpots'],
+  ['Chase off 10 raiders', '10 Plünderer vertreiben', 'Echa a 10 asaltantes', 'Expulse 10 saqueadores', 'Chasse 10 pillards'],
+  ['Pop 3 Boss Blobs', '3 Boss-Blobs platzen lassen', 'Revienta 3 blobs jefe', 'Estoure 3 blobs chefões', 'Éclate 3 blobs boss'],
+  ['Pop 15 Boss Blobs', '15 Boss-Blobs platzen lassen', 'Revienta 15 blobs jefe', 'Estoure 15 blobs chefões', 'Éclate 15 blobs boss'],
+  ['Catch a Treasure Blob', 'Fang einen Schatz-Blob', 'Atrapa un blob del tesoro', 'Pegue um blob do tesouro', 'Attrape un blob trésor'],
+  ['Catch 5 Treasure Blobs', 'Fang 5 Schatz-Blobs', 'Atrapa 5 blobs del tesoro', 'Pegue 5 blobs do tesouro', 'Attrape 5 blobs trésor'],
+  ['Live through 10 events', 'Erlebe 10 Ereignisse', 'Vive 10 eventos', 'Viva 10 eventos', 'Vis 10 événements'],
+  ['Take the crown', 'Hol dir die Krone', 'Consigue la corona', 'Pegue a coroa', 'Prends la couronne'],
+  ['Reach level 5', 'Erreiche Level 5', 'Llega al nivel 5', 'Chegue ao nível 5', 'Atteins le niveau 5'],
+  ['Reach level 10', 'Erreiche Level 10', 'Llega al nivel 10', 'Chegue ao nível 10', 'Atteins le niveau 10'],
+  ['Rebirth 5 times', '5-mal wiedergeboren', 'Renace 5 veces', 'Renasça 5 vezes', 'Renais 5 fois'],
+  ['Daily gift 7 days in a row', 'Tagesgeschenk 7 Tage in Folge', 'Regalo diario 7 días seguidos', 'Presente diário 7 dias seguidos', 'Cadeau du jour 7 jours d’affilée'],
   // first-minute onboarding hints
   ['DRAG TO MOVE', 'ZIEHEN ZUM LAUFEN', 'ARRASTRA PARA MOVERTE', 'ARRASTE PARA ANDAR', 'GLISSE POUR BOUGER'],
   ['WASD OR ARROWS TO MOVE', 'WASD ODER PFEILE ZUM LAUFEN', 'WASD O FLECHAS PARA MOVERTE', 'WASD OU SETAS PARA ANDAR', 'WASD OU FLÈCHES POUR BOUGER'],
@@ -774,7 +865,8 @@ var KIND = {
   apple: { mass: 2, coin: 1, slots: 1, r: 12 }, donut: { mass: 3, coin: 2, slots: 1, r: 13 }, pizza: { mass: 4, coin: 3, slots: 1, r: 13 }, fish: { mass: 3, coin: 2, slots: 1, r: 13 },
   can: { mass: 5, coin: 0, slots: 1, r: 11 }, boot: { mass: 9, coin: 0, slots: 2, r: 14 },
   gem: { mass: 1, coin: 8, slots: 1, r: 12 }, gold: { mass: 3, coin: 5, slots: 1, r: 12 }, star: { mass: 6, coin: 25, slots: 1, r: 15 },
-  goo: { mass: 0, coin: 0, slots: 1, r: 12 }, heart: { mass: 0, coin: 0, slots: 0, r: 13 }
+  goo: { mass: 0, coin: 0, slots: 1, r: 12 }, heart: { mass: 0, coin: 0, slots: 0, r: 13 },
+  cake: { mass: 12, coin: 40, slots: 1, r: 16 }      // golden cake: only from surprise moments, never from the normal loot table
 };
 var TABLE = [['apple', 30], ['donut', 20], ['pizza', 13], ['fish', 12], ['can', 10], ['boot', 8], ['gem', 5], ['star', 0.7], ['heart', 0.5]];
 var UPG = {
@@ -852,9 +944,11 @@ function blobR(b) { var lo = LVT[b.level - 1], hi = LVT[b.level], f = clamp((b.m
 function newGame(sv) {
   sv = sv || {};
   G = { t: 0, coins: sv.coins || 0, total: sv.total || 0, gems: sv.gems || 0, stars: sv.stars || 0, rb: sv.rb || 0,
-    up: {}, stats: { fed: 0, crystals: 0, bonks: 0, bosses: 0, bought: 0, raids: 0, raided: 0, stolen: 0, jackpots: 0, defended: 0, kos: 0, revives: 0, ads: 0, rebirths: 0, time: 0 },
+    up: {}, stats: { fed: 0, crystals: 0, bonks: 0, bosses: 0, bought: 0, raids: 0, raided: 0, stolen: 0, jackpots: 0, defended: 0, kos: 0, revives: 0, ads: 0, rebirths: 0, time: 0, treasures: 0, events: 0, surprises: 0 },
     quest: sv.quest || 0, qbase: sv.qbase || null, skins: sv.skins || ['classic'], skin: sv.skin || 'classic', hats: sv.hats || ['none'], hat: sv.hat || 'none',
-    cd: sv.cd || {}, daily: sv.daily || 0, streak: sv.streak || 0, hp: 3, healT: 0, fever: 0, feverT: 0, boost: { x2: 0 }, leader: -1, leadT: 0, crownT: 0, alarm: 0, lastRaid: -99, raidGem: -999, hitStop: 0, rate: 0, rateAcc: 0, calm: 0,
+    cd: sv.cd || {}, daily: sv.daily || 0, streak: sv.streak || 0,
+    album: { loot: (sv.album && sv.album.loot) || {}, ev: (sv.album && sv.album.ev) || {} }, albumDone: sv.albumDone || {}, ach: sv.ach || {}, pbest: sv.pbest || 0,
+    pcombo: 0, pcomboT: -9, lucky: 0, surpriseT: 70, surpriseN: 0, treasure: null, feast: null, hp: 3, healT: 0, fever: 0, feverT: 0, boost: { x2: 0 }, leader: -1, leadT: 0, crownT: 0, alarm: 0, lastRaid: -99, raidGem: -999, hitStop: 0, rate: 0, rateAcc: 0, calm: 0,
     items: [], actors: [], blobs: [], map: null, clouds: [], crates: [], crateT: 8, tips: {}, parts: [], texts: [], meteors: [], boss: null, event: null, nextEvent: 45, evBag: [], evCount: 0,
     spawnAcc: 0, grav: 900, shake: 0, flash: 0, saveT: 0, banner: null, started: false, auto: false, modal: null, pend: [], koOffer: false, ground: 0 };
   var k, i; UKEYS.forEach(function (key) { G.up[key] = (sv.up && sv.up[key]) || 0; });
@@ -931,7 +1025,8 @@ function hitCrate(a, c, idx) {
   if (vis) { Snd.smack(); for (i = 0; i < 7; i++) part(c.x, c.y - 10, rand(-220, 220), rand(-260, 20), rand(0.3, 0.6), pick(['#c98a5a', '#8b5a3c', '#f3d9a4']), rand(4, 8), 500); }
   if (c.hp > 0) { if (!a.bot) G.shake = Math.max(G.shake, 5); return; }
   G.crates.splice(idx, 1);
-  burst(c.x, c.y, 7, function () { var r = rnd(); return r < 0.15 ? 'gem' : r < 0.5 ? 'gold' : rollKind(); }, 300);
+  burst(c.x, c.y, c.lucky ? 14 : 7, function () { var r = rnd(); return r < (c.lucky ? 0.45 : 0.15) ? 'gem' : r < 0.5 ? 'gold' : rollKind(); }, 300);
+  if (c.lucky && !a.bot) { G.gems += 2; Snd.gem(); say(c.x, c.y - 80, 'LUCKY CRATE! +2 gems', '#fff36b', 26); }
   if (!a.bot) { var co = Math.round(5 * lootMul() * coinMul()); addCoins(co); G.shake = Math.max(G.shake, 9); say(c.x, c.y - 44, T('CRATE!  +{0}', fmt(co)), '#ffd23c', 24); }
 }
 function tip(key, a, str, col) { if (!G.tips[key] && G.started) { G.tips[key] = 1; say(a.x, a.y - 46, str, col, 22); } }
@@ -997,6 +1092,7 @@ function updMap(dt) {
 /* ---------- loot ---------- */
 function rollKind() {
   if (evOn('gold') && rnd() < 0.55) return 'gold';
+  if (evOn('rainbow') && rnd() < 0.6) { var rr = rnd(); return rr < 0.35 ? 'gem' : rr < 0.7 ? 'gold' : rr < 0.78 ? 'star' : 'donut'; }      // rainbow rain: rare loot
   var luck = UPG.luck.eff(G.up.luck), tot = 0, i, w;
   for (i = 0; i < TABLE.length; i++) { w = TABLE[i][1]; if (TABLE[i][0] === 'gem' || TABLE[i][0] === 'star') w *= luck; tot += w; }
   var r = rnd() * tot;
@@ -1089,7 +1185,7 @@ function updItems(dt) {
   }
   G.ground = n;
   var rate = 14.5 * (1 + 0.05 * Math.min(G.blobs[0].level - 1, 12));      // scaled with the arena, so loot is as dense as before
-  if (evOn('gold')) rate *= 2.1; else if (evOn('frenzy')) rate *= 2; else if (evOn('boss')) rate *= 1.3;
+  if (evOn('gold')) rate *= 2.1; else if (evOn('frenzy')) rate *= 2; else if (evOn('boss')) rate *= 1.3; else if (evOn('rainbow')) rate *= 1.8;
   if (n < 520) { G.spawnAcc += rate * dt; while (G.spawnAcc >= 1) { G.spawnAcc -= 1; spawnItem(false); } }
 }
 
@@ -1102,6 +1198,8 @@ function eat(b, it) {
     a.combo = a.comboT > 0 ? a.combo + 1 : 1; a.comboT = 0.5;
     G.fever = Math.min(100, G.fever + 0.8); G.feverT = 5;
     var c = it.c * coinMul();
+    if (G.lucky > 0 && !it.fly && c > 0) { c *= 2; G.lucky--; say(b.x, b.y - b.r - 40, T('LUCKY x2!  {0} left', G.lucky), '#fff36b', 20); }      // lucky star: the next pickups pay double
+    if (it.kind === 'cake') { say(b.x, b.y - b.r - 60, 'GOLDEN CAKE!', '#ffd23c', 28); Snd.fanfare(); }
     if (c > 0) { addCoins(c); a.gain += c; if (KIND[it.kind].coin >= 8) Snd.coin(); }
     if (!it.fly) G.stats.fed++; if (it.kind === 'gem') G.stats.crystals++;
     Snd.gulp(a.combo);
@@ -1233,6 +1331,8 @@ function botThink(a, dt) {
     if (a.used === 0) ai.mode = 'seek';
     else { d = goTo(a, b.x, b.y); if (d < b.r + 18) a.ix = a.iy = 0; return; }
   }
+  var fe = G.feast;      // giant snack: everyone races to it and lunges chunks off
+  if (fe && a.used < cap && hyp(a.x - fe.x, a.y - fe.y) < 1500) { d = goTo(a, fe.x, fe.y); a.wantSprint = d > 400 && a.stam > 50; if (d < fe.r + 70 && a.stam > 30) a.wantLunge = true; return; }
   if (ai.think <= 0 || !ai.tgt || ai.tgt.state !== 1) {
     ai.think = rand(0.35, 0.75) / a.skill; ai.tgt = bestItem(a);
     if (a.aggro && ai.huntCd <= 0 && a.stam > 60) {
@@ -1277,7 +1377,7 @@ function updActors(dt) {
   var i, a, P = G.actors[0];
   if (G.auto) autoPilot(P, dt);
   else { var l = hyp(IN.x, IN.y); P.ix = l > 1 ? IN.x / l : IN.x; P.iy = l > 1 ? IN.y / l : IN.y; P.wantSprint = IN.sprint; if (IN.lunge) { P.wantLunge = true; IN.lunge = false; } }
-  for (i = 1; i < 4; i++) botThink(G.actors[i], dt);
+  for (i = 1; i < 4; i++) { botThink(G.actors[i], dt); if (evOn('party')) G.actors[i].wantLunge = false; }      // blob party: rivals are friendly
   var lowg = evOn('lowgrav'), inf = evOn('frenzy');
   for (i = 0; i < 4; i++) {
     a = G.actors[i];
@@ -1418,7 +1518,7 @@ function pickups(dt) {
         if (it.kind === 'heart') { if (!a.bot && G.hp < 3) { G.hp++; Snd.heal(); say(a.x, a.y - 44, '+1 HEART', '#ff4d6d', 22); G.items.splice(j, 1); } continue; }
         if (full || a.used + k.slots > cap) continue;
         it.state = 2; it.owner = a; it.z = 0; it.pop = 1; it.vx = it.vy = it.vz = 0; a.carry.push(it); a.used += k.slots; full = a.used >= cap;
-        if (!a.bot) { Snd.pop(a.carry.length); if (full) say(a.x, a.y - 44, 'FULL!', '#ff6b5b', 20); }
+        if (!a.bot) { G.album.loot[it.kind] = 1; comboStep(); Snd.pop(G.pcombo); if (full) say(a.x, a.y - 44, 'FULL!', '#ff6b5b', 20); }
       } else if (mag && it.state === 1 && it.kind !== 'heart' && d2 < mag * mag) { var d = Math.sqrt(d2); it.vx += dx / d * 1100 * dt; it.vy += dy / d * 1100 * dt; it.pull = 0.4; }
     }
   }
@@ -1470,19 +1570,80 @@ var EV = {
   lowgrav: { title: 'LOW GRAVITY', sub: 'Carry twice as much!', dur: 15, col: '#6ce0ff',
     start: function () { G.grav = 170; }, end: function () { G.grav = 900; } },
   tornado: { title: 'LOOT TORNADO', sub: 'Everything swirls to one spot!', dur: 11, col: '#8cf58a',
-    start: function (e) { e.data.x = rand(W * 0.35, W * 0.65); e.data.y = rand(H * 0.35, H * 0.65); } }
+    start: function (e) { e.data.x = rand(W * 0.35, W * 0.65); e.data.y = rand(H * 0.35, H * 0.65); } },
+  // a shy golden blob runs away from you; every lunge that lands knocks crystals out, the third one pops it for gems
+  treasure: { title: 'TREASURE BLOB', sub: 'Catch it! Lunge into it 3 times!', dur: 20, col: '#ffd23c',
+    start: function () {
+      var P = G.actors[0], a = rnd() * TAU;
+      G.treasure = { x: clamp(P.x + Math.cos(a) * 520, 200, W - 200), y: clamp(P.y + Math.sin(a) * 420, 200, H - 200), vx: 0, vy: 0, r: 34, hp: 3, hitCd: 0, wob: 0, hurt: 0, wx: 0, wy: 0, wt: 0 };
+    },
+    upd: function (e, dt) {
+      var tr = G.treasure, P = G.actors[0]; if (!tr) { e.done = true; return; }
+      tr.wob += dt; if (tr.hitCd > 0) tr.hitCd -= dt; if (tr.hurt > 0) tr.hurt -= dt;
+      var dx = tr.x - P.x, dy = tr.y - P.y, d = hyp(dx, dy) + 0.01, sp, tx, ty;
+      if (d < 560) { tx = dx / d; ty = dy / d; sp = 205 + (3 - tr.hp) * 12; }          // flee, a bit faster after each hit
+      else { tr.wt -= dt; if (tr.wt <= 0) { tr.wt = rand(1, 2.2); var wa = rnd() * TAU; tr.wx = Math.cos(wa); tr.wy = Math.sin(wa); } tx = tr.wx; ty = tr.wy; sp = 90; }
+      if (tr.x < 260 || tr.x > W - 260) tx += (W / 2 - tr.x) / 900; if (tr.y < 260 || tr.y > H - 260) ty += (H / 2 - tr.y) / 900;   // no hiding in corners
+      var t = 1 - Math.exp(-4 * dt); tr.vx = lerp(tr.vx, tx * sp, t); tr.vy = lerp(tr.vy, ty * sp, t);
+      tr.x = clamp(tr.x + tr.vx * dt, EDGE + tr.r, W - EDGE - tr.r); tr.y = clamp(tr.y + tr.vy * dt, EDGE + tr.r, H - EDGE - tr.r); rockOut(tr, tr.r);
+      if (P.atk > 0 && tr.hitCd <= 0 && d < tr.r + P.r + 8) {
+        tr.hp--; tr.hitCd = 0.5; tr.hurt = 0.4; tr.vx = dx / d * 620; tr.vy = dy / d * 620; P.atk = 0; P.lunge = 0; G.shake = 8;
+        burst(tr.x, tr.y, 6, function () { return rnd() < 0.5 ? 'gem' : 'gold'; }, 320); Snd.gem();
+        if (tr.hp > 0) say(tr.x, tr.y - 50, 'GOTCHA!', '#fff36b', 26);
+        else {
+          G.gems += 3; G.stats.treasures++; e.done = true; e.caught = true; G.flash = 0.3; Snd.fanfare();
+          burst(tr.x, tr.y, 14, function () { return rnd() < 0.6 ? 'gem' : 'gold'; }, 420);
+          say(tr.x, tr.y - 60, 'TREASURE! +3 gems', '#ffd23c', 30);
+          for (var k = 0; k < 30; k++) part(tr.x, tr.y, rand(-380, 380), rand(-380, 120), rand(0.4, 0.9), pick(['#ffd23c', '#fff36b', '#3fe0ff']), rand(4, 9), 500);
+        }
+      }
+    },
+    end: function (e) { var tr = G.treasure; if (tr && !e.caught) say(tr.x, tr.y - 50, 'It got away!', '#ffffff', 22); G.treasure = null; } },
+  // rare loot rains everywhere: crystals, gold and the odd star (see rollKind)
+  rainbow: { title: 'RAINBOW RAIN', sub: 'Rare loot everywhere!', dur: 13, col: '#ff8fe0' },
+  // a giant snack lands in the middle; every collector that touches it breaks off loot, lunges break off more
+  feast: { title: 'GIANT SNACK', sub: 'Race to the middle and bite chunks off!', dur: 22, col: '#ff9f2e',
+    start: function () { G.feast = { x: W / 2, y: H / 2 - 30, r: 74, hp: 16, max: 16, cd: [0, 0, 0, 0], t: 0, wob: 0 }; G.shake = 10; },
+    upd: function (e, dt) {
+      var fe = G.feast; if (!fe) { e.done = true; return; } fe.t += dt; if (fe.wob > 0) fe.wob -= dt * 3;
+      for (var i = 0; i < 4; i++) {
+        var a = G.actors[i]; if (fe.cd[i] > 0) { fe.cd[i] -= dt; continue; }
+        if (hyp(a.x - fe.x, a.y - fe.y) > fe.r + a.r + 6) continue;
+        var lunge = a.atk > 0; fe.cd[i] = lunge ? 0.3 : 0.75; fe.hp--; fe.wob = 1;
+        burst(fe.x, fe.y, lunge ? 5 : 3, function () { return pick(['donut', 'pizza', 'apple', 'gold', 'donut']); }, 280);
+        if (onScreen(fe.x, fe.y)) { Snd.smack(); for (var k = 0; k < 8; k++) part(fe.x, fe.y, rand(-260, 260), rand(-260, 40), rand(0.3, 0.6), pick(['#ffd35a', '#ff8fc7', '#e9b872']), rand(4, 8), 500); }
+        if (!a.bot && lunge) say(fe.x, fe.y - fe.r - 20, 'CHOMP!', '#ffffff', 26);
+        if (fe.hp <= 0) { e.done = true; say(fe.x, fe.y - fe.r, 'ALL GONE!', '#ffd23c', 26); break; }
+      }
+    },
+    end: function () { var fe = G.feast; if (fe && fe.hp > 0) burst(fe.x, fe.y, fe.hp * 2, function () { return pick(['donut', 'pizza', 'apple']); }, 300); G.feast = null; } },
+  // rivals turn friendly: no bonks, no raids, and their blobs send you gifts
+  party: { title: 'BLOB PARTY', sub: 'Rivals are friends now and send gifts!', dur: 15, col: '#c77dff',
+    start: function (e) { e.data.next = 1; e.data.k = 0; for (var i = 1; i < 4; i++) { var ai = G.actors[i].ai; if (ai.mode === 'raid' || ai.mode === 'hunt') ai.mode = 'seek'; } },
+    upd: function (e, dt) {
+      e.data.next -= dt; if (e.data.next > 0) return; e.data.next = 1.5;
+      var b = G.blobs[1 + (e.data.k++ % 3)], me = G.blobs[0], span = LVT[me.level] - LVT[me.level - 1];
+      gooFly(b, span * 0.012, 3, me.x, me.y); addCoins(Math.round(4 * lootMul() * coinMul()));
+      if (onScreen(b.x, b.y)) say(b.x, b.y - b.r - 30, 'GIFT!', '#e0b3ff', 24);
+    } },
+  // lucky star: the next 10 pickups you bring home pay double coins
+  lucky: { title: 'LUCKY STAR', sub: 'Your next 10 snacks pay double!', dur: 25, col: '#fff36b',
+    start: function () { G.lucky = 10; },
+    upd: function (e) { if (G.lucky <= 0) e.done = true; },
+    end: function () { G.lucky = 0; } }
 };
 function nextEventType() {
   G.evCount++;
   if (G.evForce) { var f = G.evForce; G.evForce = null; return f; }
   if (G.evCount === 1) return 'gold';
-  if (G.evCount === 2) return 'boss';
-  if (!G.evBag.length) G.evBag = ['gold', 'boss', 'frenzy', 'lowgrav', 'tornado'].sort(function () { return rnd() - 0.5; });
+  if (G.evCount === 2) return 'treasure';
+  if (G.evCount === 3) return 'boss';
+  if (!G.evBag.length) G.evBag = ['gold', 'boss', 'frenzy', 'lowgrav', 'tornado', 'treasure', 'rainbow', 'feast', 'party', 'lucky'].sort(function () { return rnd() - 0.5; });
   return G.evBag.pop();
 }
 function updEvents(dt) {
   var e = G.event, i, k;
-  if (!e) { if (G.t >= G.nextEvent) { var ty = nextEventType(); G.event = { type: ty, t: 0, pre: 2.4, on: false, done: false, data: {} }; G.banner = { title: EV[ty].title, sub: EV[ty].sub, col: EV[ty].col, t: 4.2 }; Snd.siren(); } }
+  if (!e) { if (G.t >= G.nextEvent) { var ty = nextEventType(); G.event = { type: ty, t: 0, pre: 2.4, on: false, done: false, data: {} }; G.banner = { title: EV[ty].title, sub: EV[ty].sub, col: EV[ty].col, t: 4.2 }; G.album.ev[ty] = 1; G.stats.events++; Snd.siren(); Snd.sting(ty); } }
   else if (!e.on) { e.pre -= dt; if (e.pre <= 0) { e.on = true; if (EV[e.type].start) EV[e.type].start(e); G.shake = 6; } }
   else {
     e.t += dt; if (EV[e.type].upd) EV[e.type].upd(e, dt);
@@ -1536,7 +1697,7 @@ function updBoss(dt) {
 function step(dt) {
   if (G.modal) return;
   G.t += dt; G.stats.time += dt;
-  updMap(dt); updActors(dt); pickups(dt); updCarry(dt); updItems(dt); updBlobs(dt); updEvents(dt); updFx(dt); updQuest();
+  updMap(dt); updActors(dt); pickups(dt); updCarry(dt); updItems(dt); updBlobs(dt); updEvents(dt); updFx(dt); updQuest(); updMeta(dt);
   if (G.questPop > 0) G.questPop -= dt;
   if (G.calm > 0) G.calm -= dt;
   if (G.pend.length && (G.calm <= 0 || G.pend[0].type === 'ko')) nextModal();
@@ -1621,7 +1782,7 @@ function dailyNext() { return DAILY[(dailyDay() - 1) % 7]; }
 function rebirthGain() { return 3 + Math.max(0, G.blobs[0].level - rbLevel()); }
 function canRebirth() { return G.blobs[0].level >= rbLevel(); }
 function doRebirth(mult) {
-  var st = Math.ceil(rebirthGain() * mult), keep = { gems: G.gems + 20, stars: G.stars + st, rb: G.rb + 1, stats: G.stats, quest: G.quest, qbase: G.qbase, skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, total: G.total };
+  var st = Math.ceil(rebirthGain() * mult), keep = { gems: G.gems + 20, stars: G.stars + st, rb: G.rb + 1, stats: G.stats, quest: G.quest, qbase: G.qbase, skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, total: G.total, album: G.album, albumDone: G.albumDone, ach: G.ach, pbest: G.pbest };
   keep.stats.rebirths++;
   newGame(keep); G.started = true; cam.x = HOMES[0].x; cam.y = HOMES[0].y; G.flash = 0.8; Snd.level();
   G.banner = { title: T('REBIRTH {0}', G.rb), sub: T('+{0} stars. Everything grows {1}% now. Welcome to {2}!', st, Math.round(starMul() * 100), T(THEMES[G.rb % THEMES.length].name)), col: '#fff36b', t: 4.2 };
@@ -1668,6 +1829,70 @@ var ACT = {
   rebirthAd: function () { rewarded('rebirth', 0, function () { doRebirth(1.5); }); },
   rebirthGem: function () { if (spend(20)) doRebirth(1.5); }
 };
+
+/* ---------- keep-playing loops: pickup combo, surprises, achievements, album. All rewards are earned, never bought ---------- */
+// pickup combo: pickups less than 1.2 s apart chain up; every 10th in a chain pays a small, growing coin bonus
+function comboStep() {
+  G.pcombo = G.t - G.pcomboT < 1.2 ? G.pcombo + 1 : 1; G.pcomboT = G.t; if (G.pcombo > G.pbest) G.pbest = G.pcombo;
+  if (G.pcombo % 10 === 0) {
+    var P = G.actors[0], c = Math.round(3 * lootMul() * coinMul() * G.pcombo / 10); addCoins(c); Snd.quest();
+    say(P.x, P.y - 70, T('COMBO x{0}!  +{1}', G.pcombo, fmt(c)), '#ff8fe0', 22 + Math.min(10, G.pcombo / 5));
+  }
+}
+// surprise moments between events: a golden cake drops near you, or a lucky crate appears
+function surprise() {
+  var P = G.actors[0], x, y, ok, n = 0, i;
+  do {          // a spot near the player but never on or next to a blob, so no blob swallows the surprise
+    var a = rnd() * TAU; x = clamp(P.x + Math.cos(a) * 330, 220, W - 220); y = clamp(P.y + Math.sin(a) * 260, 220, H - 220); ok = true;
+    for (i = 0; i < 4; i++) if (hyp(x - G.blobs[i].x, y - G.blobs[i].y) < G.blobs[i].r + 120) ok = false;
+  } while (!ok && ++n < 12);
+  if (!ok) { G.surpriseT = 3; return; }      // no free spot right now: try again in a moment
+  G.stats.surprises++; G.surpriseN++;
+  if (G.surpriseN % 2) { var it = mkItem('cake', x, y, 640); it.life = 30; G.items.push(it); say(P.x, P.y - 60, 'A GOLDEN CAKE FALLS!', '#ffd23c', 22); Snd.boing(); }
+  else { G.crates.push({ x: x, y: y, hp: 2, wob: 1, age: 0, lucky: true }); say(P.x, P.y - 60, 'A LUCKY CRATE!', '#fff36b', 22); Snd.zoom(); }
+}
+var ACH = [
+  { id: 'fed100', text: 'Feed 100 loot', gems: 5, ok: function () { return G.stats.fed >= 100; } },
+  { id: 'fed1k', text: 'Feed 1,000 loot', gems: 15, ok: function () { return G.stats.fed >= 1000; } },
+  { id: 'fed10k', text: 'Feed 10,000 loot', gems: 40, ok: function () { return G.stats.fed >= 10000; } },
+  { id: 'combo20', text: 'Pickup combo x20', gems: 10, ok: function () { return G.pbest >= 20; } },
+  { id: 'combo50', text: 'Pickup combo x50', gems: 25, ok: function () { return G.pbest >= 50; } },
+  { id: 'raid10', text: 'Raid rival blobs 10 times', gems: 10, ok: function () { return G.stats.raids >= 10; } },
+  { id: 'raid100', text: 'Raid rival blobs 100 times', gems: 30, ok: function () { return G.stats.raids >= 100; } },
+  { id: 'jack5', text: 'Hit 5 raid jackpots', gems: 15, ok: function () { return G.stats.jackpots >= 5; } },
+  { id: 'def10', text: 'Chase off 10 raiders', gems: 15, ok: function () { return G.stats.defended >= 10; } },
+  { id: 'boss3', text: 'Pop 3 Boss Blobs', gems: 15, ok: function () { return G.stats.bosses >= 3; } },
+  { id: 'boss15', text: 'Pop 15 Boss Blobs', gems: 40, ok: function () { return G.stats.bosses >= 15; } },
+  { id: 'tre1', text: 'Catch a Treasure Blob', gems: 10, ok: function () { return G.stats.treasures >= 1; } },
+  { id: 'tre5', text: 'Catch 5 Treasure Blobs', gems: 25, ok: function () { return G.stats.treasures >= 5; } },
+  { id: 'ev10', text: 'Live through 10 events', gems: 15, ok: function () { return G.stats.events >= 10; } },
+  { id: 'crown', text: 'Take the crown', gems: 10, ok: function () { return G.leader === 0 && G.t > 60; } },
+  { id: 'lvl5', text: 'Reach level 5', gems: 10, ok: function () { return G.blobs[0].level >= 5; } },
+  { id: 'lvl10', text: 'Reach level 10', gems: 30, ok: function () { return G.blobs[0].level >= 10; } },
+  { id: 'rb1', text: 'Rebirth for the first time', gems: 20, ok: function () { return G.stats.rebirths >= 1; } },
+  { id: 'rb5', text: 'Rebirth 5 times', gems: 60, ok: function () { return G.stats.rebirths >= 5; } },
+  { id: 'day7', text: 'Daily gift 7 days in a row', gems: 30, ok: function () { return G.streak >= 7; } }
+];
+function checkAch() {
+  for (var i = 0; i < ACH.length; i++) { var a = ACH[i]; if (G.ach[a.id] || !a.ok()) continue; G.ach[a.id] = 1; G.gems += a.gems; if (!G.auto) { Snd.quest(); uiAch(a); } }
+}
+// album: one sticker per loot kind, event, skin and hat seen or owned; a full page pays gems once
+var ALBUM = [
+  { id: 'loot', name: 'Loot', gems: 15, list: function () { return ['apple', 'donut', 'pizza', 'fish', 'can', 'boot', 'gem', 'gold', 'star', 'heart', 'cake']; }, has: function (k) { return !!G.album.loot[k]; } },
+  { id: 'ev', name: 'Events', gems: 25, list: function () { return Object.keys(EV); }, has: function (k) { return !!G.album.ev[k]; } },
+  { id: 'skins', name: 'Skins', gems: 50, list: function () { return SKINS.map(function (s) { return s.id; }); }, has: function (k) { return G.skins.indexOf(k) >= 0; } },
+  { id: 'hats', name: 'Hats', gems: 15, list: function () { return HATS.map(function (h) { return h.id; }); }, has: function (k) { return G.hats.indexOf(k) >= 0; } }
+];
+function albumCount(pg) { var l = pg.list(), n = 0; for (var i = 0; i < l.length; i++) if (pg.has(l[i])) n++; return [n, l.length]; }
+function albumReady() { for (var i = 0; i < ALBUM.length; i++) { var c = albumCount(ALBUM[i]); if (c[0] >= c[1] && !G.albumDone[ALBUM[i].id]) return true; } return false; }
+ACT.album = function (id) {
+  for (var i = 0; i < ALBUM.length; i++) { var pg = ALBUM[i], c = albumCount(pg); if (pg.id !== id || c[0] < c[1] || G.albumDone[id]) continue; G.albumDone[id] = 1; G.gems += pg.gems; Snd.fanfare(); uiToast(T('Page complete! +{0} gems', pg.gems)); save(); uiModal(); hud(); }
+};
+var metaT = 0;
+function updMeta(dt) {
+  if (!G.event && !G.boss) { G.surpriseT -= dt; if (G.surpriseT <= 0) { G.surpriseT = G.stats.time < 600 ? rand(20, 30) : rand(24, 38); surprise(); } }      // a little more often in the first 10 minutes
+  metaT -= dt; if (metaT <= 0) { metaT = 1; checkAch(); }
+}
 
 // ---- 40_render.js ----
 /* ---------- drawing ---------- */
@@ -1948,7 +2173,8 @@ function drawSolids(th) {
     var cs = Math.min(1, o.age * 5) * (1 + Math.max(0, o.wob) * 0.18), tilt = Math.max(0, o.wob) * Math.sin(G.t * 40) * 0.12 + Math.sin(G.t * 2 + o.x) * 0.03;
     cx.beginPath(); cx.ellipse(o.x, o.y + 16, 27 * cs, 10 * cs, 0, 0, TAU); cx.fillStyle = 'rgba(40,25,15,.22)'; cx.fill();
     cx.save(); cx.translate(o.x, o.y - 6); cx.rotate(tilt); cx.scale(cs, cs);
-    cx.beginPath(); cx.roundRect(-23, -21, 46, 42, 6); cx.fillStyle = o.hp > 1 ? '#c98a5a' : '#b0744a'; cx.fill(); cx.lineWidth = 3.5; cx.strokeStyle = INK; cx.stroke();
+    if (o.lucky) { cx.beginPath(); cx.arc(0, 0, 40 + Math.sin(G.t * 5) * 4, 0, TAU); cx.fillStyle = 'rgba(255,243,107,.35)'; cx.fill(); }
+    cx.beginPath(); cx.roundRect(-23, -21, 46, 42, 6); cx.fillStyle = o.lucky ? (o.hp > 1 ? '#ffd23c' : '#e8b020') : o.hp > 1 ? '#c98a5a' : '#b0744a'; cx.fill(); cx.lineWidth = 3.5; cx.strokeStyle = INK; cx.stroke();
     cx.beginPath(); cx.moveTo(-23, -7); cx.lineTo(23, -7); cx.moveTo(-23, 8); cx.lineTo(23, 8); cx.lineWidth = 2.5; cx.strokeStyle = 'rgba(59,42,32,.55)'; cx.stroke();
     if (o.hp < 2) { cx.beginPath(); cx.moveTo(-6, -21); cx.lineTo(2, -6); cx.lineTo(-5, 4); cx.lineTo(4, 21); cx.lineWidth = 3; cx.strokeStyle = INK; cx.stroke(); }
     cx.beginPath(); for (k = 0; k < 10; k++) { var cr = k % 2 ? 4.5 : 10, ca = -Math.PI / 2 + k * Math.PI / 5; cx.lineTo(Math.cos(ca) * cr, Math.sin(ca) * cr); } cx.closePath(); cx.fillStyle = '#ffd23c'; cx.fill(); cx.lineWidth = 2; cx.strokeStyle = INK; cx.stroke();
@@ -1997,6 +2223,8 @@ function drawMini(th) {
     if (G.leader === i) { cx.fillStyle = '#ffd23c'; cx.beginPath(); cx.moveTo(o.x * k - 4, o.y * k - br - 1); cx.lineTo(o.x * k - 4, o.y * k - br - 6); cx.lineTo(o.x * k - 1.5, o.y * k - br - 3.5); cx.lineTo(o.x * k, o.y * k - br - 7); cx.lineTo(o.x * k + 1.5, o.y * k - br - 3.5); cx.lineTo(o.x * k + 4, o.y * k - br - 6); cx.lineTo(o.x * k + 4, o.y * k - br - 1); cx.closePath(); cx.fill(); cx.lineWidth = 1; cx.strokeStyle = INK; cx.stroke(); }
   }
   if (G.boss) { cx.beginPath(); cx.arc(G.boss.x * k, G.boss.y * k, 5.5, 0, TAU); cx.fillStyle = '#b65cff'; cx.fill(); cx.lineWidth = 1.5; cx.strokeStyle = INK; cx.stroke(); }
+  if (G.treasure) { cx.beginPath(); cx.arc(G.treasure.x * k, G.treasure.y * k, 4.5 + Math.sin(G.t * 8), 0, TAU); cx.fillStyle = '#ffd23c'; cx.fill(); cx.lineWidth = 1.5; cx.strokeStyle = INK; cx.stroke(); }
+  if (G.feast) { cx.beginPath(); cx.arc(G.feast.x * k, G.feast.y * k, 6, 0, TAU); cx.fillStyle = '#ff9f2e'; cx.fill(); cx.lineWidth = 1.5; cx.strokeStyle = INK; cx.stroke(); }
   for (i = 3; i >= 0; i--) { o = G.actors[i]; cx.beginPath(); cx.arc(o.x * k, o.y * k, i ? 2.6 : 3.6, 0, TAU); cx.fillStyle = i ? COLORS[i] : '#fff'; cx.fill(); cx.lineWidth = i ? 1 : 1.8; cx.strokeStyle = INK; cx.stroke(); }
   cx.lineWidth = 1.5; cx.strokeStyle = dark ? 'rgba(255,255,255,.75)' : 'rgba(59,42,32,.55)'; cx.strokeRect((VIEW.x - VIEW.w / 2) * k, (VIEW.y - VIEW.h / 2) * k, VIEW.w * k, VIEW.h * k);
   cx.restore();
@@ -2052,6 +2280,7 @@ function render() {
     drawBlobBody(b.x, b.y, b.r * (b.stun > 0 ? 0.93 : 1), { h: 282, s: 85, l: 60 }, Math.sin(b.wob * 5) * 0.8 + (b.stun > 0 ? 2 : 0), 9, 0.3 + Math.abs(Math.sin(b.wob * 4)) * 0.5, 1, P.x - b.x, P.y - b.y, 1, 1);
     for (i = 0; i < b.max; i++) { cx.beginPath(); cx.arc(b.x + (i - (b.max - 1) / 2) * 20, b.y - b.r - 22, 7.5, 0, TAU); cx.fillStyle = i < b.hp ? '#ff4d6d' : 'rgba(59,42,32,.35)'; cx.fill(); cx.lineWidth = 2.5; cx.strokeStyle = INK; cx.stroke(); }
   }
+  drawSpecials(P);
   for (i = 0; i < 4; i++) { var cr = G.actors[i].carry; for (var j = cr.length - 1; j >= 0; j--) if (onScreen(cr[j].x, cr[j].y)) drawItem(cr[j], false); }
   var order = G.actors.slice().sort(function (p, q) { return p.y - q.y; });
   for (i = 0; i < 4; i++) if (onScreen(order[i].x, order[i].y)) drawActor(order[i]);
@@ -2064,9 +2293,11 @@ function render() {
   if (MOUSE.down && !TOUCH) { cx.beginPath(); cx.arc(MOUSE.wx, MOUSE.wy, 9 + Math.sin(G.t * 8) * 2, 0, TAU); cx.lineWidth = 3; cx.strokeStyle = 'rgba(255,255,255,.8)'; cx.stroke(); }
   for (i = 0; i < G.parts.length; i++) { var p = G.parts[i]; cx.globalAlpha = clamp(p.life / p.max * 1.5, 0, 1); cx.fillStyle = p.col; cx.beginPath(); cx.arc(p.x, p.y, p.size * (0.4 + 0.6 * p.life / p.max), 0, TAU); cx.fill(); }
   cx.globalAlpha = 1;
+  if (G.pcombo >= 3 && G.t - G.pcomboT < 1.2) { var cs = 1 + Math.max(0, 0.25 - (G.t - G.pcomboT)) * 2; txt('x' + G.pcombo, P.x + 30, P.y - 30, (16 + Math.min(12, G.pcombo / 3)) * cs, '#ff8fe0', 1, 'left'); }      // pickup combo
   for (i = 0; i < G.texts.length; i++) { var t = G.texts[i], k = t.life / t.max; txt(T(t.str), t.x, t.y, t.size * (k > 0.85 ? 1 + (1 - k) * 2 : 1.3 - (1 - k) * 0.3), t.col, clamp(k * 2.2, 0, 1), t.align); }
   cx.restore();
   if (G.event && G.event.on) { cx.globalAlpha = 0.07; cx.fillStyle = EV[G.event.type].col; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
+  if (evOn('rainbow')) { var rg = cx.createLinearGradient(0, 0, VW, VH), rh = (G.t * 60) % 360; for (var ri = 0; ri < 4; ri++) rg.addColorStop(ri / 3, 'hsla(' + ((rh + ri * 90) % 360) + ',90%,65%,.12)'); cx.fillStyle = rg; cx.fillRect(0, 0, VW, VH); }
   if (G.alarm > 0 || (G.hp === 1 && G.started)) { var al = G.alarm > 0 ? 0.1 + 0.1 * Math.abs(Math.sin(G.t * 8)) : 0.06 + 0.04 * Math.sin(G.t * 4); cx.globalAlpha = al; cx.fillStyle = '#ff2d2d'; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
   if (G.flash > 0) { cx.globalAlpha = clamp(G.flash, 0, 0.6); cx.fillStyle = '#fff'; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
   if (G.started) {
@@ -2074,6 +2305,8 @@ function render() {
     if (G.alarm > 0) { edgeArrow(hb.x, hb.y, '#ff4d4d', 'HELP', true); txt(T('YOUR BLOB IS UNDER ATTACK!'), VW / 2, TOUCH ? 172 : 150, Math.min(22, VW / 22), '#ff6b5b', 0.6 + 0.4 * Math.abs(Math.sin(G.t * 8))); }
     else edgeArrow(hb.x, hb.y, '#59d16a', 'HOME', P.used >= capOf(P));
     if (G.boss) edgeArrow(G.boss.x, G.boss.y, '#b65cff', 'BOSS', false);
+    if (G.treasure) edgeArrow(G.treasure.x, G.treasure.y, '#ffd23c', 'CATCH', true);
+    if (G.feast) edgeArrow(G.feast.x, G.feast.y, '#ff9f2e', 'SNACK', true);
     var nc = null, ncd = 1e9; for (i = 0; i < G.clouds.length; i++) { var cd2 = hyp(G.clouds[i].x - P.x, G.clouds[i].y - P.y); if (cd2 < ncd) { ncd = cd2; nc = G.clouds[i]; } }
     if (nc && !G.alarm) edgeArrow(nc.x, nc.y, '#6cc0ff', 'LOOT', false);
     drawMini(th);
@@ -2176,6 +2409,35 @@ function drawOnboard() {
   } else if (OB.step === 3) { if (OB.rival) chevron(OB.rival.x, OB.rival.y - OB.rival.r - 6, '#ff8a7a'); bubble(P.x, P.y - P.r - 26, T(TOUCH ? 'TAP RUN TO LUNGE!' : 'SPACE TO LUNGE!'), k); }
 }
 
+/* ---------- event specials: treasure blob, giant snack, party hearts, lucky aura ---------- */
+var GOLDSKIN = { h: 46, s: 96, l: 58, pat: 'shine', pcol: 'rgba(255,255,255,.75)' };
+function drawSpecials(P) {
+  var i, tr = G.treasure, fe = G.feast;
+  if (tr && near(tr.x, tr.y, 120)) {
+    for (i = 0; i < 6; i++) { var sa = G.t * 2 + i * 1.05, sr = tr.r * (1.35 + 0.15 * Math.sin(G.t * 4 + i)); cx.globalAlpha = 0.5 + 0.5 * Math.sin(G.t * 6 + i); cx.fillStyle = i % 2 ? '#fff36b' : '#3fe0ff'; cx.beginPath(); cx.arc(tr.x + Math.cos(sa) * sr, tr.y + Math.sin(sa) * sr * 0.8, 3.5, 0, TAU); cx.fill(); }
+    cx.globalAlpha = 1;
+    drawBlobBody(tr.x, tr.y, tr.r, GOLDSKIN, 0.6 + (tr.hurt > 0 ? 3 : 0), 4.2, tr.hurt > 0 ? 0.6 : 0.25, 1, tr.x - P.x, tr.y - P.y, 3, tr.hurt > 0 ? 2 : 0);
+    for (i = 0; i < 3; i++) { cx.beginPath(); cx.arc(tr.x + (i - 1) * 16, tr.y - tr.r - 16, 6, 0, TAU); cx.fillStyle = i < tr.hp ? '#ffd23c' : 'rgba(59,42,32,.3)'; cx.fill(); cx.lineWidth = 2.5; cx.strokeStyle = INK; cx.stroke(); }
+  }
+  if (fe && near(fe.x, fe.y, 200)) {
+    var drop = Math.max(0, 1 - fe.t / 0.6), z = drop * drop * 700, sc = (0.55 + 0.45 * fe.hp / fe.max) * (1 + Math.max(0, fe.wob) * 0.08), w = fe.r * 2.3 * sc;
+    cx.beginPath(); cx.ellipse(fe.x, fe.y + fe.r * 0.55, fe.r * sc, fe.r * 0.3 * sc, 0, 0, TAU); cx.fillStyle = 'rgba(40,25,15,.25)'; cx.fill();
+    cx.save(); cx.translate(fe.x, fe.y - z); cx.rotate(Math.sin(G.t * 2) * 0.05 + Math.max(0, fe.wob) * Math.sin(G.t * 40) * 0.08); cx.drawImage(SPR.donut, -w / 2, -w / 2, w, w); cx.restore();
+    if (fe.t > 0.6) { cx.beginPath(); cx.roundRect(fe.x - 40, fe.y - fe.r * sc - 26, 80, 10, 5); cx.fillStyle = 'rgba(59,42,32,.4)'; cx.fill(); cx.beginPath(); cx.roundRect(fe.x - 40, fe.y - fe.r * sc - 26, 80 * fe.hp / fe.max, 10, 5); cx.fillStyle = '#ff9f2e'; cx.fill(); }
+  }
+  if (evOn('party')) for (i = 1; i < 4; i++) {          // floating hearts and confetti over the friendly rivals
+    var b = G.blobs[i]; if (!near(b.x, b.y, b.r + 80)) continue;
+    for (var k = 0; k < 7; k++) { var ph = (G.t * 0.6 + k / 7) % 1, hx = b.x + Math.sin(k * 2.3 + G.t) * b.r * 0.8, hy = b.y - b.r * 0.5 - ph * b.r * 1.4; cx.globalAlpha = Math.sin(ph * Math.PI);
+      if (k % 2) { cx.fillStyle = '#ff4d6d'; cx.beginPath(); cx.moveTo(hx, hy + 6); cx.bezierCurveTo(hx - 10, hy - 2, hx - 6, hy - 10, hx, hy - 4); cx.bezierCurveTo(hx + 6, hy - 10, hx + 10, hy - 2, hx, hy + 6); cx.fill(); }
+      else { cx.fillStyle = ['#fff36b', '#7ad7ff', '#8cf58a', '#ff8fe0'][k % 4]; cx.save(); cx.translate(hx, hy); cx.rotate(G.t * 5 + k); cx.fillRect(-4, -2, 8, 4); cx.restore(); } }
+    cx.globalAlpha = 1;
+  }
+  if (G.lucky > 0) {      // lucky star: golden aura around the collector with the pickups left
+    cx.beginPath(); cx.arc(P.x, P.y, P.r + 14 + Math.sin(G.t * 6) * 3, 0, TAU); cx.lineWidth = 5; cx.strokeStyle = 'rgba(255,215,60,.85)'; cx.stroke();
+    for (i = 0; i < 5; i++) { var la = G.t * 3 + i * 1.257; cx.fillStyle = '#fff36b'; cx.beginPath(); cx.arc(P.x + Math.cos(la) * (P.r + 14), P.y + Math.sin(la) * (P.r + 14), 3, 0, TAU); cx.fill(); }
+  }
+}
+
 // ---- 50_ui.js ----
 /* ---------- input, HUD, pop-ups, saving, main loop ---------- */
 var rawTs = 0, FXDT = 0, JOY = null, KEYS = {}, MOUSE = { down: false, x: 0, y: 0, wx: 0, wy: 0 }, sprintDown = false, paused = false, hudT = 0, lastTs = 0, acc = 0, AWAY = 0, cdT = 0;
@@ -2197,7 +2459,7 @@ function save() {
   if (!G || G.auto) return;
   try {
     localStorage.setItem(SAVEKEY, JSON.stringify({ coins: G.coins, total: G.total, gems: G.gems, stars: G.stars, rb: G.rb, up: G.up, stats: G.stats, quest: G.quest, qbase: G.qbase,
-      skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, mass: G.blobs.map(function (b) { return Math.round(b.mass); }), lvl: G.blobs.map(function (b) { return b.level; }), ts: Date.now(), mute: Snd.muted, musicOff: Snd.musicOff, lang: LANG }));
+      skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, mass: G.blobs.map(function (b) { return Math.round(b.mass); }), lvl: G.blobs.map(function (b) { return b.level; }), ts: Date.now(), mute: Snd.muted, musicOff: Snd.musicOff, lang: LANG, album: G.album, albumDone: G.albumDone, ach: G.ach, pbest: G.pbest }));
   } catch (e) { /* storage can be unavailable; the game runs without it */ }
 }
 function load() { try { return JSON.parse(localStorage.getItem(SAVEKEY) || 'null'); } catch (e) { return null; } }
@@ -2312,7 +2574,7 @@ function readInput() {
 }
 function hud() {
   var P = G.actors[0], b = G.blobs[0], i, k, h;
-  $('shopbtn').classList.toggle('gift', G.daily !== today());
+  $('shopbtn').classList.toggle('gift', G.daily !== today() || albumReady());
   var c = cpsNow(); $('cps').textContent = '+' + (c < 10 ? c.toFixed(1) : fmt(c)) + '/s';
   $('lvlname').textContent = T('Lv {0}', b.level) + ' ' + lvName(b.level) + (G.stars ? '  ★' + G.stars : '');
   var lo = LVT[b.level - 1], hi = LVT[b.level]; $('lvlfill').style.width = clamp((b.mass - lo) / (hi - lo) * 100, 0, 100) + '%';
@@ -2366,8 +2628,8 @@ function uiModal() {
     h = '<h2>' + T('REBIRTH') + '</h2><p>' + T('Start again in a new world with tougher rivals. Coins, upgrades and blob size reset. You keep gems, skins and stars.') + '</p><div class="reward">' + T('★ +{0} stars = +{1}% coins and growth, forever', st, st * 20) + '</div><div class="btns">' +
       adBtn('rebirthAd', T('Rebirth with {0} stars', st2)) + btn('rebirth', T('Rebirth with {0} stars', st)) + btn('rebirthGem', T('Rebirth with {0} stars for 20 {1}', st2, ICON.gem), { off: G.gems < 20 }) + btn('close', T('Not yet')) + '</div>';
   } else if (m.type === 'shop') {
-    var tabs = [['skins', T('Skins')], ['hats', T('Hats')], ['boosts', T('Boosts')], ['gems', T('Gems')]];
-    h = '<div class="mhead"><span class="gemcount">' + ICON.gem + ' <b>' + fmt(SHOW.g + 0.001) + '</b></span><div class="tabs">' + tabs.map(function (t) { return '<button class="tab' + (m.tab === t[0] ? ' on' : '') + (t[0] === 'gems' && G.daily !== today() ? ' gift' : '') + '" data-act="tab:' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><button class="x" data-act="close" aria-label="' + T('Close') + '">X</button></div><div class="mbody">';
+    var tabs = [['skins', T('Skins')], ['hats', T('Hats')], ['boosts', T('Boosts')], ['album', T('Album')], ['gems', T('Gems')]];
+    h = '<div class="mhead"><span class="gemcount">' + ICON.gem + ' <b>' + fmt(SHOW.g + 0.001) + '</b></span><div class="tabs">' + tabs.map(function (t) { return '<button class="tab' + (m.tab === t[0] ? ' on' : '') + ((t[0] === 'gems' && G.daily !== today()) || (t[0] === 'album' && albumReady()) ? ' gift' : '') + '" data-act="tab:' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><button class="x" data-act="close" aria-label="' + T('Close') + '">X</button></div><div class="mbody">';
     if (m.tab === 'skins' || m.tab === 'hats') {
       var list = m.tab === 'skins' ? SKINS : HATS, own = m.tab === 'skins' ? G.skins : G.hats, cur = m.tab === 'skins' ? G.skin : G.hat, act = m.tab === 'skins' ? 'skin' : 'hat';
       h += '<div class="grid">';
@@ -2375,7 +2637,8 @@ function uiModal() {
       h += '</div>';
     } else if (m.tab === 'boosts') {
       for (i = 0; i < BOOSTS.length; i++) { var bo = BOOSTS[i]; h += '<div class="rowi"><div><b>' + T(bo.name) + '</b><span>' + T(bo.hint) + '</span></div><div class="rbtn">' + adBtn('boostAd:' + bo.id, T('Free'), 'b_' + bo.id) + btn('boostGem:' + bo.id, bo.gems + ' ' + ICON.gem, { off: G.gems < bo.gems }) + '</div></div>'; }
-    } else {
+    } else if (m.tab === 'album') h += albumHtml();
+    else {
       h += streakRow();
       if (adsOn()) h += '<div class="rowi"><div><b>' + T('Free gems') + '</b><span>' + T('15 gems per video') + '</span></div><div class="rbtn">' + adBtn('gemAd', T('Watch'), 'gems') + '</div></div>';
       h += '<div class="rowi"><div><b>' + T('Earn gems by playing') + '</b><span>' + T('Quests, boss blobs, level-ups and every rebirth pay gems.') + '</span></div></div>';
@@ -2385,6 +2648,14 @@ function uiModal() {
   }
   if (m.type === 'levelup' || m.type === 'rebirth') h = '<div class="rays"></div>' + h;
   $('mcard').innerHTML = h; $('mcard').className = 'pill ' + m.type;
+  Array.prototype.forEach.call(document.querySelectorAll('canvas[data-st]'), function (cnv) {      // album stickers, 80x80 canvas
+    var p = cnv.dataset.st.split(':'), g = cnv.getContext('2d');
+    if (p[0] === 'loot') { var sp = SPR[p[1]]; g.drawImage(sp, 8, 8, 64, 64); return; }
+    var old = cx; cx = g; cx.lineJoin = 'round'; cx.lineCap = 'round';
+    if (p[0] === 'skin') drawBlobBody(40, 42, 27, findIn(SKINS, p[1]), 0, 1, 0, 1, 0, 1, 3, 0);
+    else { cx.save(); cx.translate(40, 50); cx.scale(1.2, 1.2); cx.beginPath(); cx.arc(0, 0, 17, 0, TAU); cx.fillStyle = COLORS[0]; cx.fill(); cx.lineWidth = 3; cx.strokeStyle = INK; cx.stroke(); drawHat(p[1], 17); cx.restore(); }
+    cx = old;
+  });
   Array.prototype.forEach.call(document.querySelectorAll('canvas[data-pv]'), function (cnv) {
     var p = cnv.dataset.pv.split(':');
     drawPreview(cnv, function () {
@@ -2414,9 +2685,39 @@ var EVICON = {
   frenzy: '<svg viewBox="0 0 48 48"><path d="M27 3 9 27h12l-3 18 21-26H26z" fill="#ff5b8a" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/><path d="M4 14h7M2 22h6M38 33h7M40 41h6" stroke="#3b2a20" stroke-width="3" stroke-linecap="round"/></svg>',
   lowgrav: '<svg viewBox="0 0 48 48"><circle cx="24" cy="30" r="11" fill="#6ce0ff" stroke="#3b2a20" stroke-width="3"/><circle cx="20" cy="27" r="3" fill="#fff"/><path d="M10 12l5-6 5 6M28 10l5-6 5 6" fill="none" stroke="#3b2a20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 6v10M33 4v10" stroke="#3b2a20" stroke-width="3" stroke-linecap="round"/></svg>',
   tornado: '<svg viewBox="0 0 48 48"><path d="M5 8h38M9 17h30M14 26h20M18 34h12M22 42h5" stroke="#3b2a20" stroke-width="7" stroke-linecap="round"/><path d="M5 8h38M9 17h30M14 26h20M18 34h12M22 42h5" stroke="#8cf58a" stroke-width="3.4" stroke-linecap="round"/></svg>',
+  treasure: '<svg viewBox="0 0 48 48"><path d="M6 40c-2-13 6-27 18-27s20 14 18 27z" fill="#ffd23c" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/><circle cx="18" cy="27" r="3.5" fill="#fff" stroke="#3b2a20" stroke-width="2"/><circle cx="30" cy="27" r="3.5" fill="#fff" stroke="#3b2a20" stroke-width="2"/><path d="M20 35q4-3 8 0" fill="none" stroke="#3b2a20" stroke-width="2.6" stroke-linecap="round"/><path d="M38 6l2 5 5 2-5 2-2 5-2-5-5-2 5-2zM9 4l1.4 3.6L14 9l-3.6 1.4L9 14l-1.4-3.6L4 9l3.6-1.4z" fill="#3fe0ff" stroke="#3b2a20" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+  rainbow: '<svg viewBox="0 0 48 48"><path d="M4 34a20 20 0 0 1 40 0" fill="none" stroke="#ff5b5b" stroke-width="5"/><path d="M9 34a15 15 0 0 1 30 0" fill="none" stroke="#ffd23c" stroke-width="5"/><path d="M14 34a10 10 0 0 1 20 0" fill="none" stroke="#59d16a" stroke-width="5"/><path d="M19 34a5 5 0 0 1 10 0" fill="none" stroke="#5aa9ff" stroke-width="5"/><path d="M4 34h40" stroke="#3b2a20" stroke-width="3" stroke-linecap="round"/><path d="M10 42l-2 4M24 42l-2 4M38 42l-2 4" stroke="#3fe0ff" stroke-width="3" stroke-linecap="round"/></svg>',
+  feast: '<svg viewBox="0 0 48 48"><circle cx="24" cy="26" r="19" fill="#e9b872" stroke="#3b2a20" stroke-width="3"/><circle cx="24" cy="26" r="15" fill="#ff8fc7"/><circle cx="24" cy="26" r="6" fill="#f3e6cf" stroke="#3b2a20" stroke-width="3"/><path d="M14 18l3 2M31 15l-1 3M34 30l-3-1M15 33l3-2" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M37 8a7 7 0 0 0 0 10a7 7 0 0 1-6-5z" fill="#fff8ea" stroke="#3b2a20" stroke-width="2.4" stroke-linejoin="round"/></svg>',
+  party: '<svg viewBox="0 0 48 48"><path d="M8 44 18 14l16 16z" fill="#c77dff" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/><path d="M12 33l4 4M15 24l9 9" stroke="#fff36b" stroke-width="3" stroke-linecap="round"/><path d="M30 8c2 4-2 6 0 10M38 14c4 1 3 5 7 5" fill="none" stroke="#3b2a20" stroke-width="2.6" stroke-linecap="round"/><circle cx="40" cy="6" r="2.6" fill="#ff4d6d"/><circle cx="44" cy="30" r="2.6" fill="#59d16a"/><circle cx="26" cy="4" r="2.2" fill="#5aa9ff"/></svg>',
+  lucky: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="21" fill="#fff36b" opacity=".45"/><path d="M24 5l5.5 12 13 1.5-9.6 9 2.6 13L24 34l-11.5 6.5 2.6-13-9.6-9 13-1.5z" fill="#ffd23c" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/><path d="M19 26h3v-3h4v3h3" fill="none" stroke="#3b2a20" stroke-width="2"/><text x="24" y="27" font-size="9" font-weight="900" text-anchor="middle" fill="#3b2a20" font-family="Arial">x2</text></svg>',
   star: '<svg viewBox="0 0 48 48"><path d="M24 3l6 13 14 2-10 10 3 14-13-7-13 7 3-14L4 18l14-2z" fill="#fff36b" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/></svg>'
 };
 function evKey(title) { for (var k in EV) if (EV[k].title === title) return k; return 'star'; }
+
+/* ---------- album and achievements (logic: ALBUM, ACH in 35_meta.js) ---------- */
+function albumHtml() {
+  var h = '', i, j;
+  for (i = 0; i < ALBUM.length; i++) {
+    var pg = ALBUM[i], c = albumCount(pg), l = pg.list(), done = G.albumDone[pg.id], full = c[0] >= c[1];
+    h += '<div class="apage"><div class="ah"><b>' + T(pg.name) + '</b><span class="acount">' + c[0] + '/' + c[1] + '</span>' +
+      (done ? '<span class="adone">✓ +' + pg.gems + ' ' + ICON.gem + '</span>' : full ? btn('album:' + pg.id, T('Claim {0} {1}', pg.gems, ICON.gem), { cls: 'claim' }) : '<span class="arew">+' + pg.gems + ' ' + ICON.gem + '</span>') + '</div><div class="stk">';
+    for (j = 0; j < l.length; j++) {
+      var k = l[j], has = pg.has(k), inner = pg.id === 'ev' ? EVICON[k] || EVICON.star : '<canvas width="80" height="80" data-st="' + (pg.id === 'loot' ? 'loot' : pg.id === 'skins' ? 'skin' : 'hat') + ':' + k + '"></canvas>';
+      h += '<i class="st' + (has ? '' : ' off') + '">' + inner + '</i>';
+    }
+    h += '</div></div>';
+  }
+  var n = 0; for (i = 0; i < ACH.length; i++) if (G.ach[ACH[i].id]) n++;
+  h += '<div class="apage"><div class="ah"><b>' + T('Achievements') + '</b><span class="acount">' + n + '/' + ACH.length + '</span></div>';
+  for (i = 0; i < ACH.length; i++) { var a = ACH[i], ok = G.ach[a.id]; h += '<div class="arow' + (ok ? ' done' : '') + '"><span>' + (ok ? '✓ ' : '') + T(a.text) + '</span><b>+' + a.gems + ' ' + ICON.gem + '</b></div>'; }
+  return h + '</div>';
+}
+var achT = null;
+function uiAch(a) {     // an achievement pops in at the top, then flies its gems into the counter
+  var el = $('ach'); el.innerHTML = '<b>🏆 ' + T('Achievement!') + '</b><span>' + T(a.text) + '</span><em>+' + a.gems + ' ' + ICON.gem + '</em>';
+  el.classList.remove('gone', 'show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(achT); achT = setTimeout(function () { var r = el.getBoundingClientRect(); flyBurst(r, 'gem', Math.min(8, 2 + Math.round(a.gems / 8))); el.classList.add('gone'); }, 2600);
+}
 
 /* ---------- daily streak: a 7-day row, the claim sends gems flying into the counter ---------- */
 function streakRow() {

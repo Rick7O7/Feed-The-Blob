@@ -78,12 +78,16 @@ async def main():
             await pg.click('#mute'); await shot('settings'); await pg.click('#mute')
             await pg.evaluate("G.modal = null; G.daily = 0; G.streak = 0; ACT.shop('gems')")
             await pg.click('[data-act=\"daily\"]'); await shot('daily-claim', 330); await pg.wait_for_timeout(900); await shot('daily-done', 50)
-            for tab in ('skins', 'hats', 'boosts', 'gems'):
+            for tab in ('skins', 'hats', 'boosts', 'album', 'gems'):
                 await pg.evaluate(f"G.modal = null; ACT.shop('{tab}')")
                 await shot('shop-' + tab)
-            for ty in ('gold', 'boss', 'frenzy', 'lowgrav', 'tornado'):
+            for ty in ('gold', 'boss', 'frenzy', 'lowgrav', 'tornado', 'treasure', 'rainbow', 'feast', 'party', 'lucky'):
                 await pg.evaluate(CALM + f" __fb.event('{ty}'); step(1 / 60); hud();")
                 await shot('event-' + ty, 650)
+                if ty in ('treasure', 'feast', 'party', 'lucky'):      # the event itself, a moment after the banner
+                    await pg.evaluate("G.event.pre = 0; for (var k = 0; k < 280; k++) { G.calm = 99; G.hp = 3; step(1 / 60); } G.banner = null; var P = G.actors[0]; if (G.treasure) { G.treasure.vx = G.treasure.vy = 0; P.x = G.treasure.x; P.y = G.treasure.y - 150; } if (G.feast) { P.x = G.feast.x + 40; P.y = G.feast.y - 190; } if (G.event && G.event.type === 'party') { var b = G.blobs[1]; P.x = b.x - b.r - 120; P.y = b.y; } hud();")
+                    await shot('event-' + ty + '-on', 500)
+                    await pg.evaluate(CALM + ' G.treasure = null; G.feast = null; G.lucky = 0;')
             await pg.evaluate(CALM + " G.pend.push({type: 'ko'}); nextModal();")
             await shot('ko')
             await pg.evaluate(CALM + " G.pend.push({type: 'levelup', level: 5, reward: 1234}); nextModal();")

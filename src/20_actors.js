@@ -56,6 +56,8 @@ function botThink(a, dt) {
     if (a.used === 0) ai.mode = 'seek';
     else { d = goTo(a, b.x, b.y); if (d < b.r + 18) a.ix = a.iy = 0; return; }
   }
+  var fe = G.feast;      // giant snack: everyone races to it and lunges chunks off
+  if (fe && a.used < cap && hyp(a.x - fe.x, a.y - fe.y) < 1500) { d = goTo(a, fe.x, fe.y); a.wantSprint = d > 400 && a.stam > 50; if (d < fe.r + 70 && a.stam > 30) a.wantLunge = true; return; }
   if (ai.think <= 0 || !ai.tgt || ai.tgt.state !== 1) {
     ai.think = rand(0.35, 0.75) / a.skill; ai.tgt = bestItem(a);
     if (a.aggro && ai.huntCd <= 0 && a.stam > 60) {
@@ -100,7 +102,7 @@ function updActors(dt) {
   var i, a, P = G.actors[0];
   if (G.auto) autoPilot(P, dt);
   else { var l = hyp(IN.x, IN.y); P.ix = l > 1 ? IN.x / l : IN.x; P.iy = l > 1 ? IN.y / l : IN.y; P.wantSprint = IN.sprint; if (IN.lunge) { P.wantLunge = true; IN.lunge = false; } }
-  for (i = 1; i < 4; i++) botThink(G.actors[i], dt);
+  for (i = 1; i < 4; i++) { botThink(G.actors[i], dt); if (evOn('party')) G.actors[i].wantLunge = false; }      // blob party: rivals are friendly
   var lowg = evOn('lowgrav'), inf = evOn('frenzy');
   for (i = 0; i < 4; i++) {
     a = G.actors[i];
@@ -241,7 +243,7 @@ function pickups(dt) {
         if (it.kind === 'heart') { if (!a.bot && G.hp < 3) { G.hp++; Snd.heal(); say(a.x, a.y - 44, '+1 HEART', '#ff4d6d', 22); G.items.splice(j, 1); } continue; }
         if (full || a.used + k.slots > cap) continue;
         it.state = 2; it.owner = a; it.z = 0; it.pop = 1; it.vx = it.vy = it.vz = 0; a.carry.push(it); a.used += k.slots; full = a.used >= cap;
-        if (!a.bot) { Snd.pop(a.carry.length); if (full) say(a.x, a.y - 44, 'FULL!', '#ff6b5b', 20); }
+        if (!a.bot) { G.album.loot[it.kind] = 1; comboStep(); Snd.pop(G.pcombo); if (full) say(a.x, a.y - 44, 'FULL!', '#ff6b5b', 20); }
       } else if (mag && it.state === 1 && it.kind !== 'heart' && d2 < mag * mag) { var d = Math.sqrt(d2); it.vx += dx / d * 1100 * dt; it.vy += dy / d * 1100 * dt; it.pull = 0.4; }
     }
   }

@@ -25,7 +25,8 @@ var KIND = {
   apple: { mass: 2, coin: 1, slots: 1, r: 12 }, donut: { mass: 3, coin: 2, slots: 1, r: 13 }, pizza: { mass: 4, coin: 3, slots: 1, r: 13 }, fish: { mass: 3, coin: 2, slots: 1, r: 13 },
   can: { mass: 5, coin: 0, slots: 1, r: 11 }, boot: { mass: 9, coin: 0, slots: 2, r: 14 },
   gem: { mass: 1, coin: 8, slots: 1, r: 12 }, gold: { mass: 3, coin: 5, slots: 1, r: 12 }, star: { mass: 6, coin: 25, slots: 1, r: 15 },
-  goo: { mass: 0, coin: 0, slots: 1, r: 12 }, heart: { mass: 0, coin: 0, slots: 0, r: 13 }
+  goo: { mass: 0, coin: 0, slots: 1, r: 12 }, heart: { mass: 0, coin: 0, slots: 0, r: 13 },
+  cake: { mass: 12, coin: 40, slots: 1, r: 16 }      // golden cake: only from surprise moments, never from the normal loot table
 };
 var TABLE = [['apple', 30], ['donut', 20], ['pizza', 13], ['fish', 12], ['can', 10], ['boot', 8], ['gem', 5], ['star', 0.7], ['heart', 0.5]];
 var UPG = {
@@ -103,9 +104,11 @@ function blobR(b) { var lo = LVT[b.level - 1], hi = LVT[b.level], f = clamp((b.m
 function newGame(sv) {
   sv = sv || {};
   G = { t: 0, coins: sv.coins || 0, total: sv.total || 0, gems: sv.gems || 0, stars: sv.stars || 0, rb: sv.rb || 0,
-    up: {}, stats: { fed: 0, crystals: 0, bonks: 0, bosses: 0, bought: 0, raids: 0, raided: 0, stolen: 0, jackpots: 0, defended: 0, kos: 0, revives: 0, ads: 0, rebirths: 0, time: 0 },
+    up: {}, stats: { fed: 0, crystals: 0, bonks: 0, bosses: 0, bought: 0, raids: 0, raided: 0, stolen: 0, jackpots: 0, defended: 0, kos: 0, revives: 0, ads: 0, rebirths: 0, time: 0, treasures: 0, events: 0, surprises: 0 },
     quest: sv.quest || 0, qbase: sv.qbase || null, skins: sv.skins || ['classic'], skin: sv.skin || 'classic', hats: sv.hats || ['none'], hat: sv.hat || 'none',
-    cd: sv.cd || {}, daily: sv.daily || 0, streak: sv.streak || 0, hp: 3, healT: 0, fever: 0, feverT: 0, boost: { x2: 0 }, leader: -1, leadT: 0, crownT: 0, alarm: 0, lastRaid: -99, raidGem: -999, hitStop: 0, rate: 0, rateAcc: 0, calm: 0,
+    cd: sv.cd || {}, daily: sv.daily || 0, streak: sv.streak || 0,
+    album: { loot: (sv.album && sv.album.loot) || {}, ev: (sv.album && sv.album.ev) || {} }, albumDone: sv.albumDone || {}, ach: sv.ach || {}, pbest: sv.pbest || 0,
+    pcombo: 0, pcomboT: -9, lucky: 0, surpriseT: 70, surpriseN: 0, treasure: null, feast: null, hp: 3, healT: 0, fever: 0, feverT: 0, boost: { x2: 0 }, leader: -1, leadT: 0, crownT: 0, alarm: 0, lastRaid: -99, raidGem: -999, hitStop: 0, rate: 0, rateAcc: 0, calm: 0,
     items: [], actors: [], blobs: [], map: null, clouds: [], crates: [], crateT: 8, tips: {}, parts: [], texts: [], meteors: [], boss: null, event: null, nextEvent: 45, evBag: [], evCount: 0,
     spawnAcc: 0, grav: 900, shake: 0, flash: 0, saveT: 0, banner: null, started: false, auto: false, modal: null, pend: [], koOffer: false, ground: 0 };
   var k, i; UKEYS.forEach(function (key) { G.up[key] = (sv.up && sv.up[key]) || 0; });
@@ -182,7 +185,8 @@ function hitCrate(a, c, idx) {
   if (vis) { Snd.smack(); for (i = 0; i < 7; i++) part(c.x, c.y - 10, rand(-220, 220), rand(-260, 20), rand(0.3, 0.6), pick(['#c98a5a', '#8b5a3c', '#f3d9a4']), rand(4, 8), 500); }
   if (c.hp > 0) { if (!a.bot) G.shake = Math.max(G.shake, 5); return; }
   G.crates.splice(idx, 1);
-  burst(c.x, c.y, 7, function () { var r = rnd(); return r < 0.15 ? 'gem' : r < 0.5 ? 'gold' : rollKind(); }, 300);
+  burst(c.x, c.y, c.lucky ? 14 : 7, function () { var r = rnd(); return r < (c.lucky ? 0.45 : 0.15) ? 'gem' : r < 0.5 ? 'gold' : rollKind(); }, 300);
+  if (c.lucky && !a.bot) { G.gems += 2; Snd.gem(); say(c.x, c.y - 80, 'LUCKY CRATE! +2 gems', '#fff36b', 26); }
   if (!a.bot) { var co = Math.round(5 * lootMul() * coinMul()); addCoins(co); G.shake = Math.max(G.shake, 9); say(c.x, c.y - 44, T('CRATE!  +{0}', fmt(co)), '#ffd23c', 24); }
 }
 function tip(key, a, str, col) { if (!G.tips[key] && G.started) { G.tips[key] = 1; say(a.x, a.y - 46, str, col, 22); } }
@@ -248,6 +252,7 @@ function updMap(dt) {
 /* ---------- loot ---------- */
 function rollKind() {
   if (evOn('gold') && rnd() < 0.55) return 'gold';
+  if (evOn('rainbow') && rnd() < 0.6) { var rr = rnd(); return rr < 0.35 ? 'gem' : rr < 0.7 ? 'gold' : rr < 0.78 ? 'star' : 'donut'; }      // rainbow rain: rare loot
   var luck = UPG.luck.eff(G.up.luck), tot = 0, i, w;
   for (i = 0; i < TABLE.length; i++) { w = TABLE[i][1]; if (TABLE[i][0] === 'gem' || TABLE[i][0] === 'star') w *= luck; tot += w; }
   var r = rnd() * tot;
@@ -340,7 +345,7 @@ function updItems(dt) {
   }
   G.ground = n;
   var rate = 14.5 * (1 + 0.05 * Math.min(G.blobs[0].level - 1, 12));      // scaled with the arena, so loot is as dense as before
-  if (evOn('gold')) rate *= 2.1; else if (evOn('frenzy')) rate *= 2; else if (evOn('boss')) rate *= 1.3;
+  if (evOn('gold')) rate *= 2.1; else if (evOn('frenzy')) rate *= 2; else if (evOn('boss')) rate *= 1.3; else if (evOn('rainbow')) rate *= 1.8;
   if (n < 520) { G.spawnAcc += rate * dt; while (G.spawnAcc >= 1) { G.spawnAcc -= 1; spawnItem(false); } }
 }
 
@@ -353,6 +358,8 @@ function eat(b, it) {
     a.combo = a.comboT > 0 ? a.combo + 1 : 1; a.comboT = 0.5;
     G.fever = Math.min(100, G.fever + 0.8); G.feverT = 5;
     var c = it.c * coinMul();
+    if (G.lucky > 0 && !it.fly && c > 0) { c *= 2; G.lucky--; say(b.x, b.y - b.r - 40, T('LUCKY x2!  {0} left', G.lucky), '#fff36b', 20); }      // lucky star: the next pickups pay double
+    if (it.kind === 'cake') { say(b.x, b.y - b.r - 60, 'GOLDEN CAKE!', '#ffd23c', 28); Snd.fanfare(); }
     if (c > 0) { addCoins(c); a.gain += c; if (KIND[it.kind].coin >= 8) Snd.coin(); }
     if (!it.fly) G.stats.fed++; if (it.kind === 'gem') G.stats.crystals++;
     Snd.gulp(a.combo);

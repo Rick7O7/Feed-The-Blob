@@ -14,19 +14,80 @@ var EV = {
   lowgrav: { title: 'LOW GRAVITY', sub: 'Carry twice as much!', dur: 15, col: '#6ce0ff',
     start: function () { G.grav = 170; }, end: function () { G.grav = 900; } },
   tornado: { title: 'LOOT TORNADO', sub: 'Everything swirls to one spot!', dur: 11, col: '#8cf58a',
-    start: function (e) { e.data.x = rand(W * 0.35, W * 0.65); e.data.y = rand(H * 0.35, H * 0.65); } }
+    start: function (e) { e.data.x = rand(W * 0.35, W * 0.65); e.data.y = rand(H * 0.35, H * 0.65); } },
+  // a shy golden blob runs away from you; every lunge that lands knocks crystals out, the third one pops it for gems
+  treasure: { title: 'TREASURE BLOB', sub: 'Catch it! Lunge into it 3 times!', dur: 20, col: '#ffd23c',
+    start: function () {
+      var P = G.actors[0], a = rnd() * TAU;
+      G.treasure = { x: clamp(P.x + Math.cos(a) * 520, 200, W - 200), y: clamp(P.y + Math.sin(a) * 420, 200, H - 200), vx: 0, vy: 0, r: 34, hp: 3, hitCd: 0, wob: 0, hurt: 0, wx: 0, wy: 0, wt: 0 };
+    },
+    upd: function (e, dt) {
+      var tr = G.treasure, P = G.actors[0]; if (!tr) { e.done = true; return; }
+      tr.wob += dt; if (tr.hitCd > 0) tr.hitCd -= dt; if (tr.hurt > 0) tr.hurt -= dt;
+      var dx = tr.x - P.x, dy = tr.y - P.y, d = hyp(dx, dy) + 0.01, sp, tx, ty;
+      if (d < 560) { tx = dx / d; ty = dy / d; sp = 205 + (3 - tr.hp) * 12; }          // flee, a bit faster after each hit
+      else { tr.wt -= dt; if (tr.wt <= 0) { tr.wt = rand(1, 2.2); var wa = rnd() * TAU; tr.wx = Math.cos(wa); tr.wy = Math.sin(wa); } tx = tr.wx; ty = tr.wy; sp = 90; }
+      if (tr.x < 260 || tr.x > W - 260) tx += (W / 2 - tr.x) / 900; if (tr.y < 260 || tr.y > H - 260) ty += (H / 2 - tr.y) / 900;   // no hiding in corners
+      var t = 1 - Math.exp(-4 * dt); tr.vx = lerp(tr.vx, tx * sp, t); tr.vy = lerp(tr.vy, ty * sp, t);
+      tr.x = clamp(tr.x + tr.vx * dt, EDGE + tr.r, W - EDGE - tr.r); tr.y = clamp(tr.y + tr.vy * dt, EDGE + tr.r, H - EDGE - tr.r); rockOut(tr, tr.r);
+      if (P.atk > 0 && tr.hitCd <= 0 && d < tr.r + P.r + 8) {
+        tr.hp--; tr.hitCd = 0.5; tr.hurt = 0.4; tr.vx = dx / d * 620; tr.vy = dy / d * 620; P.atk = 0; P.lunge = 0; G.shake = 8;
+        burst(tr.x, tr.y, 6, function () { return rnd() < 0.5 ? 'gem' : 'gold'; }, 320); Snd.gem();
+        if (tr.hp > 0) say(tr.x, tr.y - 50, 'GOTCHA!', '#fff36b', 26);
+        else {
+          G.gems += 3; G.stats.treasures++; e.done = true; e.caught = true; G.flash = 0.3; Snd.fanfare();
+          burst(tr.x, tr.y, 14, function () { return rnd() < 0.6 ? 'gem' : 'gold'; }, 420);
+          say(tr.x, tr.y - 60, 'TREASURE! +3 gems', '#ffd23c', 30);
+          for (var k = 0; k < 30; k++) part(tr.x, tr.y, rand(-380, 380), rand(-380, 120), rand(0.4, 0.9), pick(['#ffd23c', '#fff36b', '#3fe0ff']), rand(4, 9), 500);
+        }
+      }
+    },
+    end: function (e) { var tr = G.treasure; if (tr && !e.caught) say(tr.x, tr.y - 50, 'It got away!', '#ffffff', 22); G.treasure = null; } },
+  // rare loot rains everywhere: crystals, gold and the odd star (see rollKind)
+  rainbow: { title: 'RAINBOW RAIN', sub: 'Rare loot everywhere!', dur: 13, col: '#ff8fe0' },
+  // a giant snack lands in the middle; every collector that touches it breaks off loot, lunges break off more
+  feast: { title: 'GIANT SNACK', sub: 'Race to the middle and bite chunks off!', dur: 22, col: '#ff9f2e',
+    start: function () { G.feast = { x: W / 2, y: H / 2 - 30, r: 74, hp: 16, max: 16, cd: [0, 0, 0, 0], t: 0, wob: 0 }; G.shake = 10; },
+    upd: function (e, dt) {
+      var fe = G.feast; if (!fe) { e.done = true; return; } fe.t += dt; if (fe.wob > 0) fe.wob -= dt * 3;
+      for (var i = 0; i < 4; i++) {
+        var a = G.actors[i]; if (fe.cd[i] > 0) { fe.cd[i] -= dt; continue; }
+        if (hyp(a.x - fe.x, a.y - fe.y) > fe.r + a.r + 6) continue;
+        var lunge = a.atk > 0; fe.cd[i] = lunge ? 0.3 : 0.75; fe.hp--; fe.wob = 1;
+        burst(fe.x, fe.y, lunge ? 5 : 3, function () { return pick(['donut', 'pizza', 'apple', 'gold', 'donut']); }, 280);
+        if (onScreen(fe.x, fe.y)) { Snd.smack(); for (var k = 0; k < 8; k++) part(fe.x, fe.y, rand(-260, 260), rand(-260, 40), rand(0.3, 0.6), pick(['#ffd35a', '#ff8fc7', '#e9b872']), rand(4, 8), 500); }
+        if (!a.bot && lunge) say(fe.x, fe.y - fe.r - 20, 'CHOMP!', '#ffffff', 26);
+        if (fe.hp <= 0) { e.done = true; say(fe.x, fe.y - fe.r, 'ALL GONE!', '#ffd23c', 26); break; }
+      }
+    },
+    end: function () { var fe = G.feast; if (fe && fe.hp > 0) burst(fe.x, fe.y, fe.hp * 2, function () { return pick(['donut', 'pizza', 'apple']); }, 300); G.feast = null; } },
+  // rivals turn friendly: no bonks, no raids, and their blobs send you gifts
+  party: { title: 'BLOB PARTY', sub: 'Rivals are friends now and send gifts!', dur: 15, col: '#c77dff',
+    start: function (e) { e.data.next = 1; e.data.k = 0; for (var i = 1; i < 4; i++) { var ai = G.actors[i].ai; if (ai.mode === 'raid' || ai.mode === 'hunt') ai.mode = 'seek'; } },
+    upd: function (e, dt) {
+      e.data.next -= dt; if (e.data.next > 0) return; e.data.next = 1.5;
+      var b = G.blobs[1 + (e.data.k++ % 3)], me = G.blobs[0], span = LVT[me.level] - LVT[me.level - 1];
+      gooFly(b, span * 0.012, 3, me.x, me.y); addCoins(Math.round(4 * lootMul() * coinMul()));
+      if (onScreen(b.x, b.y)) say(b.x, b.y - b.r - 30, 'GIFT!', '#e0b3ff', 24);
+    } },
+  // lucky star: the next 10 pickups you bring home pay double coins
+  lucky: { title: 'LUCKY STAR', sub: 'Your next 10 snacks pay double!', dur: 25, col: '#fff36b',
+    start: function () { G.lucky = 10; },
+    upd: function (e) { if (G.lucky <= 0) e.done = true; },
+    end: function () { G.lucky = 0; } }
 };
 function nextEventType() {
   G.evCount++;
   if (G.evForce) { var f = G.evForce; G.evForce = null; return f; }
   if (G.evCount === 1) return 'gold';
-  if (G.evCount === 2) return 'boss';
-  if (!G.evBag.length) G.evBag = ['gold', 'boss', 'frenzy', 'lowgrav', 'tornado'].sort(function () { return rnd() - 0.5; });
+  if (G.evCount === 2) return 'treasure';
+  if (G.evCount === 3) return 'boss';
+  if (!G.evBag.length) G.evBag = ['gold', 'boss', 'frenzy', 'lowgrav', 'tornado', 'treasure', 'rainbow', 'feast', 'party', 'lucky'].sort(function () { return rnd() - 0.5; });
   return G.evBag.pop();
 }
 function updEvents(dt) {
   var e = G.event, i, k;
-  if (!e) { if (G.t >= G.nextEvent) { var ty = nextEventType(); G.event = { type: ty, t: 0, pre: 2.4, on: false, done: false, data: {} }; G.banner = { title: EV[ty].title, sub: EV[ty].sub, col: EV[ty].col, t: 4.2 }; Snd.siren(); } }
+  if (!e) { if (G.t >= G.nextEvent) { var ty = nextEventType(); G.event = { type: ty, t: 0, pre: 2.4, on: false, done: false, data: {} }; G.banner = { title: EV[ty].title, sub: EV[ty].sub, col: EV[ty].col, t: 4.2 }; G.album.ev[ty] = 1; G.stats.events++; Snd.siren(); Snd.sting(ty); } }
   else if (!e.on) { e.pre -= dt; if (e.pre <= 0) { e.on = true; if (EV[e.type].start) EV[e.type].start(e); G.shake = 6; } }
   else {
     e.t += dt; if (EV[e.type].upd) EV[e.type].upd(e, dt);
@@ -80,7 +141,7 @@ function updBoss(dt) {
 function step(dt) {
   if (G.modal) return;
   G.t += dt; G.stats.time += dt;
-  updMap(dt); updActors(dt); pickups(dt); updCarry(dt); updItems(dt); updBlobs(dt); updEvents(dt); updFx(dt); updQuest();
+  updMap(dt); updActors(dt); pickups(dt); updCarry(dt); updItems(dt); updBlobs(dt); updEvents(dt); updFx(dt); updQuest(); updMeta(dt);
   if (G.questPop > 0) G.questPop -= dt;
   if (G.calm > 0) G.calm -= dt;
   if (G.pend.length && (G.calm <= 0 || G.pend[0].type === 'ko')) nextModal();

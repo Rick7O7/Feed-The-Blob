@@ -91,6 +91,14 @@ var Snd = {
   boing: function () { if (this.ok('boing', 0.12)) this.tone(170 * this.jit(), 0.2, 'sine', 0.17, 560); },
   zoom: function () { if (this.ok('zoom', 0.3)) { this.tone(420, 0.16, 'triangle', 0.11, 940); this.noise(0.12, 0.1, 3200); } },
   heal: function () { if (this.ok('heal', 0.2)) { var j = this.jit(); this.tone(660 * j, 0.12, 'sine', 0.12); this.tone(880 * j, 0.2, 'sine', 0.12, 0, 0.1); } },
+  // a short tune when an event starts; it runs on the music bus, so the music switch silences it too
+  STINGS: { treasure: [[784, 'triangle'], [988], [1175], [1568]], rainbow: [[523, 'sine'], [659], [784], [988], [1175], [1319]], feast: [[392, 'square'], [523], [392], [659]],
+            party: [[523, 'triangle'], [659], [784], [659], [784], [1047]], lucky: [[1047, 'sine'], [1319], [1568], [2093]] },
+  sting: function (ty) {
+    var m = this.STINGS[ty]; if (!m || !this.ctx || this.musicOff || this.ctx.state !== 'running') return;
+    var type = m[0][1]; for (var i = 0; i < m.length; i++) this.tone(m[i][0], 0.22, type, 0.5, 0, 0.5 + i * 0.11, this.mus);
+    this.tone(m[m.length - 1][0] / 2, 0.6, 'triangle', 0.4, 0, 0.5 + m.length * 0.11, this.mus);
+  },
   fanfare: function () { if (this.ok('fanfare', 1)) { var a = [523, 659, 784, 1047], i; for (i = 0; i < a.length; i++) { this.tone(a[i], 0.14, 'square', 0.05, 0, i * 0.1); this.tone(a[i] / 2, 0.14, 'triangle', 0.1, 0, i * 0.1); } this.tone(1047, 0.6, 'triangle', 0.13, 0, 0.42); this.tone(1319, 0.6, 'triangle', 0.1, 0, 0.42); this.tone(1568, 0.6, 'sine', 0.08, 0, 0.42); } }
 };
 
@@ -205,6 +213,14 @@ function buildSprites() {
       g.beginPath(); g.moveTo(0, -13); g.bezierCurveTo(11, -3, 12, 4, 12, 5); g.arc(0, 5, 12, 0, Math.PI); g.bezierCurveTo(-12, 4, -11, -3, 0, -13); g.closePath(); g.fillStyle = col; g.fill(); outl(g);
       g.beginPath(); g.arc(-4, 3, 3.4, 0, TAU); g.fillStyle = 'rgba(255,255,255,.75)'; g.fill();
     });
+  });
+  SPR.cake = mkSprite(48, function (g) {       // golden cake: surprise moment loot
+    g.beginPath(); g.roundRect(-14, -2, 28, 14, 4); g.fillStyle = '#ffc93c'; g.fill(); outl(g);
+    g.beginPath(); g.roundRect(-11, -12, 22, 11, 4); g.fillStyle = '#ffe14d'; g.fill(); outl(g);
+    g.beginPath(); g.moveTo(-14, 3); g.quadraticCurveTo(-7, 8, 0, 3); g.quadraticCurveTo(7, 8, 14, 3); g.strokeStyle = '#fff8ea'; g.lineWidth = 3; g.stroke();
+    g.beginPath(); g.moveTo(0, -12); g.lineTo(0, -19); g.strokeStyle = INK; g.lineWidth = 2.5; g.stroke();
+    g.beginPath(); g.ellipse(0, -21, 2.6, 3.6, 0, 0, TAU); g.fillStyle = '#ff6b5b'; g.fill();
+    g.beginPath(); g.arc(-6, -8, 2.2, 0, TAU); g.fillStyle = 'rgba(255,255,255,.8)'; g.fill();
   });
   SPR.star = mkSprite(48, function (g) {
     g.beginPath(); for (var i = 0; i < 10; i++) { var r = i % 2 ? 7 : 16, a = -Math.PI / 2 + i * Math.PI / 5; g.lineTo(Math.cos(a) * r, Math.sin(a) * r); }

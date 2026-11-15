@@ -230,6 +230,30 @@ body.touch .card .btn,body.touch .tag{min-height:44px}
 .up .lv{font-size:11px}
 @media (max-width:560px){#shopbtn.long{font-size:11px;padding:0 6px}.mhead{flex-wrap:wrap;justify-content:space-between}.mhead .tabs{order:3;flex-basis:100%;flex-wrap:nowrap;gap:5px}.mhead .tab{flex:1;padding:6px 4px}#mute{width:44px}.days{gap:3px}.day small{font-size:9px}.day b{font-size:12px}#setpop{top:calc(60px + env(safe-area-inset-top))}}
 @media (max-height:430px){#hero{height:70px;max-width:200px;margin:-6px auto -2px}#mid{top:calc(58px + env(safe-area-inset-top))}#sub{top:calc(58px + env(safe-area-inset-top))}#setpop{top:calc(58px + env(safe-area-inset-top))}#mcard.shop{height:94vh}}
+#ach{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top));transform:translateX(-50%);z-index:31;padding:8px 16px;display:flex;flex-direction:column;align-items:center;gap:1px;background:#fff36b;pointer-events:none;max-width:90vw;text-align:center}
+#ach.show{animation:achin .5s cubic-bezier(.2,1.6,.4,1) both}
+#ach b{font-size:13px;font-weight:900;letter-spacing:.04em}
+#ach span{font-size:15px;font-weight:900}
+#ach em{font-style:normal;font-size:14px;font-weight:900}
+@keyframes achin{from{transform:translateX(-50%) translateY(-70px) scale(.6)}to{transform:translateX(-50%)}}
+.apage{background:#f1e4c9;border:3px solid #3b2a20;border-radius:14px;padding:8px 10px 10px;margin-bottom:8px}
+.ah{display:flex;align-items:center;gap:8px;min-height:40px}
+.ah b{font-size:15px}
+.acount{font-size:13px;font-weight:900;opacity:.6;margin-right:auto}
+.ah .btn{width:auto;min-height:40px;font-size:13px;padding:4px 10px}
+.adone{font-size:13px;font-weight:900;color:#2f8f3a}
+.arew{font-size:13px;font-weight:900;opacity:.6}
+.stk{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.st{width:44px;height:44px;border-radius:10px;background:#fff8ea;border:2px solid #3b2a20;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.st svg{width:34px;height:34px}
+.st canvas{width:42px;height:42px}
+.st.off{background:#e3d4b6}
+.st.off svg,.st.off canvas{filter:brightness(0);opacity:.18}
+.arow{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:800;padding:6px 2px;border-top:2px dashed rgba(59,42,32,.18)}
+.arow b{white-space:nowrap}
+.arow.done{color:#2f8f3a}
+.arow:not(.done){opacity:.7}
+@media (max-width:560px){.mhead .tab{font-size:11px;padding:6px 2px}}
 @media (prefers-reduced-motion:reduce){#play,#play .tri,.day.next,.btn.claim,#mcard>.rays{animation:none}}
 </style>
 <!--__SDK__-->
@@ -265,6 +289,7 @@ body.touch .card .btn,body.touch .tag{min-height:44px}
   </div>
 </div>
 <div id="toast" class="pill gone"></div>
+<div id="ach" class="pill gone"></div>
 <div id="fly"></div>
 <div id="modal" class="gone"><div id="mcard" class="pill"></div></div>
 <div id="start">

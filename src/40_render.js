@@ -276,7 +276,8 @@ function drawSolids(th) {
     var cs = Math.min(1, o.age * 5) * (1 + Math.max(0, o.wob) * 0.18), tilt = Math.max(0, o.wob) * Math.sin(G.t * 40) * 0.12 + Math.sin(G.t * 2 + o.x) * 0.03;
     cx.beginPath(); cx.ellipse(o.x, o.y + 16, 27 * cs, 10 * cs, 0, 0, TAU); cx.fillStyle = 'rgba(40,25,15,.22)'; cx.fill();
     cx.save(); cx.translate(o.x, o.y - 6); cx.rotate(tilt); cx.scale(cs, cs);
-    cx.beginPath(); cx.roundRect(-23, -21, 46, 42, 6); cx.fillStyle = o.hp > 1 ? '#c98a5a' : '#b0744a'; cx.fill(); cx.lineWidth = 3.5; cx.strokeStyle = INK; cx.stroke();
+    if (o.lucky) { cx.beginPath(); cx.arc(0, 0, 40 + Math.sin(G.t * 5) * 4, 0, TAU); cx.fillStyle = 'rgba(255,243,107,.35)'; cx.fill(); }
+    cx.beginPath(); cx.roundRect(-23, -21, 46, 42, 6); cx.fillStyle = o.lucky ? (o.hp > 1 ? '#ffd23c' : '#e8b020') : o.hp > 1 ? '#c98a5a' : '#b0744a'; cx.fill(); cx.lineWidth = 3.5; cx.strokeStyle = INK; cx.stroke();
     cx.beginPath(); cx.moveTo(-23, -7); cx.lineTo(23, -7); cx.moveTo(-23, 8); cx.lineTo(23, 8); cx.lineWidth = 2.5; cx.strokeStyle = 'rgba(59,42,32,.55)'; cx.stroke();
     if (o.hp < 2) { cx.beginPath(); cx.moveTo(-6, -21); cx.lineTo(2, -6); cx.lineTo(-5, 4); cx.lineTo(4, 21); cx.lineWidth = 3; cx.strokeStyle = INK; cx.stroke(); }
     cx.beginPath(); for (k = 0; k < 10; k++) { var cr = k % 2 ? 4.5 : 10, ca = -Math.PI / 2 + k * Math.PI / 5; cx.lineTo(Math.cos(ca) * cr, Math.sin(ca) * cr); } cx.closePath(); cx.fillStyle = '#ffd23c'; cx.fill(); cx.lineWidth = 2; cx.strokeStyle = INK; cx.stroke();
@@ -325,6 +326,8 @@ function drawMini(th) {
     if (G.leader === i) { cx.fillStyle = '#ffd23c'; cx.beginPath(); cx.moveTo(o.x * k - 4, o.y * k - br - 1); cx.lineTo(o.x * k - 4, o.y * k - br - 6); cx.lineTo(o.x * k - 1.5, o.y * k - br - 3.5); cx.lineTo(o.x * k, o.y * k - br - 7); cx.lineTo(o.x * k + 1.5, o.y * k - br - 3.5); cx.lineTo(o.x * k + 4, o.y * k - br - 6); cx.lineTo(o.x * k + 4, o.y * k - br - 1); cx.closePath(); cx.fill(); cx.lineWidth = 1; cx.strokeStyle = INK; cx.stroke(); }
   }
   if (G.boss) { cx.beginPath(); cx.arc(G.boss.x * k, G.boss.y * k, 5.5, 0, TAU); cx.fillStyle = '#b65cff'; cx.fill(); cx.lineWidth = 1.5; cx.strokeStyle = INK; cx.stroke(); }
+  if (G.treasure) { cx.beginPath(); cx.arc(G.treasure.x * k, G.treasure.y * k, 4.5 + Math.sin(G.t * 8), 0, TAU); cx.fillStyle = '#ffd23c'; cx.fill(); cx.lineWidth = 1.5; cx.strokeStyle = INK; cx.stroke(); }
+  if (G.feast) { cx.beginPath(); cx.arc(G.feast.x * k, G.feast.y * k, 6, 0, TAU); cx.fillStyle = '#ff9f2e'; cx.fill(); cx.lineWidth = 1.5; cx.strokeStyle = INK; cx.stroke(); }
   for (i = 3; i >= 0; i--) { o = G.actors[i]; cx.beginPath(); cx.arc(o.x * k, o.y * k, i ? 2.6 : 3.6, 0, TAU); cx.fillStyle = i ? COLORS[i] : '#fff'; cx.fill(); cx.lineWidth = i ? 1 : 1.8; cx.strokeStyle = INK; cx.stroke(); }
   cx.lineWidth = 1.5; cx.strokeStyle = dark ? 'rgba(255,255,255,.75)' : 'rgba(59,42,32,.55)'; cx.strokeRect((VIEW.x - VIEW.w / 2) * k, (VIEW.y - VIEW.h / 2) * k, VIEW.w * k, VIEW.h * k);
   cx.restore();
@@ -380,6 +383,7 @@ function render() {
     drawBlobBody(b.x, b.y, b.r * (b.stun > 0 ? 0.93 : 1), { h: 282, s: 85, l: 60 }, Math.sin(b.wob * 5) * 0.8 + (b.stun > 0 ? 2 : 0), 9, 0.3 + Math.abs(Math.sin(b.wob * 4)) * 0.5, 1, P.x - b.x, P.y - b.y, 1, 1);
     for (i = 0; i < b.max; i++) { cx.beginPath(); cx.arc(b.x + (i - (b.max - 1) / 2) * 20, b.y - b.r - 22, 7.5, 0, TAU); cx.fillStyle = i < b.hp ? '#ff4d6d' : 'rgba(59,42,32,.35)'; cx.fill(); cx.lineWidth = 2.5; cx.strokeStyle = INK; cx.stroke(); }
   }
+  drawSpecials(P);
   for (i = 0; i < 4; i++) { var cr = G.actors[i].carry; for (var j = cr.length - 1; j >= 0; j--) if (onScreen(cr[j].x, cr[j].y)) drawItem(cr[j], false); }
   var order = G.actors.slice().sort(function (p, q) { return p.y - q.y; });
   for (i = 0; i < 4; i++) if (onScreen(order[i].x, order[i].y)) drawActor(order[i]);
@@ -392,9 +396,11 @@ function render() {
   if (MOUSE.down && !TOUCH) { cx.beginPath(); cx.arc(MOUSE.wx, MOUSE.wy, 9 + Math.sin(G.t * 8) * 2, 0, TAU); cx.lineWidth = 3; cx.strokeStyle = 'rgba(255,255,255,.8)'; cx.stroke(); }
   for (i = 0; i < G.parts.length; i++) { var p = G.parts[i]; cx.globalAlpha = clamp(p.life / p.max * 1.5, 0, 1); cx.fillStyle = p.col; cx.beginPath(); cx.arc(p.x, p.y, p.size * (0.4 + 0.6 * p.life / p.max), 0, TAU); cx.fill(); }
   cx.globalAlpha = 1;
+  if (G.pcombo >= 3 && G.t - G.pcomboT < 1.2) { var cs = 1 + Math.max(0, 0.25 - (G.t - G.pcomboT)) * 2; txt('x' + G.pcombo, P.x + 30, P.y - 30, (16 + Math.min(12, G.pcombo / 3)) * cs, '#ff8fe0', 1, 'left'); }      // pickup combo
   for (i = 0; i < G.texts.length; i++) { var t = G.texts[i], k = t.life / t.max; txt(T(t.str), t.x, t.y, t.size * (k > 0.85 ? 1 + (1 - k) * 2 : 1.3 - (1 - k) * 0.3), t.col, clamp(k * 2.2, 0, 1), t.align); }
   cx.restore();
   if (G.event && G.event.on) { cx.globalAlpha = 0.07; cx.fillStyle = EV[G.event.type].col; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
+  if (evOn('rainbow')) { var rg = cx.createLinearGradient(0, 0, VW, VH), rh = (G.t * 60) % 360; for (var ri = 0; ri < 4; ri++) rg.addColorStop(ri / 3, 'hsla(' + ((rh + ri * 90) % 360) + ',90%,65%,.12)'); cx.fillStyle = rg; cx.fillRect(0, 0, VW, VH); }
   if (G.alarm > 0 || (G.hp === 1 && G.started)) { var al = G.alarm > 0 ? 0.1 + 0.1 * Math.abs(Math.sin(G.t * 8)) : 0.06 + 0.04 * Math.sin(G.t * 4); cx.globalAlpha = al; cx.fillStyle = '#ff2d2d'; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
   if (G.flash > 0) { cx.globalAlpha = clamp(G.flash, 0, 0.6); cx.fillStyle = '#fff'; cx.fillRect(0, 0, VW, VH); cx.globalAlpha = 1; }
   if (G.started) {
@@ -402,6 +408,8 @@ function render() {
     if (G.alarm > 0) { edgeArrow(hb.x, hb.y, '#ff4d4d', 'HELP', true); txt(T('YOUR BLOB IS UNDER ATTACK!'), VW / 2, TOUCH ? 172 : 150, Math.min(22, VW / 22), '#ff6b5b', 0.6 + 0.4 * Math.abs(Math.sin(G.t * 8))); }
     else edgeArrow(hb.x, hb.y, '#59d16a', 'HOME', P.used >= capOf(P));
     if (G.boss) edgeArrow(G.boss.x, G.boss.y, '#b65cff', 'BOSS', false);
+    if (G.treasure) edgeArrow(G.treasure.x, G.treasure.y, '#ffd23c', 'CATCH', true);
+    if (G.feast) edgeArrow(G.feast.x, G.feast.y, '#ff9f2e', 'SNACK', true);
     var nc = null, ncd = 1e9; for (i = 0; i < G.clouds.length; i++) { var cd2 = hyp(G.clouds[i].x - P.x, G.clouds[i].y - P.y); if (cd2 < ncd) { ncd = cd2; nc = G.clouds[i]; } }
     if (nc && !G.alarm) edgeArrow(nc.x, nc.y, '#6cc0ff', 'LOOT', false);
     drawMini(th);
@@ -502,4 +510,33 @@ function drawOnboard() {
     if (l > h.r + 40) { cx.beginPath(); cx.moveTo(P.x + dx / l * (P.r + 10), P.y + dy / l * (P.r + 10)); cx.lineTo(h.x - dx / l * (h.r + 14), h.y - dy / l * (h.r + 14)); cx.setLineDash([14, 14]); cx.lineDashOffset = -G.t * 60; cx.lineWidth = 6; cx.strokeStyle = 'rgba(255,255,255,.85)'; cx.stroke(); cx.setLineDash([]); }
     if (Math.abs(h.x - VIEW.x) < VIEW.w / 2 - 60 && Math.abs(h.y - h.r - VIEW.y) < VIEW.h / 2 - 160) bubble(h.x, h.y - h.r - 30, T('BRING IT HOME!'), k); else bubble(P.x, P.y - P.r - 26, T('BRING IT HOME!'), k);
   } else if (OB.step === 3) { if (OB.rival) chevron(OB.rival.x, OB.rival.y - OB.rival.r - 6, '#ff8a7a'); bubble(P.x, P.y - P.r - 26, T(TOUCH ? 'TAP RUN TO LUNGE!' : 'SPACE TO LUNGE!'), k); }
+}
+
+/* ---------- event specials: treasure blob, giant snack, party hearts, lucky aura ---------- */
+var GOLDSKIN = { h: 46, s: 96, l: 58, pat: 'shine', pcol: 'rgba(255,255,255,.75)' };
+function drawSpecials(P) {
+  var i, tr = G.treasure, fe = G.feast;
+  if (tr && near(tr.x, tr.y, 120)) {
+    for (i = 0; i < 6; i++) { var sa = G.t * 2 + i * 1.05, sr = tr.r * (1.35 + 0.15 * Math.sin(G.t * 4 + i)); cx.globalAlpha = 0.5 + 0.5 * Math.sin(G.t * 6 + i); cx.fillStyle = i % 2 ? '#fff36b' : '#3fe0ff'; cx.beginPath(); cx.arc(tr.x + Math.cos(sa) * sr, tr.y + Math.sin(sa) * sr * 0.8, 3.5, 0, TAU); cx.fill(); }
+    cx.globalAlpha = 1;
+    drawBlobBody(tr.x, tr.y, tr.r, GOLDSKIN, 0.6 + (tr.hurt > 0 ? 3 : 0), 4.2, tr.hurt > 0 ? 0.6 : 0.25, 1, tr.x - P.x, tr.y - P.y, 3, tr.hurt > 0 ? 2 : 0);
+    for (i = 0; i < 3; i++) { cx.beginPath(); cx.arc(tr.x + (i - 1) * 16, tr.y - tr.r - 16, 6, 0, TAU); cx.fillStyle = i < tr.hp ? '#ffd23c' : 'rgba(59,42,32,.3)'; cx.fill(); cx.lineWidth = 2.5; cx.strokeStyle = INK; cx.stroke(); }
+  }
+  if (fe && near(fe.x, fe.y, 200)) {
+    var drop = Math.max(0, 1 - fe.t / 0.6), z = drop * drop * 700, sc = (0.55 + 0.45 * fe.hp / fe.max) * (1 + Math.max(0, fe.wob) * 0.08), w = fe.r * 2.3 * sc;
+    cx.beginPath(); cx.ellipse(fe.x, fe.y + fe.r * 0.55, fe.r * sc, fe.r * 0.3 * sc, 0, 0, TAU); cx.fillStyle = 'rgba(40,25,15,.25)'; cx.fill();
+    cx.save(); cx.translate(fe.x, fe.y - z); cx.rotate(Math.sin(G.t * 2) * 0.05 + Math.max(0, fe.wob) * Math.sin(G.t * 40) * 0.08); cx.drawImage(SPR.donut, -w / 2, -w / 2, w, w); cx.restore();
+    if (fe.t > 0.6) { cx.beginPath(); cx.roundRect(fe.x - 40, fe.y - fe.r * sc - 26, 80, 10, 5); cx.fillStyle = 'rgba(59,42,32,.4)'; cx.fill(); cx.beginPath(); cx.roundRect(fe.x - 40, fe.y - fe.r * sc - 26, 80 * fe.hp / fe.max, 10, 5); cx.fillStyle = '#ff9f2e'; cx.fill(); }
+  }
+  if (evOn('party')) for (i = 1; i < 4; i++) {          // floating hearts and confetti over the friendly rivals
+    var b = G.blobs[i]; if (!near(b.x, b.y, b.r + 80)) continue;
+    for (var k = 0; k < 7; k++) { var ph = (G.t * 0.6 + k / 7) % 1, hx = b.x + Math.sin(k * 2.3 + G.t) * b.r * 0.8, hy = b.y - b.r * 0.5 - ph * b.r * 1.4; cx.globalAlpha = Math.sin(ph * Math.PI);
+      if (k % 2) { cx.fillStyle = '#ff4d6d'; cx.beginPath(); cx.moveTo(hx, hy + 6); cx.bezierCurveTo(hx - 10, hy - 2, hx - 6, hy - 10, hx, hy - 4); cx.bezierCurveTo(hx + 6, hy - 10, hx + 10, hy - 2, hx, hy + 6); cx.fill(); }
+      else { cx.fillStyle = ['#fff36b', '#7ad7ff', '#8cf58a', '#ff8fe0'][k % 4]; cx.save(); cx.translate(hx, hy); cx.rotate(G.t * 5 + k); cx.fillRect(-4, -2, 8, 4); cx.restore(); } }
+    cx.globalAlpha = 1;
+  }
+  if (G.lucky > 0) {      // lucky star: golden aura around the collector with the pickups left
+    cx.beginPath(); cx.arc(P.x, P.y, P.r + 14 + Math.sin(G.t * 6) * 3, 0, TAU); cx.lineWidth = 5; cx.strokeStyle = 'rgba(255,215,60,.85)'; cx.stroke();
+    for (i = 0; i < 5; i++) { var la = G.t * 3 + i * 1.257; cx.fillStyle = '#fff36b'; cx.beginPath(); cx.arc(P.x + Math.cos(la) * (P.r + 14), P.y + Math.sin(la) * (P.r + 14), 3, 0, TAU); cx.fill(); }
+  }
 }

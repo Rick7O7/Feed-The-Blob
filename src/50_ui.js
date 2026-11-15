@@ -18,7 +18,7 @@ function save() {
   if (!G || G.auto) return;
   try {
     localStorage.setItem(SAVEKEY, JSON.stringify({ coins: G.coins, total: G.total, gems: G.gems, stars: G.stars, rb: G.rb, up: G.up, stats: G.stats, quest: G.quest, qbase: G.qbase,
-      skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, mass: G.blobs.map(function (b) { return Math.round(b.mass); }), lvl: G.blobs.map(function (b) { return b.level; }), ts: Date.now(), mute: Snd.muted, musicOff: Snd.musicOff, lang: LANG }));
+      skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, mass: G.blobs.map(function (b) { return Math.round(b.mass); }), lvl: G.blobs.map(function (b) { return b.level; }), ts: Date.now(), mute: Snd.muted, musicOff: Snd.musicOff, lang: LANG, album: G.album, albumDone: G.albumDone, ach: G.ach, pbest: G.pbest }));
   } catch (e) { /* storage can be unavailable; the game runs without it */ }
 }
 function load() { try { return JSON.parse(localStorage.getItem(SAVEKEY) || 'null'); } catch (e) { return null; } }
@@ -133,7 +133,7 @@ function readInput() {
 }
 function hud() {
   var P = G.actors[0], b = G.blobs[0], i, k, h;
-  $('shopbtn').classList.toggle('gift', G.daily !== today());
+  $('shopbtn').classList.toggle('gift', G.daily !== today() || albumReady());
   var c = cpsNow(); $('cps').textContent = '+' + (c < 10 ? c.toFixed(1) : fmt(c)) + '/s';
   $('lvlname').textContent = T('Lv {0}', b.level) + ' ' + lvName(b.level) + (G.stars ? '  ★' + G.stars : '');
   var lo = LVT[b.level - 1], hi = LVT[b.level]; $('lvlfill').style.width = clamp((b.mass - lo) / (hi - lo) * 100, 0, 100) + '%';
@@ -187,8 +187,8 @@ function uiModal() {
     h = '<h2>' + T('REBIRTH') + '</h2><p>' + T('Start again in a new world with tougher rivals. Coins, upgrades and blob size reset. You keep gems, skins and stars.') + '</p><div class="reward">' + T('★ +{0} stars = +{1}% coins and growth, forever', st, st * 20) + '</div><div class="btns">' +
       adBtn('rebirthAd', T('Rebirth with {0} stars', st2)) + btn('rebirth', T('Rebirth with {0} stars', st)) + btn('rebirthGem', T('Rebirth with {0} stars for 20 {1}', st2, ICON.gem), { off: G.gems < 20 }) + btn('close', T('Not yet')) + '</div>';
   } else if (m.type === 'shop') {
-    var tabs = [['skins', T('Skins')], ['hats', T('Hats')], ['boosts', T('Boosts')], ['gems', T('Gems')]];
-    h = '<div class="mhead"><span class="gemcount">' + ICON.gem + ' <b>' + fmt(SHOW.g + 0.001) + '</b></span><div class="tabs">' + tabs.map(function (t) { return '<button class="tab' + (m.tab === t[0] ? ' on' : '') + (t[0] === 'gems' && G.daily !== today() ? ' gift' : '') + '" data-act="tab:' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><button class="x" data-act="close" aria-label="' + T('Close') + '">X</button></div><div class="mbody">';
+    var tabs = [['skins', T('Skins')], ['hats', T('Hats')], ['boosts', T('Boosts')], ['album', T('Album')], ['gems', T('Gems')]];
+    h = '<div class="mhead"><span class="gemcount">' + ICON.gem + ' <b>' + fmt(SHOW.g + 0.001) + '</b></span><div class="tabs">' + tabs.map(function (t) { return '<button class="tab' + (m.tab === t[0] ? ' on' : '') + ((t[0] === 'gems' && G.daily !== today()) || (t[0] === 'album' && albumReady()) ? ' gift' : '') + '" data-act="tab:' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div><button class="x" data-act="close" aria-label="' + T('Close') + '">X</button></div><div class="mbody">';
     if (m.tab === 'skins' || m.tab === 'hats') {
       var list = m.tab === 'skins' ? SKINS : HATS, own = m.tab === 'skins' ? G.skins : G.hats, cur = m.tab === 'skins' ? G.skin : G.hat, act = m.tab === 'skins' ? 'skin' : 'hat';
       h += '<div class="grid">';
@@ -196,7 +196,8 @@ function uiModal() {
       h += '</div>';
     } else if (m.tab === 'boosts') {
       for (i = 0; i < BOOSTS.length; i++) { var bo = BOOSTS[i]; h += '<div class="rowi"><div><b>' + T(bo.name) + '</b><span>' + T(bo.hint) + '</span></div><div class="rbtn">' + adBtn('boostAd:' + bo.id, T('Free'), 'b_' + bo.id) + btn('boostGem:' + bo.id, bo.gems + ' ' + ICON.gem, { off: G.gems < bo.gems }) + '</div></div>'; }
-    } else {
+    } else if (m.tab === 'album') h += albumHtml();
+    else {
       h += streakRow();
       if (adsOn()) h += '<div class="rowi"><div><b>' + T('Free gems') + '</b><span>' + T('15 gems per video') + '</span></div><div class="rbtn">' + adBtn('gemAd', T('Watch'), 'gems') + '</div></div>';
       h += '<div class="rowi"><div><b>' + T('Earn gems by playing') + '</b><span>' + T('Quests, boss blobs, level-ups and every rebirth pay gems.') + '</span></div></div>';
@@ -206,6 +207,14 @@ function uiModal() {
   }
   if (m.type === 'levelup' || m.type === 'rebirth') h = '<div class="rays"></div>' + h;
   $('mcard').innerHTML = h; $('mcard').className = 'pill ' + m.type;
+  Array.prototype.forEach.call(document.querySelectorAll('canvas[data-st]'), function (cnv) {      // album stickers, 80x80 canvas
+    var p = cnv.dataset.st.split(':'), g = cnv.getContext('2d');
+    if (p[0] === 'loot') { var sp = SPR[p[1]]; g.drawImage(sp, 8, 8, 64, 64); return; }
+    var old = cx; cx = g; cx.lineJoin = 'round'; cx.lineCap = 'round';
+    if (p[0] === 'skin') drawBlobBody(40, 42, 27, findIn(SKINS, p[1]), 0, 1, 0, 1, 0, 1, 3, 0);
+    else { cx.save(); cx.translate(40, 50); cx.scale(1.2, 1.2); cx.beginPath(); cx.arc(0, 0, 17, 0, TAU); cx.fillStyle = COLORS[0]; cx.fill(); cx.lineWidth = 3; cx.strokeStyle = INK; cx.stroke(); drawHat(p[1], 17); cx.restore(); }
+    cx = old;
+  });
   Array.prototype.forEach.call(document.querySelectorAll('canvas[data-pv]'), function (cnv) {
     var p = cnv.dataset.pv.split(':');
     drawPreview(cnv, function () {
@@ -235,9 +244,39 @@ var EVICON = {
   frenzy: '<svg viewBox="0 0 48 48"><path d="M27 3 9 27h12l-3 18 21-26H26z" fill="#ff5b8a" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/><path d="M4 14h7M2 22h6M38 33h7M40 41h6" stroke="#3b2a20" stroke-width="3" stroke-linecap="round"/></svg>',
   lowgrav: '<svg viewBox="0 0 48 48"><circle cx="24" cy="30" r="11" fill="#6ce0ff" stroke="#3b2a20" stroke-width="3"/><circle cx="20" cy="27" r="3" fill="#fff"/><path d="M10 12l5-6 5 6M28 10l5-6 5 6" fill="none" stroke="#3b2a20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 6v10M33 4v10" stroke="#3b2a20" stroke-width="3" stroke-linecap="round"/></svg>',
   tornado: '<svg viewBox="0 0 48 48"><path d="M5 8h38M9 17h30M14 26h20M18 34h12M22 42h5" stroke="#3b2a20" stroke-width="7" stroke-linecap="round"/><path d="M5 8h38M9 17h30M14 26h20M18 34h12M22 42h5" stroke="#8cf58a" stroke-width="3.4" stroke-linecap="round"/></svg>',
+  treasure: '<svg viewBox="0 0 48 48"><path d="M6 40c-2-13 6-27 18-27s20 14 18 27z" fill="#ffd23c" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/><circle cx="18" cy="27" r="3.5" fill="#fff" stroke="#3b2a20" stroke-width="2"/><circle cx="30" cy="27" r="3.5" fill="#fff" stroke="#3b2a20" stroke-width="2"/><path d="M20 35q4-3 8 0" fill="none" stroke="#3b2a20" stroke-width="2.6" stroke-linecap="round"/><path d="M38 6l2 5 5 2-5 2-2 5-2-5-5-2 5-2zM9 4l1.4 3.6L14 9l-3.6 1.4L9 14l-1.4-3.6L4 9l3.6-1.4z" fill="#3fe0ff" stroke="#3b2a20" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+  rainbow: '<svg viewBox="0 0 48 48"><path d="M4 34a20 20 0 0 1 40 0" fill="none" stroke="#ff5b5b" stroke-width="5"/><path d="M9 34a15 15 0 0 1 30 0" fill="none" stroke="#ffd23c" stroke-width="5"/><path d="M14 34a10 10 0 0 1 20 0" fill="none" stroke="#59d16a" stroke-width="5"/><path d="M19 34a5 5 0 0 1 10 0" fill="none" stroke="#5aa9ff" stroke-width="5"/><path d="M4 34h40" stroke="#3b2a20" stroke-width="3" stroke-linecap="round"/><path d="M10 42l-2 4M24 42l-2 4M38 42l-2 4" stroke="#3fe0ff" stroke-width="3" stroke-linecap="round"/></svg>',
+  feast: '<svg viewBox="0 0 48 48"><circle cx="24" cy="26" r="19" fill="#e9b872" stroke="#3b2a20" stroke-width="3"/><circle cx="24" cy="26" r="15" fill="#ff8fc7"/><circle cx="24" cy="26" r="6" fill="#f3e6cf" stroke="#3b2a20" stroke-width="3"/><path d="M14 18l3 2M31 15l-1 3M34 30l-3-1M15 33l3-2" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M37 8a7 7 0 0 0 0 10a7 7 0 0 1-6-5z" fill="#fff8ea" stroke="#3b2a20" stroke-width="2.4" stroke-linejoin="round"/></svg>',
+  party: '<svg viewBox="0 0 48 48"><path d="M8 44 18 14l16 16z" fill="#c77dff" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/><path d="M12 33l4 4M15 24l9 9" stroke="#fff36b" stroke-width="3" stroke-linecap="round"/><path d="M30 8c2 4-2 6 0 10M38 14c4 1 3 5 7 5" fill="none" stroke="#3b2a20" stroke-width="2.6" stroke-linecap="round"/><circle cx="40" cy="6" r="2.6" fill="#ff4d6d"/><circle cx="44" cy="30" r="2.6" fill="#59d16a"/><circle cx="26" cy="4" r="2.2" fill="#5aa9ff"/></svg>',
+  lucky: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="21" fill="#fff36b" opacity=".45"/><path d="M24 5l5.5 12 13 1.5-9.6 9 2.6 13L24 34l-11.5 6.5 2.6-13-9.6-9 13-1.5z" fill="#ffd23c" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/><path d="M19 26h3v-3h4v3h3" fill="none" stroke="#3b2a20" stroke-width="2"/><text x="24" y="27" font-size="9" font-weight="900" text-anchor="middle" fill="#3b2a20" font-family="Arial">x2</text></svg>',
   star: '<svg viewBox="0 0 48 48"><path d="M24 3l6 13 14 2-10 10 3 14-13-7-13 7 3-14L4 18l14-2z" fill="#fff36b" stroke="#3b2a20" stroke-width="3" stroke-linejoin="round"/></svg>'
 };
 function evKey(title) { for (var k in EV) if (EV[k].title === title) return k; return 'star'; }
+
+/* ---------- album and achievements (logic: ALBUM, ACH in 35_meta.js) ---------- */
+function albumHtml() {
+  var h = '', i, j;
+  for (i = 0; i < ALBUM.length; i++) {
+    var pg = ALBUM[i], c = albumCount(pg), l = pg.list(), done = G.albumDone[pg.id], full = c[0] >= c[1];
+    h += '<div class="apage"><div class="ah"><b>' + T(pg.name) + '</b><span class="acount">' + c[0] + '/' + c[1] + '</span>' +
+      (done ? '<span class="adone">✓ +' + pg.gems + ' ' + ICON.gem + '</span>' : full ? btn('album:' + pg.id, T('Claim {0} {1}', pg.gems, ICON.gem), { cls: 'claim' }) : '<span class="arew">+' + pg.gems + ' ' + ICON.gem + '</span>') + '</div><div class="stk">';
+    for (j = 0; j < l.length; j++) {
+      var k = l[j], has = pg.has(k), inner = pg.id === 'ev' ? EVICON[k] || EVICON.star : '<canvas width="80" height="80" data-st="' + (pg.id === 'loot' ? 'loot' : pg.id === 'skins' ? 'skin' : 'hat') + ':' + k + '"></canvas>';
+      h += '<i class="st' + (has ? '' : ' off') + '">' + inner + '</i>';
+    }
+    h += '</div></div>';
+  }
+  var n = 0; for (i = 0; i < ACH.length; i++) if (G.ach[ACH[i].id]) n++;
+  h += '<div class="apage"><div class="ah"><b>' + T('Achievements') + '</b><span class="acount">' + n + '/' + ACH.length + '</span></div>';
+  for (i = 0; i < ACH.length; i++) { var a = ACH[i], ok = G.ach[a.id]; h += '<div class="arow' + (ok ? ' done' : '') + '"><span>' + (ok ? '✓ ' : '') + T(a.text) + '</span><b>+' + a.gems + ' ' + ICON.gem + '</b></div>'; }
+  return h + '</div>';
+}
+var achT = null;
+function uiAch(a) {     // an achievement pops in at the top, then flies its gems into the counter
+  var el = $('ach'); el.innerHTML = '<b>🏆 ' + T('Achievement!') + '</b><span>' + T(a.text) + '</span><em>+' + a.gems + ' ' + ICON.gem + '</em>';
+  el.classList.remove('gone', 'show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(achT); achT = setTimeout(function () { var r = el.getBoundingClientRect(); flyBurst(r, 'gem', Math.min(8, 2 + Math.round(a.gems / 8))); el.classList.add('gone'); }, 2600);
+}
 
 /* ---------- daily streak: a 7-day row, the claim sends gems flying into the counter ---------- */
 function streakRow() {
