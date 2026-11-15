@@ -1,0 +1,7 @@
+admin/pass.txt
+dist/
+shots/
+src_v1/
+src_v2/
+node_modules/
+.venv/

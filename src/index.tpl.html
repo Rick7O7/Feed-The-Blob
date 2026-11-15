@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Feed the Blob</title>
+<!-- version 2.5: 12 new skins incl. animated ones (bolt, flame, bubbles, swirl, facet); calmer big map -->
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:#bfa77f;color:#3b2a20;user-select:none;-webkit-user-select:none;touch-action:none;
+  font-family:"Arial Rounded MT Bold","Nunito","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+button{font-family:inherit;color:inherit}
+canvas#c{position:fixed;left:0;top:0;display:block;touch-action:none}
+#hud{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none}
+.pill{background:#fff8ea;border:3px solid #3b2a20;border-radius:16px;box-shadow:0 4px 0 rgba(59,42,32,.28)}
+.gone{display:none!important}
+.coin{display:inline-block;width:26px;height:26px;border-radius:50%;background:#ffc93c;border:3px solid #3b2a20;box-shadow:inset -3px -3px 0 #e09a12;flex:none;vertical-align:middle}
+.coin.s{width:14px;height:14px;border-width:2px;box-shadow:inset -2px -2px 0 #e09a12}
+.gemi{display:inline-block;width:13px;height:13px;background:linear-gradient(135deg,#ffb3f7,#b65cff);border:2px solid #3b2a20;border-radius:3px;transform:rotate(45deg);vertical-align:middle;margin:0 4px 2px}
+#top{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:6px;align-items:stretch}
+#coinbox{padding:5px 10px 5px 7px;display:flex;align-items:center;gap:7px}
+#coins{display:block;font-size:20px;font-weight:900;line-height:1.05}
+#cps{display:block;font-size:11px;font-weight:700;opacity:.65}
+#gembox,#shopbtn,#mute{pointer-events:auto;cursor:pointer;font-weight:900}
+#gembox{padding:0 10px 0 6px;font-size:16px;display:flex;align-items:center}
+#lvl{flex:1;max-width:270px;min-width:0;padding:6px 10px}
+#lvlname{font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lvlbar,#evbar{height:10px;border-radius:6px;background:#e7d6b5;border:2px solid #3b2a20;margin-top:4px;overflow:hidden}
+#lvlfill{display:block;height:100%;width:0;background:#59d16a;transition:width .2s}
+#rank{padding:6px 10px;font-size:12px;font-weight:900;display:flex;gap:9px;align-items:center;margin-left:auto}
+#rank span{display:flex;align-items:center;gap:3px;opacity:.55}
+#rank span.me{opacity:1}
+#rank i{width:12px;height:12px;border-radius:50%;border:2px solid #3b2a20;display:inline-block}
+#shopbtn{padding:0 12px;font-size:14px;background:#ffd95e}
+#mute{width:46px;font-size:13px}
+#mute.off{opacity:.45;text-decoration:line-through}
+#sub{position:absolute;top:62px;left:8px;right:8px;display:flex;gap:6px;align-items:center;flex-wrap:nowrap;overflow:hidden}
+#hearts{display:flex;gap:1px}
+.hp svg{width:27px;height:27px;display:block}
+.hp svg path{fill:#d9cbb0}
+.hp.on svg path{fill:#ff4d6d}
+#fever{padding:2px 9px;font-size:14px;font-weight:900;background:#ffb347}
+#fever.hot{background:#ff7a3d;animation:pulse .4s infinite alternate}
+.chip{background:#3b2a20;color:#fff;border-radius:10px;padding:3px 8px;font-size:11px;font-weight:800;white-space:nowrap}
+#mid{position:absolute;top:98px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 8px}
+#quest{padding:5px 12px;font-size:13px;font-weight:800;max-width:480px;display:flex;gap:10px;align-items:center;text-align:left}
+#quest.done{background:#8cf58a}
+#qnum{font-weight:900;white-space:nowrap}
+#rebirthbtn{pointer-events:auto;cursor:pointer;padding:7px 16px;font-size:15px;font-weight:900;background:#fff36b;animation:pulse .5s infinite alternate}
+#ev{padding:4px 12px 6px;min-width:190px;text-align:center}
+#evtxt{font-size:13px;font-weight:900;letter-spacing:.03em}
+#evbar{margin-top:2px;background:rgba(255,255,255,.5);height:8px}
+#evfill{display:block;height:100%;background:#3b2a20}
+#banner{position:absolute;top:32%;left:0;right:0;text-align:center;opacity:0;transform:scale(.6);padding:0 10px}
+#banner.show{animation:ban 4.2s both}
+#bt{font-size:clamp(34px,9vw,76px);font-weight:900;-webkit-text-stroke:7px #3b2a20;paint-order:stroke fill;letter-spacing:.02em;line-height:1}
+#bs{font-size:clamp(15px,3.4vw,24px);font-weight:900;color:#fff;-webkit-text-stroke:5px #3b2a20;paint-order:stroke fill;margin-top:6px}
+@keyframes ban{0%{opacity:0;transform:scale(.5) rotate(-4deg)}8%{opacity:1;transform:scale(1.12) rotate(2deg)}14%{transform:scale(1) rotate(0)}80%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.25)}}
+@keyframes pulse{to{transform:scale(1.07)}}
+#toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);padding:8px 16px;font-size:14px;font-weight:900;z-index:30;background:#3b2a20;color:#fff;max-width:90vw;text-align:center;pointer-events:none}
+#bottom{position:absolute;left:0;right:0;bottom:0;padding:6px 8px 8px;display:flex;flex-direction:column;gap:6px}
+#row{display:flex;justify-content:space-between;align-items:flex-end;min-height:44px}
+#carry{padding:6px 12px;font-size:17px;font-weight:900;display:flex;align-items:center;gap:6px}
+#carry svg{width:22px;height:22px}
+#carry.full{background:#ff8a7a;animation:pulse .5s infinite alternate}
+#keys{font-size:12px;font-weight:800;color:#fff;-webkit-text-stroke:3px #3b2a20;paint-order:stroke fill;align-self:center;padding:0 10px;text-align:center}
+#sprint{pointer-events:auto;display:none;position:relative;width:88px;height:88px;border-radius:50%;overflow:hidden;font-weight:900;font-size:17px;cursor:pointer;touch-action:none}
+body.touch #sprint{display:block}
+body.touch #keys{display:none}
+#sprintfill{position:absolute;left:0;right:0;bottom:0;background:#ffe14d;z-index:0}
+#sprint.tired #sprintfill{background:#ff8a7a}
+#sprint b{position:relative;z-index:1}
+#shop{display:flex;gap:6px;overflow-x:auto;pointer-events:auto;touch-action:pan-x;scrollbar-width:none;padding:4px 0 2px}
+#shop::-webkit-scrollbar{display:none}
+.up{position:relative;flex:0 0 auto;width:104px;padding:5px 4px;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;background:#e9dcc3;transition:transform .08s}
+.up:first-child{margin-left:auto}
+.up:last-child{margin-right:auto}
+.up>span{opacity:.5}
+.up .ic svg{width:28px;height:28px;display:block}
+.up .nm{font-size:11px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.up .lv{font-size:10px;font-weight:800;opacity:.65}
+.up .ct{font-size:13px;font-weight:900;display:flex;align-items:center;gap:3px;min-height:16px}
+.up kbd{position:absolute;top:3px;left:6px;font-weight:900;font-size:10px;font-family:inherit;opacity:.4}
+body.touch .up kbd{display:none}
+.up.can{background:#dfffd9;box-shadow:0 4px 0 #3b2a20;animation:can .7s infinite alternate}
+.up.can>span{opacity:1}
+@keyframes can{to{transform:translateY(-3px)}}
+.up.max{background:#d9cdb6}
+.up.max .ct{visibility:hidden}
+.up:active{transform:translateY(2px)}
+#modal,#start,#adov{position:fixed;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;padding:14px}
+#modal{background:rgba(59,42,32,.6);z-index:10}
+#start{background:rgba(59,42,32,.55);z-index:5}
+#adov{background:#111;z-index:40;color:#fff;flex-direction:column;text-align:center;gap:10px}
+#adtitle{font-size:34px;font-weight:900;letter-spacing:.05em}
+#adsub{font-size:15px;font-weight:700;opacity:.8;max-width:320px}
+#mcard{max-width:430px;width:100%;padding:20px 18px;text-align:center;max-height:92vh;display:flex;flex-direction:column}
+#mcard h2{font-size:clamp(28px,7vw,40px);font-weight:900;line-height:1.05;color:#ffc93c;-webkit-text-stroke:5px #3b2a20;paint-order:stroke fill}
+#mcard.ko h2{color:#ff6b5b}
+#mcard p{font-size:14px;font-weight:700;margin-top:10px;line-height:1.35}
+#mcard p.note{font-size:12px;opacity:.7}
+.reward{margin-top:12px;font-size:22px;font-weight:900;background:#fff0c2;border-radius:12px;padding:8px}
+.btns{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:46px;padding:8px 12px;font-size:15px;font-weight:900;background:#8cf58a;border:3px solid #3b2a20;border-radius:14px;box-shadow:0 4px 0 rgba(59,42,32,.3);cursor:pointer}
+.btn:active{transform:translateY(2px)}
+.btn:disabled{background:#ddd2bd;opacity:.6;cursor:default}
+.adi{width:24px;height:24px;flex:none}
+#mcard.shop{max-width:560px;height:86vh;padding:12px;text-align:left}
+.mhead{display:flex;align-items:center;gap:8px;flex:none}
+.gemcount{font-size:16px;white-space:nowrap}
+.tabs{display:flex;gap:4px;flex:1;justify-content:center;flex-wrap:wrap}
+.tab,.x{font-weight:900;font-size:13px;padding:7px 10px;border:3px solid #3b2a20;border-radius:12px;background:#e9dcc3;cursor:pointer}
+.tab.on{background:#ffd95e}
+.x{background:#ff8a7a}
+.mbody{flex:1;overflow-y:auto;margin-top:10px;touch-action:pan-y;padding:2px 2px 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.card{background:#f1e4c9;border:3px solid #3b2a20;border-radius:14px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.card.on{background:#dfffd9}
+.card canvas{width:80px;height:80px}
+.card b{font-size:12px}
+.card .btn{min-height:34px;font-size:13px;padding:4px 6px}
+.tag{font-size:12px;font-weight:900;min-height:34px;display:flex;align-items:center}
+.rowi{display:flex;align-items:center;gap:8px;justify-content:space-between;background:#f1e4c9;border:3px solid #3b2a20;border-radius:14px;padding:8px 10px;margin-bottom:8px}
+.rowi b{display:block;font-size:14px}
+.rowi span{font-size:12px;font-weight:700;opacity:.75}
+.rbtn{display:flex;gap:6px;flex:none}
+.rbtn .btn{width:auto;min-width:74px;min-height:38px;font-size:13px;padding:4px 8px}
+#card{max-width:450px;width:100%;padding:20px 18px;text-align:center}
+#card h1{font-size:clamp(34px,9vw,52px);font-weight:900;line-height:1;color:#59d16a;-webkit-text-stroke:6px #3b2a20;paint-order:stroke fill}
+#card p{font-size:15px;font-weight:700;margin-top:10px;line-height:1.35}
+#card ol{text-align:left;margin:10px auto 0;padding-left:22px;font-size:14px;font-weight:700;line-height:1.45;max-width:350px}
+#play{margin-top:14px;padding:12px 34px;font-weight:900;font-size:22px;background:#59d16a;cursor:pointer}
+#play:active{transform:translateY(3px)}
+#fresh{display:block;margin:12px auto 0;background:none;border:0;font-weight:800;font-size:13px;text-decoration:underline;cursor:pointer;opacity:.7}
+@media (max-width:560px){
+  #rank{display:none}#lvl{max-width:none;padding:6px 8px}#coins{font-size:17px}#coinbox{padding:5px 7px 5px 5px;gap:5px}.coin{width:22px;height:22px}
+  .up{width:74px}.up .nm{font-size:10px}.up .ic svg{width:25px;height:25px}#quest{font-size:12px}#shopbtn{padding:0 8px;font-size:13px}#mute{width:40px;font-size:12px}#gembox{font-size:14px;padding:0 7px 0 3px}
+}
+@media (max-height:430px){
+  .up{flex-direction:row;justify-content:center;gap:6px;padding:4px;width:auto;min-width:86px}.up .nm,.up .lv{display:none}#mid{top:58px;align-items:flex-end}#sub{top:58px}#card{padding:12px}#card ol{display:none}#sprint{width:74px;height:74px}
+}
+</style>
+<!--__SDK__-->
+<script>window.FB_ADS = '__ADS__';</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <div id="top">
+    <div id="coinbox" class="pill"><i class="coin"></i><div><b id="coins">0</b><span id="cps">+0/s</span></div></div>
+    <button id="gembox" class="pill" data-act="shop:gems" aria-label="Gems"><i class="gemi"></i><b id="gems">0</b></button>
+    <div id="lvl" class="pill"><div id="lvlname">Lv 1 Droplet</div><div id="lvlbar"><i id="lvlfill"></i></div></div>
+    <div id="rank" class="pill"></div>
+    <button id="shopbtn" class="pill" data-act="shop:skins">SHOP</button>
+    <button id="mute" class="pill" data-act="mute" aria-label="Sound on or off">SND</button>
+  </div>
+  <div id="sub"><div id="hearts"></div><div id="fever" class="pill gone"><span id="fevertxt"></span></div><div id="chips"></div></div>
+  <div id="mid">
+    <div id="quest" class="pill"><span id="qtxt"></span><b id="qnum"></b></div>
+    <button id="rebirthbtn" class="pill gone" data-act="rebirthOpen">★ REBIRTH READY</button>
+    <div id="ev" class="pill gone"><div id="evtxt"></div><div id="evbar"><i id="evfill"></i></div></div>
+  </div>
+  <div id="banner"><div id="bt"></div><div id="bs"></div></div>
+  <div id="bottom">
+    <div id="row">
+      <div id="carry" class="pill"><svg viewBox="0 0 24 24"><path d="M7.5 8V6.5a4.5 4.5 0 0 1 9 0V8" fill="none" stroke="#3b2a20" stroke-width="2.4"/><rect x="4" y="8" width="16" height="13" rx="4" fill="#c98a5a" stroke="#3b2a20" stroke-width="2.4"/></svg><span id="carrytxt">0/6</span></div>
+      <div id="keys">Move: WASD, arrows or hold the mouse button &nbsp;·&nbsp; Lunge and sprint: Space, Shift or right click &nbsp;·&nbsp; Upgrades: 1 to 8 &nbsp;·&nbsp; Shop: B</div>
+      <button id="sprint" class="pill"><i id="sprintfill"></i><b>RUN</b></button>
+    </div>
+    <div id="shop"></div>
+  </div>
+</div>
+<div id="toast" class="pill gone"></div>
+<div id="modal" class="gone"><div id="mcard" class="pill"></div></div>
+<div id="start">
+  <div id="card" class="pill">
+    <h1>FEED THE BLOB</h1>
+    <p>Loot rains from the sky. Your blob is hungry. So are the others.</p>
+    <ol>
+      <li>Grab loot and carry it to your green blob.</li>
+      <li>Tap RUN or press Space to lunge. Lunge into rivals to make them drop loot.</li>
+      <li>Lunge into a rival blob to steal goo. It flies home by itself. Three hits in a row is a jackpot, then run.</li>
+      <li>Defend your own blob when the alarm goes off.</li>
+      <li>Explore the big map: follow the loot clouds, smash crates and use the portals.</li>
+    </ol>
+    <button id="play" class="pill" data-act="play">PLAY</button>
+    <button id="fresh" class="gone" data-act="fresh">Start a new game</button>
+  </div>
+</div>
+<div id="adov" class="gone"><div id="adtitle"></div><div id="adsub"></div></div>
+<script>
+/*__JS__*/
+</script>
+</body>
+</html>
