@@ -5,7 +5,10 @@ if (window.CanvasRenderingContext2D && !CanvasRenderingContext2D.prototype.round
   CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) { this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r); this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath(); return this; };
 }
 function resize() {
-  DPR = Math.min(window.devicePixelRatio || 1, 2); VW = window.innerWidth; VH = window.innerHeight;
+  VW = window.innerWidth; VH = window.innerHeight;
+  // Fill cost grows with canvas pixels: a 1440p screen or 150 % Windows scaling draws 2.3x the pixels of full HD and drops the late game to ~35 fps.
+  // So the canvas stays within PXMAX pixels, and RESQ lowers the resolution further when frames are slow (see frame() in 50_ui.js).
+  DPR = Math.max(0.5, Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(PXMAX / (VW * VH))) * RESQ);
   cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR); cv.style.width = VW + 'px'; cv.style.height = VH + 'px';
   SC = clamp(Math.min(VW, VH) / 560, 0.5, 1.45);
   try {          // safe areas (notch, home bar): canvas-drawn HUD parts (mini map, edge arrows) keep out of them
@@ -422,6 +425,7 @@ function render() {
 }
 
 /* ---------- screen-space effects: raid impacts, level-up moment. Pure decoration, Math.random only, never touches G ---------- */
+var PXMAX = 2.1e6, RESQ = 1, RESQT = 0;   // canvas pixel budget (about full HD) and resolution factor, see resize()
 var FX = [], FXMAX = 40, FRAMEMS = 16, LOWFX = false;   // LOWFX: the device is struggling (average frame over 25 ms), so effects get cheaper
 function w2s(wx, wy) { var z = SC * (1 - 0.05 * ZB); return { x: (wx - cam.x) * z + VW / 2, y: (wy - cam.y) * z + VH / 2, z: z }; }
 function fxAdd(o) { if (FX.length >= (LOWFX ? 6 : FXMAX)) FX.shift(); o.t = 0; FX.push(o); }

@@ -397,7 +397,9 @@ function frame(ts) {
     G.saveT += dt; if (G.saveT > 5) { G.saveT = 0; save(); }
   }
   if (G.modal) { cdT -= dt; if (cdT <= 0) { cdT = 1; tickCooldowns(); } }
-  if (rdt > 0) { FRAMEMS += (rdt * 1000 - FRAMEMS) * 0.03; LOWFX = LOWFX ? FRAMEMS > 21 : FRAMEMS > 25; }
+  if (rdt > 0) { FRAMEMS += (rdt * 1000 - FRAMEMS) * 0.03; LOWFX = LOWFX ? FRAMEMS > 21 : FRAMEMS > 25;
+    // still slow with cheap effects: render fewer pixels, one step per 2 s, down to 60 % resolution (never back up within a session, so it cannot flicker)
+    RESQT += rdt; if (LOWFX && FRAMEMS > 21 && RESQ > 0.6 && RESQT > 2) { RESQ = Math.max(0.6, RESQ - 0.15); RESQT = 0; resize(); } }
   FXDT = paused || Ads.busy ? 0 : rdt; watchFx(rdt); hudAnim(rdt); obUpdate(rdt);
   if (!G.started) drawHero($('hero'), ts);
   render();
