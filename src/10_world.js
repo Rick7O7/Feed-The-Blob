@@ -2,8 +2,12 @@
 var W = 3600, H = 2400, EDGE = 60;
 var HOMES = [{ x: 560, y: 1860 }, { x: 3040, y: 1860 }, { x: 560, y: 540 }, { x: 3040, y: 540 }];
 var COLORS = ['#59d16a', '#ff8a4c', '#5aa9ff', '#c77dff'], BHUE = [128, 22, 212, 275];
-var LEAGUES = [['Grumbo', 'Mossy', 'Bubbla'], ['Sir Slurp', 'Dr. Ooze', 'Lady Gloop'], ['Mega Muck', 'Count Slime', 'Jelly Khan'], ['Lord Blobula', 'Queen Goo', 'The Glob']];
-var NAMES = ['You', 'Grumbo', 'Mossy', 'Bubbla'];
+// rivals look like other players: made-up handles (no real names, no brands, not translated), each with its own skin
+// pattern and hat. Rolled for a new game and on every rebirth, kept in the save (G.rv) so a reload keeps the same rivals.
+var RNAMES = ['GloopKid', 'SirWobbles', 'MuffinMunch', 'TurboSnail', 'PuddlePro', 'JellyJam7', 'BlobbyBoo', 'ZoomyGoo', 'SnackAttack',
+  'PixelPudding', 'CaptSlurp', 'BubbleBuddy', 'Wobblez', 'CocoChomp', 'SlimeSurfer', 'TaterTot99', 'FizzyPop', 'GummyGrump',
+  'SquishLord', 'DizzyDrop', 'MegaMunch', 'LuckyLump', 'NoodleNoggin', 'Splatty42', 'PickleBlob', 'WaffleWob', 'Mr.Mush', 'GooGoblin'];
+var NAMES = ['You', 'GloopKid', 'SirWobbles', 'MuffinMunch'];
 var THEMES = [
   { name: 'Meadow', floor: '#f5ead4', grid: 'rgba(160,125,80,.16)', edge: '#9c7748', out: '#bfa77f',
     patch: 'rgba(125,195,95,.2)', lane: 'rgba(255,255,255,.34)', tuft: '#74b854', dots: ['#ff8fc7', '#ffd23c', '#ffffff'], rock: '#b3aaa0', slow: 'rgba(150,105,65,.5)', slowEdge: 'rgba(110,72,40,.6)', slowName: 'MUD' },
@@ -114,13 +118,38 @@ function newGame(sv) {
     spawnAcc: 0, grav: 900, shake: 0, flash: 0, saveT: 0, banner: null, started: false, auto: false, modal: null, pend: [], koOffer: false, ground: 0 };
   var k, i; UKEYS.forEach(function (key) { G.up[key] = (sv.up && sv.up[key]) || 0; });
   for (k in G.stats) if (sv.stats && sv.stats[k]) G.stats[k] = sv.stats[k];
-  var lg = LEAGUES[G.rb % LEAGUES.length]; NAMES = ['You', lg[0], lg[1], lg[2]];
   for (i = 0; i < 4; i++) { G.actors.push(mkActor(i)); G.blobs.push(mkBlob(i, sv.mass ? sv.mass[i] : 0, sv.lvl ? sv.lvl[i] : 1)); }
-  critNew(sv);
+  critNew(sv); rivalsNew(sv);
   G.map = genMap();
   for (i = 0; i < 2; i++) G.clouds.push({ x: rand(500, W - 500), y: rand(400, H - 400), tx: rand(400, W - 400), ty: rand(350, H - 350), r: 200, sp: rand(38, 54), ph: rnd() * TAU });
   for (i = 0; i < 2; i++) addCrate();
   for (i = 0; i < 190; i++) spawnItem(true);
+}
+
+// G.rv = { n: [3 names], s: [3 skin ids], h: [3 hat ids] } for rivals 1..3. One rnd() call seeds a local generator,
+// so rolling rivals barely shifts the seeded game. Skins with their own hue (rainbow, aurora) are left out: rivals keep
+// their team hue BHUE[i] and only take the pattern, so the four blobs stay easy to tell apart.
+function rivalsNew(sv) {
+  var rv = sv.rv;
+  if (!rv || !rv.n || rv.n.length !== 3) {
+    var q = Math.floor(rnd() * 2147483646) + 1, r = function () { q = q * 48271 % 2147483647; return (q - 1) / 2147483646; };
+    var take = function (pool, n) { var p = pool.slice(), o = []; while (o.length < n && p.length) o.push(p.splice(Math.floor(r() * p.length), 1)[0]); return o; };
+    var sk = SKINS.filter(function (s) { return s.id !== 'classic' && s.h >= 0 && s.id !== G.skin; }).map(function (s) { return s.id; });
+    var hs = HATS.filter(function (h) { return h.id !== 'crown'; }).map(function (h) { return h.id; });      // the crown marks the leader
+    rv = { n: take(RNAMES, 3), s: take(sk, 3), h: [0, 1, 2].map(function () { return hs[Math.floor(r() * hs.length)]; }) };
+  }
+  G.rv = rv; NAMES = ['You', rv.n[0], rv.n[1], rv.n[2]];
+}
+// look of blob/collector i for the renderer: a skin def (rivals: the chosen pattern on their team hue) and a hat id
+function rivalLook(i) {
+  if (!i) return { skin: findIn(SKINS, G.skin), hat: G.hat };
+  var s = findIn(SKINS, G.rv.s[i - 1]) || SKINS[0], o = {}, k; for (k in s) o[k] = s[k]; o.h = BHUE[i];
+  return { skin: o, hat: G.rv.h[i - 1] };
+}
+// live ranking of the four blobs, best first: [{ id, name, level, mass, you }] (same order as the crown: by mass)
+function ranking() {
+  return G.blobs.map(function (b) { return { id: b.id, name: NAMES[b.id], level: b.level, mass: b.mass, you: b.id === 0 }; })
+    .sort(function (a, b) { return b.mass - a.mass || a.id - b.id; });
 }
 
 /* ---------- the map: built fresh for every game and every rebirth ----------
@@ -307,11 +336,13 @@ function gooFly(b, amount, n, ax, ay) {   // goo the player steals flies straigh
     G.items.push(it);
   }
 }
-function dropFrom(a, n) {
+// kx, ky (optional, from a bonk): the knock direction. Loot then sprays mostly that way, flies higher and bounces twice.
+function dropFrom(a, n, kx, ky) {
+  var knock = kx !== undefined, base = knock ? Math.atan2(ky, kx) : 0;
   for (var i = 0; i < n && a.carry.length; i++) {
-    var it = a.carry.pop(), ang = rnd() * TAU, s = rand(130, 330);
-    a.used -= KIND[it.kind].slots; it.state = 0; it.z = 12; it.vz = rand(240, 420); it.vx = Math.cos(ang) * s; it.vy = Math.sin(ang) * s;
-    it.life = 24; it.bounces = 0; it.noPick = 0.6; it.owner = null;
+    var it = a.carry.pop(), ang = knock ? base + rand(-1.1, 1.1) : rnd() * TAU, s = knock ? rand(170, 360) : rand(130, 330);
+    a.used -= KIND[it.kind].slots; it.state = 0; it.z = 12; it.vz = knock ? rand(330, 480) : rand(240, 420); it.vx = Math.cos(ang) * s; it.vy = Math.sin(ang) * s;
+    it.life = 24; it.bounces = 0; it.bmax = knock ? 2 : 1; it.noPick = 0.6; it.owner = null;
   }
 }
 function updItems(dt) {
@@ -325,7 +356,7 @@ function updItems(dt) {
       it.vz -= g * dt; it.z += it.vz * dt; it.x += it.vx * dt; it.y += it.vy * dt;
       if (it.z <= 0) {
         it.z = 0;
-        if (Math.abs(it.vz) > 150 && it.bounces < (lg ? 3 : 1)) { it.vz = -it.vz * (lg ? 0.62 : 0.34); it.bounces++; }
+        if (Math.abs(it.vz) > 150 && it.bounces < (lg ? 3 : it.bmax || 1)) { it.vz = -it.vz * (lg ? 0.62 : it.bmax > 1 ? 0.5 : 0.34); it.bounces++; }
         else { it.vz = 0; it.state = 1; rockOut(it, 14); if (onScreen(it.x, it.y)) dust(it.x, it.y, 3); }
       }
     } else if (it.state === 1) {

@@ -66,7 +66,7 @@ async def checks(pg):
 
     print('Pickup combo')
     await pg.evaluate("T_.calm(); G.pcombo = 0; G.pcomboT = -9; G.up.carry = 40")
-    c = await pg.evaluate("var P = G.actors[0], c0 = G.coins; P.carry.length = 0; P.used = 0; for (var i = 0; i < 12; i++) { var it = mkItem('apple', P.x, P.y, 0); it.state = 1; G.items.push(it); T_.steps(3); } [G.pcombo, G.pbest, G.texts.some(function (t) { return t.str.indexOf('COMBO x10') === 0; })]")
+    c = await pg.evaluate("var P = G.actors[0], c0 = G.coins; P.carry.length = 0; P.used = 0; P.stun = P.tum = 0; P.immune = 3; for (var i = 0; i < 12; i++) { var it = mkItem('apple', P.x, P.y, 0); it.state = 1; G.items.push(it); T_.steps(3); } [G.pcombo, G.pbest, G.texts.some(function (t) { return t.str.indexOf('COMBO x10') === 0; })]")
     check(c[0] >= 10 and c[1] >= 10 and c[2], f'fast pickups chain up, x10 pays a bonus (combo {c[0]})')
     c2 = await pg.evaluate("var P = G.actors[0]; P.starT = 0; G.spawnAcc = -999; for (var k = 0; k < 90; k++) { G.items.length = 0; T_.steps(1); } G.items.length = 0; G.spawnAcc = 0; var it = mkItem('apple', P.x, P.y, 0); it.state = 1; G.items.push(it); T_.steps(3); G.pcombo")
     check(c2 == 1, 'a pause resets the combo')

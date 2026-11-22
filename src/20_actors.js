@@ -108,6 +108,7 @@ function updActors(dt) {
     a = G.actors[i];
     if (a.stun > 0) a.stun -= dt; if (a.immune > 0) a.immune -= dt; if (a.inv > 0) a.inv -= dt; if (a.tired > 0) a.tired -= dt;
     if (a.starT > 0) a.starT -= dt; if (a.lungeCd > 0) a.lungeCd -= dt; if (a.atk > 0) a.atk -= dt;
+    if (a.tum > 0) a.tum -= dt;
     if (a.comboT > 0) { a.comboT -= dt; if (a.comboT <= 0 && a.gain > 0) { var hb = G.blobs[0]; say(hb.x, hb.y - hb.r - 14, '+' + fmt(a.gain), '#ffd23c', clamp(18 + a.combo * 0.6, 18, 34)); a.gain = 0; } }
     var il = hyp(a.ix, a.iy), moving = il > 0.15, smax = stamMax(a);
     if (a.wantLunge) {
@@ -133,7 +134,9 @@ function updActors(dt) {
     }
     a.x += a.vx * dt; a.y += a.vy * dt; a.step += hyp(a.vx, a.vy) * dt;
     if (moving && a.lunge <= 0) { var ft = 1 - Math.exp(-14 * dt); a.fx = lerp(a.fx, a.ix / il, ft); a.fy = lerp(a.fy, a.iy / il, ft); }
-    a.x = clamp(a.x, EDGE + a.r, W - EDGE - a.r); a.y = clamp(a.y, EDGE + a.r, H - EDGE - a.r);
+    var cxl = clamp(a.x, EDGE + a.r, W - EDGE - a.r), cyl = clamp(a.y, EDGE + a.r, H - EDGE - a.r);
+    if (a.tum > 0) { if (cxl !== a.x) a.vx *= -0.5; if (cyl !== a.y) a.vy *= -0.5; }      // a tumbling blob bounces off the arena edge
+    a.x = cxl; a.y = cyl;
     mapTouch(a, dt, il);
     for (var j = 0; j < 4; j++) {
       var b = G.blobs[j], dx = a.x - b.x, dy = a.y - b.y, d = hyp(dx, dy) + 0.01, lim = b.r * 0.72 + a.r;
@@ -154,8 +157,12 @@ function updActors(dt) {
 function bonk(att, vic, frac) {
   if (vic.immune > 0 || vic.inv > 0) return;
   var n = Math.ceil(vic.carry.length * (vic.bot ? 1 : 0.5) * frac), dx = vic.x - att.x, dy = vic.y - att.y, d = hyp(dx, dy) + 0.01;
-  vic.immune = 2.6; vic.stun = 0.5; vic.vx += dx / d * 420; vic.vy += dy / d * 420; att.vx = -dx / d * 150; att.vy = -dy / d * 150; att.lunge = 0; att.atk = 0;
-  if (n > 0) dropFrom(vic, n);
+  // squishy knockback: the victim tumbles for a moment (vic.tum counts down, vic.tumD = spin direction for the renderer);
+  // a bot slides a bit further, the player only briefly so control stays good. The stun time is unchanged.
+  var kb = vic.bot ? 480 : 420;
+  vic.immune = 2.6; vic.stun = 0.5; vic.vx += dx / d * kb; vic.vy += dy / d * kb; att.vx = -dx / d * 150; att.vy = -dy / d * 150; att.lunge = 0; att.atk = 0;
+  vic.tum = vic.tumT = vic.bot ? 0.55 : 0.35; vic.tumD = (dx * att.fy - dy * att.fx) > 0 ? 1 : -1;
+  if (n > 0) dropFrom(vic, n, dx / d, dy / d);
   if (!att.bot && vic.bot && vic.ai.mode === 'raid' && vic.ai.blob === G.blobs[0]) {     // chased a raider off the own blob
     var c = Math.round(12 * lootMul() * coinMul()); addCoins(c); G.stats.defended++; vic.ai.mode = 'seek'; vic.ai.raidCd = rand(40, 60);
     say(vic.x, vic.y - 66, T('DEFENDED!  +{0}', fmt(c)), '#8cf58a', 24);

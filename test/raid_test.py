@@ -16,6 +16,8 @@ SETUP = """
   for (var i = 1; i < 4; i++) { G.actors[i].x = 1100; G.actors[i].y = 750; G.actors[i].stun = 99; }   // Rivalen aus dem Weg
   P.carry.length = 0; P.used = 0; G.hp = 3; P.inv = 0; b.shield = 0; b.hits = 0; b.rage = 0; G.event = null; G.boss = null; G.nextEvent = G.t + 999; G.meteors = [];
   G.items = G.items.filter(function (it) { return it.state !== 2; });
+  for (i = 1; i < 4; i++) { G.actors[i].carry.length = 0; G.actors[i].used = 0; }
+  G.items = G.items.filter(function (it) { return !(it.state === 3 && it.owner === b) && Math.hypot(it.x - b.x, it.y - b.y) > b.r + 250; });   // nothing else may feed rival 1 while it is raided (seed-proof)
   G.raidGem = -999; out.rival0 = b.mass; out.me0 = me.mass; out.coins0 = G.coins; out.gems0 = G.gems; out.level = me.level; out.leader = G.leader; out.jack0 = G.stats.jackpots; out.stolen0 = G.stats.stolen; out.span = LVT[me.level] - LVT[me.level - 1]; out.rate = G.rate; var cheap = 1e99; UKEYS.forEach(function (k) { if (G.up[k] < UPG[k].max) cheap = Math.min(cheap, cost(k)); }); out.cheap = cheap;
   function settle(sec, ix) { for (var k = 0; k < sec * 60; k++) { IN.x = ix; IN.y = 0; IN.sprint = false; step(1 / 60); G.modal = null; G.pend.length = 0; } }
   for (var h = 0; h < 3; h++) {

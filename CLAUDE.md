@@ -35,6 +35,7 @@ python3 test/play_test.py flows     # click-through: controls, shop, ads, KO, re
 python3 test/raid_test.py unit      # raids
 python3 test/boss_test.py           # boss
 python3 test/critter_test.py        # critters: hatch, steal, save, 15-min pacing
+python3 test/rivals_test.py         # tumble knockback, bouncy loot, rival names/skins/hats, ranking
 python3 test/admin_test.py          # admin menu, needs admin/pass.txt
 ```
 
