@@ -74,7 +74,7 @@ function botThink(a, dt) {
           if (i === 0 && G.t - G.lastRaid < 50) continue;
           var w = ob.mass * (i === G.leader ? 1.6 : 1) * rand(0.6, 1.4); if (w > cm) { cm = w; cand = ob; }
         }
-        if (cand) { ai.mode = 'raid'; ai.blob = cand; ai.raidT = 22; ai.raidHits = 0; ai.raidMax = cand.id === 0 ? 2 : a.aggro > 0.6 ? 3 : 2; ai.raidCd = rand(34, 56) / a.skill; if (cand.id === 0) G.lastRaid = G.t; return; }
+        if (cand) { ai.mode = 'raid'; ai.blob = cand; ai.raidT = 22; ai.raidHits = 0; ai.raidMax = cand.id === 0 ? 2 : a.aggro > 0.6 ? 3 : 2; ai.raidCd = rand(34, 56) / a.skill; if (cand.id === 0) { G.lastRaid = G.t; critRaidStart(a); } return; }
       }
     }
   }
@@ -184,7 +184,7 @@ function raidHit(a, b) {
     a.ai.raidHits++; if (vis) Snd.bump();
   }
   if (b.id === 0) {
-    G.alarm = 4.5; G.stats.raided++; Snd.alarm();
+    G.alarm = 4.5; G.stats.raided++; Snd.alarm(); critRaidHit(a);
     if (G.up.spikes > 0) { a.stun = 0.5 + 0.08 * G.up.spikes; dropFrom(a, a.carry.length); }
   } else { var own = G.actors[b.id]; own.ai.mode = 'defend'; own.ai.victim = a; own.ai.defT = 6; }
   if (vis) for (i = 0; i < 10; i++) part(a.x, a.y, rand(-240, 240), rand(-260, 60), rand(0.3, 0.6), COLORS[b.id], rand(4, 8), 400);
@@ -204,7 +204,7 @@ function stealHit(a, b, n) {
   G.calm = 2.5;
   if (king > 1 && n === 1) say(b.x, b.y - b.r - 52, 'KINGSLAYER x1.5', '#ffd23c', 20);
   if (n >= 3) {
-    G.stats.jackpots++; G.flash = 0.22;
+    G.stats.jackpots++; G.flash = 0.22; critJackpot(b);
     spray(b, Math.atan2(a.y - b.y, a.x - b.x), 9, function () { return rnd() < 0.35 ? 'gem' : 'gold'; });
     if (G.t - G.raidGem > 90) { G.raidGem = G.t; G.gems++; Snd.gem(); say(a.x, ty - 30, '+1 gem', '#d9a8ff', 21); }
   }

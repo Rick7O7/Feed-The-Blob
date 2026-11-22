@@ -76,7 +76,7 @@ function dailyNext() { return DAILY[(dailyDay() - 1) % 7]; }
 function rebirthGain() { return 3 + Math.max(0, G.blobs[0].level - rbLevel()); }
 function canRebirth() { return G.blobs[0].level >= rbLevel(); }
 function doRebirth(mult) {
-  var st = Math.ceil(rebirthGain() * mult), keep = { gems: G.gems + 20, stars: G.stars + st, rb: G.rb + 1, stats: G.stats, quest: G.quest, qbase: G.qbase, skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, total: G.total, album: G.album, albumDone: G.albumDone, ach: G.ach, pbest: G.pbest };
+  var st = Math.ceil(rebirthGain() * mult), keep = { gems: G.gems + 20, stars: G.stars + st, rb: G.rb + 1, stats: G.stats, quest: G.quest, qbase: G.qbase, skins: G.skins, skin: G.skin, hats: G.hats, hat: G.hat, cd: G.cd, daily: G.daily, streak: G.streak, total: G.total, album: G.album, albumDone: G.albumDone, ach: G.ach, pbest: G.pbest, crit: [G.crit[0]], egg: G.egg };
   keep.stats.rebirths++;
   newGame(keep); G.started = true; cam.x = HOMES[0].x; cam.y = HOMES[0].y; G.flash = 0.8; Snd.level();
   G.banner = { title: T('REBIRTH {0}', G.rb), sub: T('+{0} stars. Everything grows {1}% now. Welcome to {2}!', st, Math.round(starMul() * 100), T(THEMES[G.rb % THEMES.length].name)), col: '#fff36b', t: 4.2 };

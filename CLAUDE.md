@@ -22,7 +22,7 @@ Repo: https://github.com/Rick7O7/Feed-The-Blob (branch `main`).
 
 | Area | Files | Owner |
 | --- | --- | --- |
-| Game logic, balance, ads layer, admin menu, build, tests | `src/10_world.js`, `src/20_actors.js`, `src/30_events.js`, `src/35_meta.js`, `admin/`, `build.mjs`, `test/` | Agent A (Claude Code on Paul's desktop) |
+| Game logic, balance, ads layer, admin menu, build, tests | `src/10_world.js`, `src/20_actors.js`, `src/30_events.js`, `src/35_meta.js`, `src/36_critters.js`, `admin/`, `build.mjs`, `test/` | Agent A (Claude Code on Paul's desktop) |
 | Visuals, sound, UI, texts | `src/00_core.js`, `src/40_render.js`, `src/50_ui.js`, `src/index.tpl.html` | Agent B (the friend's Claude) |
 
 Editing the other agent's files is allowed for small fixes. Say so in the handover, with file and reason. Bigger changes: ask in the handover and wait.
@@ -34,6 +34,7 @@ node build.mjs                      # builds dist/index.html (test), dist/portal
 python3 test/play_test.py flows     # click-through: controls, shop, ads, KO, rebirth, save
 python3 test/raid_test.py unit      # raids
 python3 test/boss_test.py           # boss
+python3 test/critter_test.py        # critters: hatch, steal, save, 15-min pacing
 python3 test/admin_test.py          # admin menu, needs admin/pass.txt
 ```
 

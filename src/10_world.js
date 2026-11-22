@@ -80,7 +80,8 @@ function starMul() { return 1 + 0.2 * G.stars; }
 function feverMul() { return 1 + G.fever / 100; }
 function coinMul() { return UPG.stomach.eff(G.up.stomach) * feverMul() * (G.leader === 0 ? 1.25 : 1) * starMul() * (G.boost.x2 > 0 ? 2 : 1) * (evOn('frenzy') ? 1.5 : 1); }
 function massMul() { return UPG.appetite.eff(G.up.appetite) * starMul(); }
-function cpsNow() { return 0.3 * lootMul() * Math.sqrt(G.blobs[0].level) * UPG.stomach.eff(G.up.stomach) * starMul() * (G.boost.x2 > 0 ? 2 : 1); }
+function cpsBase() { return 0.3 * lootMul() * Math.sqrt(G.blobs[0].level) * UPG.stomach.eff(G.up.stomach) * starMul(); }
+function cpsNow() { return cpsBase() * (1 + critIncome()) * (G.boost.x2 > 0 ? 2 : 1); }      // critters at home add to the passive (and offline) income
 function evOn(type) { return G.event && G.event.on && G.event.type === type; }
 function rbLevel() { return 8 + G.rb; }
 function stamMax(a) { return a.bot ? 100 : UPG.energy.eff(G.up.energy); }
@@ -104,10 +105,10 @@ function blobR(b) { var lo = LVT[b.level - 1], hi = LVT[b.level], f = clamp((b.m
 function newGame(sv) {
   sv = sv || {};
   G = { t: 0, coins: sv.coins || 0, total: sv.total || 0, gems: sv.gems || 0, stars: sv.stars || 0, rb: sv.rb || 0,
-    up: {}, stats: { fed: 0, crystals: 0, bonks: 0, bosses: 0, bought: 0, raids: 0, raided: 0, stolen: 0, jackpots: 0, defended: 0, kos: 0, revives: 0, ads: 0, rebirths: 0, time: 0, treasures: 0, events: 0, surprises: 0 },
+    up: {}, stats: { fed: 0, crystals: 0, bonks: 0, bosses: 0, bought: 0, raids: 0, raided: 0, stolen: 0, jackpots: 0, defended: 0, kos: 0, revives: 0, ads: 0, rebirths: 0, time: 0, treasures: 0, events: 0, surprises: 0, hatched: 0, critStolen: 0 },
     quest: sv.quest || 0, qbase: sv.qbase || null, skins: sv.skins || ['classic'], skin: sv.skin || 'classic', hats: sv.hats || ['none'], hat: sv.hat || 'none',
     cd: sv.cd || {}, daily: sv.daily || 0, streak: sv.streak || 0,
-    album: { loot: (sv.album && sv.album.loot) || {}, ev: (sv.album && sv.album.ev) || {} }, albumDone: sv.albumDone || {}, ach: sv.ach || {}, pbest: sv.pbest || 0,
+    album: { loot: (sv.album && sv.album.loot) || {}, ev: (sv.album && sv.album.ev) || {}, crit: (sv.album && sv.album.crit) || {} }, albumDone: sv.albumDone || {}, ach: sv.ach || {}, pbest: sv.pbest || 0,
     pcombo: 0, pcomboT: -9, lucky: 0, surpriseT: 70, surpriseN: 0, treasure: null, feast: null, hp: 3, healT: 0, fever: 0, feverT: 0, boost: { x2: 0 }, leader: -1, leadT: 0, crownT: 0, alarm: 0, lastRaid: -99, raidGem: -999, hitStop: 0, rate: 0, rateAcc: 0, calm: 0,
     items: [], actors: [], blobs: [], map: null, clouds: [], crates: [], crateT: 8, tips: {}, parts: [], texts: [], meteors: [], boss: null, event: null, nextEvent: 45, evBag: [], evCount: 0,
     spawnAcc: 0, grav: 900, shake: 0, flash: 0, saveT: 0, banner: null, started: false, auto: false, modal: null, pend: [], koOffer: false, ground: 0 };
@@ -115,6 +116,7 @@ function newGame(sv) {
   for (k in G.stats) if (sv.stats && sv.stats[k]) G.stats[k] = sv.stats[k];
   var lg = LEAGUES[G.rb % LEAGUES.length]; NAMES = ['You', lg[0], lg[1], lg[2]];
   for (i = 0; i < 4; i++) { G.actors.push(mkActor(i)); G.blobs.push(mkBlob(i, sv.mass ? sv.mass[i] : 0, sv.lvl ? sv.lvl[i] : 1)); }
+  critNew(sv);
   G.map = genMap();
   for (i = 0; i < 2; i++) G.clouds.push({ x: rand(500, W - 500), y: rand(400, H - 400), tx: rand(400, W - 400), ty: rand(350, H - 350), r: 200, sp: rand(38, 54), ph: rnd() * TAU });
   for (i = 0; i < 2; i++) addCrate();
@@ -363,6 +365,7 @@ function eat(b, it) {
     if (c > 0) { addCoins(c); a.gain += c; if (KIND[it.kind].coin >= 8) Snd.coin(); }
     if (!it.fly) G.stats.fed++; if (it.kind === 'gem') G.stats.crystals++;
     Snd.gulp(a.combo);
+    critFeed(it);
     if (it.kind === 'star') { a.starT = Math.max(a.starT, 10); say(a.x, a.y - 50, 'MEGA MAGNET!', '#fff36b', 22); }
   }
   splat(b.x + rand(-b.r, b.r) * 0.3, b.y - b.r * 0.2, COLORS[b.id], 3);
@@ -392,7 +395,7 @@ function updBlobs(dt) {
     if (b.rage > 0) { b.rage -= dt; b.wobV += Math.sin(G.t * 40) * 90 * dt; if (b.rage <= 0) enrage(b); }
   }
   G.rate += (G.rateAcc / dt - G.rate) * (1 - Math.exp(-dt / 40)); G.rateAcc = 0;      // the player's own feeding rate, averaged over the last 40 seconds or so
-  addCoins(cpsNow() * dt);
+  addCoins(cpsNow() * dt); critTick(dt);
   if (G.feverT > 0) G.feverT -= dt; else if (G.fever > 0) G.fever = Math.max(0, G.fever - 1.6 * dt);
   if (G.boost.x2 > 0) G.boost.x2 -= dt;
   if (G.alarm > 0) G.alarm -= dt;

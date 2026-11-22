@@ -47,6 +47,7 @@ async def checks(pg):
     await pg.evaluate("T_.steps(60 * 12)")
     f1 = await pg.evaluate("[G.feast ? G.feast.hp : 0, Math.min.apply(null, [1, 2, 3].map(function (i) { var a = G.actors[i]; return G.feast ? Math.hypot(a.x - G.feast.x, a.y - G.feast.y) : 0; }))]")
     check(ok and f1[0] < f0[0], f'rivals race to it and bite chunks off (hp {f0[0]} -> {f1[0]}, nearest rival {f0[2]:.0f} -> {f1[1]:.0f} px)')
+    if not await pg.evaluate("!!G.feast"): await pg.evaluate("T_.force('feast')")      # the rivals may have eaten all of it already (seed drift)
     hp = await pg.evaluate("var f = G.feast; if (!f) 0; else { var P = G.actors[0]; P.x = f.x - f.r - 50; P.y = f.y; var h = f.hp; T_.lungeAt(f.x, f.y); h - (G.feast ? G.feast.hp : 0); }")
     check(hp >= 1, 'a player lunge bites a chunk off')
 
@@ -88,7 +89,8 @@ async def checks(pg):
     check(not al[0] and al[1] and al[2] == 15 and al[3] == 0 and al[4], f'a full page pays 15 gems once (ready {al[1]}, paid {al[2]}, twice {al[3]})')
     ev = await pg.evaluate("Object.keys(G.album.ev).length"); check(ev >= 5, f'events seen are recorded ({ev})')
     await pg.evaluate("G.modal = null; ACT.shop('album')"); ui = await pg.evaluate("[document.querySelectorAll('.apage').length, document.querySelectorAll('.st').length, document.querySelectorAll('.arow').length]")
-    check(ui[0] == 5 and ui[1] > 50 and ui[2] == n, f'album tab shows 4 pages + achievements ({ui})'); await pg.evaluate("ACT.close()")
+    pages = await pg.evaluate("ALBUM.length")
+    check(ui[0] == pages + 1 and ui[1] > 50 and ui[2] == n, f'album tab shows {pages} pages + achievements ({ui})'); await pg.evaluate("ACT.close()")
 
     print('Saving and rebirth')
     sv = await pg.evaluate("G.pbest = 33; save(); var s = JSON.parse(localStorage.getItem(SAVEKEY)); newGame(s); [!!G.album.loot.apple, !!G.albumDone.loot, !!G.ach.fed100, G.pbest]")
